@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.env*
+!.env.example
+.terraform/
+*.tfstate*
+.DS_Store
+*.log
+.agents/
