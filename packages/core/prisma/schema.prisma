@@ -1,0 +1,552 @@
+// Influencer Ajans Yönetim Platformu — veri modeli.
+// Kural: bakiye hiçbir yerde kolon olarak tutulmaz; LedgerEntry'den türetilir.
+// LedgerEntry ve MetricSnapshot üzerinde UPDATE/DELETE trigger ile engellenir.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────── Enums ─────────────
+
+enum Role {
+  ADMIN
+  BRAND
+  INFLUENCER
+}
+
+enum TaxStatus {
+  FATURA
+  SERBEST_MESLEK_MAKBUZU
+  STOPAJLI
+}
+
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+}
+
+enum ContentType {
+  // Instagram
+  REELS
+  STORY
+  CAROUSEL
+  FEED
+  LIVE
+  // TikTok (LIVE ortak)
+  VIDEO
+  PHOTO
+  // YouTube (VIDEO ortak)
+  SHORTS
+  COMMUNITY
+}
+
+enum CampaignStatus {
+  TASLAK
+  AKTIF
+  KAPANDI
+  IPTAL
+}
+
+enum ContractStatus {
+  TEKLIF
+  KABUL
+  RED
+}
+
+enum DeliverableStatus {
+  TASLAK
+  ATANDI
+  BRIEF_GONDERILDI
+  ICERIK_YUKLENDI
+  REVIZYON
+  ONAYLANDI
+  YAYINLANDI
+  METRIK_BEKLIYOR
+  TAMAMLANDI
+  IPTAL
+}
+
+enum ReviewDecision {
+  ONAY
+  REVIZYON
+}
+
+enum AssetKind {
+  BRIEF_PDF
+  MARKA_LOGO
+  MARKA_FONT
+  ORNEK_CEKIM
+  URUN_FOTO
+  ONAYLI_CAPTION
+  TASLAK
+  HAM_DOSYA
+  METRIK_SS
+  DIGER
+}
+
+enum AssetDirection {
+  AJANS_TO_INFLUENCER
+  INFLUENCER_TO_AJANS
+}
+
+enum UsageChannel {
+  ORGANIK
+  PAID_DAHIL
+}
+
+enum UploadStatus {
+  BEKLIYOR
+  TAMAM
+}
+
+enum MetricStage {
+  H24
+  D7
+  D30
+  ARA
+}
+
+enum MetricSource {
+  MANUEL
+  EKRAN_GORUNTUSU
+  API
+  MARKA
+}
+
+enum AgentCheck {
+  BRIEF_UYUM
+  YAYIN_KONTROL
+  SILINME_KONTROL
+  METRIK_TUTARLILIK
+  SAHTE_ETKILESIM
+  HEDEF_PROJEKSIYON
+  KAMPANYA_OZETI
+  INFLUENCER_ONERI
+  MARKA_CAKISMASI
+  STORY_HATIRLATMA
+}
+
+enum Severity {
+  BILGI
+  UYARI
+  KRITIK
+}
+
+enum AgentRunStatus {
+  ACIK
+  ONAYLANDI
+  EZILDI
+}
+
+enum LedgerAccount {
+  INFLUENCER_PAYABLE
+  AGENCY_EXPENSE
+  AGENCY_BANK
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+enum LedgerReason {
+  HAKEDIS
+  ODEME
+  DUZELTME
+}
+
+enum PayoutStatus {
+  TALEP_EDILDI
+  ONAYLANDI
+  ODEME_LISTESINDE
+  GONDERILDI
+  REDDEDILDI
+}
+
+// ───────────── Kimlik ─────────────
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  role         Role
+  brandId      String?
+  brand        Brand?      @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  influencerId String?     @unique
+  influencer   Influencer? @relation(fields: [influencerId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  notifications      Notification[]
+  briefsCreated      CampaignBrief[]
+  statusChanges      DeliverableStatusChange[]
+  reviews            DeliverableReview[]
+  assetsUploaded     Asset[]
+  metricsEntered     MetricSnapshot[]
+  agentRunsResolved  AgentRun[]
+  payoutBatches      PayoutBatch[]
+
+  @@index([brandId])
+}
+
+// ───────────── Marka / Influencer ─────────────
+
+model Brand {
+  id                 String    @id @default(cuid())
+  name               String
+  taxOffice          String
+  taxNumber          String
+  contactName        String
+  contactEmail       String
+  contactPhone       String
+  contractRef        String?
+  contractStartsAt   DateTime?
+  category           String
+  competitorBrandIds String[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  users     User[]
+  campaigns Campaign[]
+}
+
+model Influencer {
+  id               String    @id @default(cuid())
+  name             String
+  category         String
+  iban             String
+  ibanHolder       String
+  taxStatus        TaxStatus
+  canIssueInvoice  Boolean
+  audienceTimezone String    @default("Europe/Istanbul")
+  riskScore        Int?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user           User?
+  socialAccounts SocialAccount[]
+  assignments    Assignment[]
+  ledgerEntries  LedgerEntry[]
+  payoutRequests PayoutRequest[]
+}
+
+model SocialAccount {
+  id             String   @id @default(cuid())
+  influencerId   String
+  influencer     Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  platform       Platform
+  handle         String
+  followers      Int
+  engagementRate Decimal  @db.Decimal(6, 4)
+  demographics   Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  snapshots SocialAccountSnapshot[]
+
+  @@unique([influencerId, platform])
+}
+
+model SocialAccountSnapshot {
+  id              String        @id @default(cuid())
+  socialAccountId String
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  followers       Int
+  engagementRate  Decimal       @db.Decimal(6, 4)
+  demographics    Json
+  takenAt         DateTime
+
+  @@index([socialAccountId, takenAt])
+}
+
+// ───────────── Kampanya ─────────────
+
+model Campaign {
+  id                     String         @id @default(cuid())
+  brandId                String
+  brand                  Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  name                   String
+  slug                   String         @unique
+  budgetKurus            Int
+  brandTotalFeeKurus     Int
+  startsAt               DateTime
+  endsAt                 DateTime
+  /// [{kpi, target, weight, windowDays}] — zod ile doğrulanır (domain/campaign-score.ts)
+  targets                Json
+  status                 CampaignStatus @default(TASLAK)
+  closedAt               DateTime?
+  brandPaymentReceivedAt DateTime?
+  reportSummary          String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  briefs      CampaignBrief[]
+  assignments Assignment[]
+  assets      Asset[]
+
+  @@index([brandId])
+  @@index([status])
+}
+
+model CampaignBrief {
+  id                 String   @id @default(cuid())
+  campaignId         String
+  campaign           Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  version            Int
+  text               String
+  dos                String[]
+  donts              String[]
+  hashtags           String[]
+  mentions           String[]
+  requiredPhrases    String[]
+  bannedPhrases      String[]
+  disclosureRequired Boolean
+  createdById        String
+  createdBy          User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt          DateTime @default(now())
+
+  @@unique([campaignId, version])
+}
+
+model Assignment {
+  id                     String         @id @default(cuid())
+  campaignId             String
+  campaign               Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencerId           String
+  influencer             Influencer     @relation(fields: [influencerId], references: [id], onDelete: Restrict)
+  feeKurus               Int
+  commissionKurus        Int
+  contractStatus         ContractStatus @default(TEKLIF)
+  exclusivityDays        Int            @default(0)
+  exclusivityCategory    String?
+  couponCode             String?
+  conflictOverrideReason String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  deliverables Deliverable[]
+
+  @@index([campaignId])
+  @@index([influencerId])
+}
+
+// ───────────── Deliverable (atomik birim) ─────────────
+
+model Deliverable {
+  id                 String            @id @default(cuid())
+  assignmentId       String
+  assignment         Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  platform           Platform
+  contentType        ContentType
+  /// UTC olarak saklanır; influencer kitlesinin saat diliminde gösterilir.
+  plannedAt          DateTime
+  approvalDeadline   DateTime
+  status             DeliverableStatus @default(TASLAK)
+  postUrl            String?
+  publishedAt        DateTime?
+  caption            String?
+  hashtags           String[]
+  mentions           String[]
+  link               String?
+  disclosureRequired Boolean
+  contractViolation  Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  statusChanges   DeliverableStatusChange[]
+  reviews         DeliverableReview[]
+  assets          Asset[]
+  metricSnapshots MetricSnapshot[]
+
+  @@index([assignmentId])
+  @@index([plannedAt, status])
+}
+
+model DeliverableStatusChange {
+  id            String             @id @default(cuid())
+  deliverableId String
+  deliverable   Deliverable        @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  from          DeliverableStatus?
+  to            DeliverableStatus
+  byUserId      String?
+  byUser        User?              @relation(fields: [byUserId], references: [id], onDelete: SetNull)
+  note          String?
+  at            DateTime           @default(now())
+
+  @@index([deliverableId, at])
+}
+
+model DeliverableReview {
+  id            String         @id @default(cuid())
+  deliverableId String
+  deliverable   Deliverable    @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  brandUserId   String
+  brandUser     User           @relation(fields: [brandUserId], references: [id], onDelete: Restrict)
+  decision      ReviewDecision
+  note          String
+  createdAt     DateTime       @default(now())
+
+  @@index([deliverableId])
+}
+
+// ───────────── Dosyalar ─────────────
+
+model Asset {
+  id                String         @id @default(cuid())
+  deliverableId     String?
+  deliverable       Deliverable?   @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  campaignId        String?
+  campaign          Campaign?      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  key               String         @unique
+  fileName          String
+  mime              String
+  size              Int
+  kind              AssetKind
+  direction         AssetDirection
+  usageDurationDays Int?
+  usageEndsAt       DateTime?
+  usageChannel      UsageChannel?
+  usageGeography    String[]
+  uploadedById      String
+  uploadedBy        User           @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  uploadStatus      UploadStatus   @default(BEKLIYOR)
+  createdAt         DateTime       @default(now())
+
+  metricSnapshots MetricSnapshot[]
+
+  @@index([deliverableId])
+  @@index([campaignId])
+}
+
+// ───────────── Metrikler (append-only) ─────────────
+
+model MetricSnapshot {
+  id                String       @id @default(cuid())
+  deliverableId     String
+  deliverable       Deliverable  @relation(fields: [deliverableId], references: [id], onDelete: Restrict)
+  stage             MetricStage
+  source            MetricSource
+  measuredAt        DateTime
+  reach             Int?
+  impressions       Int?
+  likes             Int?
+  comments          Int?
+  saves             Int?
+  shares            Int?
+  clicks            Int?
+  sales             Int?
+  revenueKurus      Int?
+  /// Platforma özgü metrikler — domain/platform-rules.ts şemalarıyla doğrulanır.
+  platformMetrics   Json
+  screenshotAssetId String?
+  screenshotAsset   Asset?       @relation(fields: [screenshotAssetId], references: [id], onDelete: Restrict)
+  enteredById       String?
+  enteredBy         User?        @relation(fields: [enteredById], references: [id], onDelete: SetNull)
+  createdAt         DateTime     @default(now())
+
+  @@index([deliverableId, measuredAt])
+  @@index([screenshotAssetId])
+}
+
+// ───────────── Agent ─────────────
+
+model AgentRun {
+  id             String         @id @default(cuid())
+  targetType     String
+  targetId       String
+  checkType      AgentCheck
+  findings       Json
+  summary        String
+  severity       Severity
+  status         AgentRunStatus @default(ACIK)
+  model          String
+  promptVersion  String
+  /// check:targetType:targetId:bucket
+  idempotencyKey String         @unique
+  resolvedById   String?
+  resolvedBy     User?          @relation(fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolutionNote String?
+  createdAt      DateTime       @default(now())
+  resolvedAt     DateTime?
+
+  @@index([status, severity])
+  @@index([targetType, targetId])
+}
+
+// ───────────── Finans (çift kayıt, append-only) ─────────────
+
+model LedgerEntry {
+  id            String          @id @default(cuid())
+  /// Aynı olayın borç/alacak çifti aynı txId'yi taşır.
+  txId          String
+  account       LedgerAccount
+  influencerId  String?
+  influencer    Influencer?     @relation(fields: [influencerId], references: [id], onDelete: Restrict)
+  amountKurus   Int
+  direction     LedgerDirection
+  reason        LedgerReason
+  referenceType String
+  referenceId   String
+  availableAt   DateTime?
+  createdAt     DateTime        @default(now())
+
+  @@index([txId])
+  @@index([influencerId])
+  @@index([referenceType, referenceId])
+}
+
+model PayoutRequest {
+  id                 String       @id @default(cuid())
+  influencerId       String
+  influencer         Influencer   @relation(fields: [influencerId], references: [id], onDelete: Restrict)
+  amountKurus        Int
+  status             PayoutStatus @default(TALEP_EDILDI)
+  ibanSnapshot       String
+  ibanHolderSnapshot String
+  adminNote          String?
+  batchId            String?
+  batch              PayoutBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  approvedAt         DateTime?
+  sentAt             DateTime?
+  rejectedAt         DateTime?
+
+  @@index([influencerId])
+  @@index([batchId])
+  @@index([status])
+}
+
+model PayoutBatch {
+  id          String   @id @default(cuid())
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  format      String
+  createdAt   DateTime @default(now())
+
+  requests PayoutRequest[]
+
+  @@index([createdById])
+}
+
+// ───────────── Bildirim ─────────────
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}

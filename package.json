@@ -1,0 +1,24 @@
+{
+  "name": "infulancer",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "db:migrate": "npm run db:migrate -w @infulancer/core",
+    "db:seed": "npm run db:seed -w @infulancer/core",
+    "audit:migrate": "npm run audit:migrate -w @infulancer/core",
+    "storage:init": "npm run storage:init -w @infulancer/core",
+    "agents:run": "npm run agents:run -w @infulancer/core --",
+    "agents:scheduler": "npm run agents:scheduler -w @infulancer/core",
+    "build:lambda": "npm run build:lambda -w @infulancer/core"
+  }
+}

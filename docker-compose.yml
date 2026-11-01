@@ -1,0 +1,46 @@
+name: infulancer
+
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-infulancer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-infulancer}
+      POSTGRES_DB: ${POSTGRES_DB:-infulancer}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    # minio/minio Docker Hub'dan kaldırıldı; Chainguard yapımı MinIO digest ile sabitlendi
+    # (minio RELEASE.2026-10-23T20-06-51Z).
+    image: chainguard/minio@sha256:3b6e40c30ecd5cea627e382ff0b82ca841f58c52294578787043ee80c8ef7c82
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-infulancer}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-infulancer-secret}
+      # MinIO bucket CORS API'sini desteklemez; tarayıcıdan presigned PUT/GET için sunucu düzeyi CORS.
+      MINIO_API_CORS_ALLOW_ORIGIN: ${APP_URL:-http://localhost:3000}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres-data:
+  minio-data:

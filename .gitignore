@@ -12,3 +12,5 @@ coverage/
 .DS_Store
 *.log
 .agents/
+packages/core/src/generated/
+packages/core/dist/
