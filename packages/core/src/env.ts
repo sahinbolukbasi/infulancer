@@ -23,7 +23,8 @@ export function loadEnv(): void {
     // import.meta.url bundle ortamında olmayabilir.
   }
   for (const file of candidates) {
-    if (existsSync(file)) {
+    // turbopackIgnore: yalnız yerel .env aranır; Next derlemesinde tüm projeyi izlemesin.
+    if (existsSync(/*turbopackIgnore: true*/ file)) {
       process.loadEnvFile(file);
       return;
     }

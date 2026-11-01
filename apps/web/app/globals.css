@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+/* Tasarım belirteçleri — tek kaynak. Gölge (box-shadow) kullanılmaz. */
+@theme {
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-hover: #1a1a1a;
+  --color-border: #262626;
+  --color-border-strong: #404040;
+  --color-fg: #fafafa;
+  --color-fg-muted: #a1a1a1;
+  --color-fg-passive: #525252;
+  --color-critical: #ef4444;
+
+  --radius-card: 8px;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-standard: 200ms;
+
+  --animate-enter: enter 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-draw: draw 900ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  --animate-modal-in: modal-in 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  --animate-fill: fill 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  @keyframes fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes draw {
+    from {
+      stroke-dashoffset: var(--draw-length, 100);
+    }
+    to {
+      stroke-dashoffset: var(--draw-offset, 0);
+    }
+  }
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+  * {
+    border-color: var(--color-border);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-fg);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-border-strong);
+  }
+}
+
+/* Tipografi */
+@utility text-title {
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+@utility text-section {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+@utility text-body {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+@utility text-label {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+@utility text-metric {
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hareket */
+@utility transition-standard {
+  transition-property: color, background-color, border-color, opacity, transform, width;
+  transition-duration: var(--duration-standard);
+  transition-timing-function: var(--ease-standard);
+}
+
+/* 12 kolonlu ızgara; mobilde tek kolon */
+@utility grid-12 {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  @media (width >= 48rem) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface) 0%,
+    var(--color-surface-hover) 50%,
+    var(--color-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+dialog::backdrop {
+  background: rgb(10 10 10 / 0.6);
+  backdrop-filter: blur(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
