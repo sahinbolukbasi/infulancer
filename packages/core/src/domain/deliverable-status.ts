@@ -57,7 +57,8 @@ export function canTransition(
 ): boolean {
   if (from === to) return false;
   if (from === "IPTAL") return false; // İptal edilmiş iş kapanmıştır.
-  if (to === "IPTAL") return role === "ADMIN";
+  // İptal: admin; ayrıca sözleşme reddi gibi sistem kaskadları (SYSTEM).
+  if (to === "IPTAL") return role === "ADMIN" || role === "SYSTEM";
   if (isBackward(from, to)) return role === "ADMIN";
   return forwardTransitions.some((e) => e.from === from && e.to === to && e.roles.includes(role));
 }
@@ -90,6 +91,12 @@ export type TransitionInput = {
   actor: Actor;
   note?: string | null;
   postUrl?: string | null;
+  /**
+   * Geçiş kuralları SYSTEM rolüyle denetlenir (ör. sözleşme reddinde işlerin
+   * İPTAL'e kaskadı, metrik girişinde YAYINLANDI→METRIK_BEKLIYOR). Audit aktörü
+   * yine işlemi tetikleyen kullanıcıdır.
+   */
+  asSystem?: boolean;
 };
 
 export type TransitionResult = {
@@ -138,7 +145,8 @@ export async function transitionDeliverable(tx: Tx, input: TransitionInput): Pro
   }
 
   const from = deliverable.status;
-  assertTransition(actor.role, from, to);
+  const checkRole: TransitionRole = input.asSystem ? "SYSTEM" : actor.role;
+  assertTransition(checkRole, from, to);
 
   if (to !== "IPTAL" && deliverable.assignment.contractStatus === "RED") {
     throw new DomainError("KURAL_IHLALI", "Sözleşmesi reddedilmiş atamanın işleri ilerletilemez.");
@@ -181,7 +189,7 @@ export async function transitionDeliverable(tx: Tx, input: TransitionInput): Pro
     action: "DELIVERABLE_STATUS",
     entityType: "Deliverable",
     entityId: deliverable.id,
-    data: { from, to, note: input.note ?? null, postUrl: data.postUrl ?? null },
+    data: { from, to, note: input.note ?? null, postUrl: data.postUrl ?? null, asSystem: input.asSystem ?? false },
   });
 
   let status: DeliverableStatus = to;
