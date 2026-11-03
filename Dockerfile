@@ -10,7 +10,12 @@ COPY packages/core/prisma packages/core/prisma
 COPY packages/core/prisma.config.ts packages/core/
 RUN npm ci
 COPY . .
-RUN npm run build -w @infulancer/web
+# Yalnız derleme aşaması için yer tutucular (bağlantı kurulmaz); çalışma zamanı değerleri
+# Secrets Manager'dan gelir ve bu aşamadan son imaja taşınmaz.
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build \
+    AUDIT_DATABASE_URL=postgresql://build:build@localhost:5432/build_audit \
+    AUTH_SECRET=build-only-placeholder S3_BUCKET=build \
+    npm run build -w @infulancer/web
 
 FROM node:24.14.0-bookworm-slim
 WORKDIR /app
