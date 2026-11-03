@@ -15,6 +15,7 @@ export const authConfig = {
         token.role = user.role;
         token.brandId = user.brandId ?? null;
         token.influencerId = user.influencerId ?? null;
+        token.status = user.status ?? "ACTIVE";
       }
       return token;
     },
@@ -24,6 +25,7 @@ export const authConfig = {
         session.user.role = token.role;
         session.user.brandId = token.brandId ?? null;
         session.user.influencerId = token.influencerId ?? null;
+        session.user.status = token.status ?? "ACTIVE";
       }
       return session;
     },

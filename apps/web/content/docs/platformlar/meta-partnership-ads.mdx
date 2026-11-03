@@ -1,0 +1,35 @@
+---
+title: Meta Partnership Ads
+slug: meta-partnership-ads
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: Kod creator'ın kendi Instagram oturumuyla üretilir, creator istediği an iptal edebilir; lansmandan hemen önce yeniden doğrulanır.
+sources:
+  - label: Meta — Partnership Ads
+    url: https://developers.facebook.com/docs/instagram-platform/partnership-ads
+    checkedAt: 2026-11-02
+---
+
+## Kod nasıl üretilir
+
+- Kod, creator'ın **kendi** Instagram oturumuyla (`instagram_branded_content_creator` izni, creator hesabına bağlı) üretilir; **markanın erişim belirteciyle üretilemez**.
+- Arşivlenmiş içerik ve gizli Collab postları da uygundur.
+- Kod markaya aktarılır; marka reklamı Ads Manager'dan veya API'den kurar. “Mevcut postu boost et” ayrı bir akıştır.
+
+## Kod değişken bir durumdur
+
+Creator kodu istediği an iptal edebilir. Bu yüzden kod **lansmandan hemen önce yeniden doğrulanır**. Kodun süresinin dolup dolmadığı dokümanda yazmıyor <Unverified />; varsayılmaz, her seferinde kontrol edilir.
+
+Kod iptal edilirse sistem: kodu “iptal” durumuna alır, **Kritik** bulgu açar ve ilgili reklamın durdurulması için admin'e talimat bildirimi gönderir.
+
+## Boost kuralları
+
+- Zaten boost edilmiş içerik **düzenlenemez**; yeniden boost edilebilir. İterasyon yeni reklam oluşturarak yapılır.
+- İçerik branded content ise partner ücretli ortak olarak etiketlenir ve mevcut ücretli ortağın **yerine geçer**.
+- Reklam creator'ın profilinde görünmez ama creator hesabından paylaşılmış gibi görünebilir.
+- Aktif branded content reklamları **Meta Ad Library'de herkese açık** listelenir — markaya bunu söyleyin.
+
+## Sözleşme uyarısı
+
+<Callout type="uyari">Influencer sözleşmesinde whitelisting/boost **süresi** ve **bütçe tavanı** yazılı olmalıdır. Kullanım hakkı içerik planında da tanımlanır ve “paid dahil” seçilmemişse içerik reklamda kullanılmamalıdır.</Callout>

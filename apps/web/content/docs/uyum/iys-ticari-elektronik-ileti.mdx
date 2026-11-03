@@ -1,0 +1,41 @@
+---
+title: İYS ve ticari elektronik ileti
+slug: iys-ticari-elektronik-ileti
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: Onay/ret kayıtları 3 iş günü içinde İYS'ye iletilir; RET kalıcıdır ve onayı olmayan kişiye kampanya mesajı gitmez.
+sources:
+  - label: İleti Yönetim Sistemi
+    url: https://iys.org.tr
+    checkedAt: 2026-11-02
+  - label: 6563 sayılı Kanun
+    url: https://www.mevzuat.gov.tr/mevzuatmetin/1.5.6563.pdf
+    checkedAt: 2026-11-02
+---
+
+## Sistemin uyguladığı kurallar
+
+- **Gönderim anında canlı kontrol:** pazarlama mesajından önce İYS sorgulanır; yerel kayıt yalnız ön filtredir. Onay yoksa gönderim **engellenir** ve nedeni gösterilir.
+- **Karma içerik ticaridir:** herhangi bir promosyon unsuru (indirim, kupon…) içeren utility mesajı da onay ister.
+- **Marka başına ayrı İYS bağlantısı:** bir markanın onayı başka markada kullanılamaz.
+- **3 iş günü SLA:** her onay/ret kaydı Türk iş günü takvimine göre (resmî tatiller ve arife yarım günleri hariç) 3 iş günü içinde İYS'ye iletilir. Kuyrukta 1 iş gününden uzun bekleyen kayıt için alarm üretilir.
+- **Toplu kayıt:** İYS isteği atomiktir; tek hatalı kayıt tüm isteği reddeder (HTTP 422). Sistem 1.000'lik paketler gönderir, hata alırsa paketi bölerek hatalı kaydı ayırır.
+
+## RET terminaldir
+
+RET kayıtları panelden, CSV ile veya doğrudan veritabanında **silinemez ve üzerine yazılamaz**. Yalnız daha yeni tarihli ve delilli (form, çağrı kaydı vb.) bir ONAY kaldırabilir. SMS STOP/İPTAL, WhatsApp “promosyonları durdur”, Instagram DM ve e-posta abonelikten çıkış talepleri aynı akışla RET olarak kaydedilir. Delil kayıtları 10 yıl saklanır.
+
+## 6563 md. 12 ceza bantları (2026, alıcı başına)
+
+| İhlal | Bant |
+|---|---|
+| İzinsiz ileti | 2.859 – 14.309 TL |
+| Gönderici/içerik bilgisi eksik | 2.859 – 28.620 TL |
+| Ret ihlali | 5.723 – 42.930 TL |
+| Aracı hizmet sağlayıcı | 28.620 – 286.206 TL |
+| Kayıt verilmemesi / ETBİS | 143.102 – 715.516 TL |
+
+<Callout type="uyari">Cezalar **alıcı başına** uygulanır: 50.000 alıcılı onaysız bir kampanya küçük bir şirket için varoluşsal risktir. Toplu gönderimde 10× çarpan iddiası doğrulanmadı.</Callout>
+
+İYS'nin WhatsApp'ı kapsayıp kapsamadığı hiçbir otorite tarafından netleştirilmedi <Unverified />; sistem muhafazakâr davranır ve WhatsApp pazarlama mesajlarını da İYS kapısından geçirir.

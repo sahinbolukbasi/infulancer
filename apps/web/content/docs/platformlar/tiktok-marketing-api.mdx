@@ -1,0 +1,28 @@
+---
+title: TikTok Marketing API
+slug: tiktok-marketing-api
+order: 7
+updatedAt: 2026-11-04
+verification: dogrulanmadi
+summary: Reklam tarafının hız limitleri ve App Review süresi resmî kaynaktan doğrulanamadı; adaptif sınırlama uygulanır.
+sources:
+  - label: TikTok API for Business
+    url: https://business-api.tiktok.com/portal/docs
+    checkedAt: 2026-11-02
+---
+
+## Durum
+
+- Kampanya oluşturma/yönetme ve Split Test API mevcuttur.
+- Hız limitleri (QPS) resmî kaynaktan doğrulanamadı <Unverified />. Sabit sayı kullanılmaz; adaptif sınırlama + 429'da geri çekilme uygulanır.
+- App Review süresi garanti değildir <Unverified />.
+
+## Spark Ads
+
+Business Center hesap bağlama modelinde bağlı hesaba erişimi olan **herkes** onu reklam kimliği olarak kullanabilir; bu yüzden post başına yetkilendirme kodu hedeflenir. Alan adları ve kodun geçerlilik süresi resmî kaynaktan doğrulanmadı <Unverified />; özellik kapalı bayrak arkasındadır.
+
+**Spark Ads Recommendation API** boost edilmeye değer organik içeriği bulmak için hedeflenmiştir (iskelet).
+
+## App Review hazırlığı
+
+Canlı web sitesi; menüye girmeden görünen ve çalışan Gizlilik Politikası ve Kullanım Koşulları (`/gizlilik`, `/kullanim-kosullari`); her izin için kullanım açıklaması; en fazla 5 demo video (her biri ≤ 50 MB, uçtan uca akış); ilk başvuruda sandbox; kullanılmayan izinler kaldırılmış. Mobil uygulama yerine web.

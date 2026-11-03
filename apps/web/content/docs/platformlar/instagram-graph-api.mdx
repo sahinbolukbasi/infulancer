@@ -1,0 +1,41 @@
+---
+title: Instagram Graph API
+slug: instagram-graph-api
+order: 3
+updatedAt: 2026-11-04
+verification: kismi
+summary: Story metrikleri 24 saatte kaybolur; yayından 20 saat sonra hatırlatma gider ve ekran görüntülü metrik olmadan story tamamlanamaz.
+sources:
+  - label: Instagram Platform — Insights
+    url: https://developers.facebook.com/docs/instagram-platform/insights
+    checkedAt: 2026-11-02
+  - label: Business Discovery
+    url: https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/business_discovery
+    checkedAt: 2026-11-02
+---
+
+## Hesap bağlama
+
+Facebook Login → Instagram Business/Creator hesabı → izinler: `instagram_basic`, `instagram_manage_insights`, `pages_show_list`. Kişisel (Professional olmayan) hesaplar bağlanamaz.
+
+## Takipçi verisinin otomatik çekilmesi
+
+Ajansın kendi Instagram Business hesabıyla **Business Discovery** sorgusu yapılır: herkese açık Business/Creator hesapların takipçi sayısı, gönderi sayısı ve son gönderilerin beğeni/yorum ortalaması. Influencer'ın giriş yapması gerekmez. Sistem bunu 6 saatte bir (12 saatten eski hesaplar için) yapar; profilde “Şimdi senkronla” ile elle tetiklenebilir. Scraping yapılmaz.
+
+## Alınabilen metrikler
+
+Bağlı (kendi) hesap için: reach, impressions, saves, shares, profile views, takipçi demografisi.
+
+## Story kritik notu
+
+<Callout type="uyari">Story metrikleri 24 saat sonra kaybolur → **ekran görüntüsü zorunludur**. Sistem yayından **+20 saat** sonra influencer'a hatırlatma gönderir. Instagram Story'de ekran görüntülü metrik olmadan iş “Tamamlandı” yapılamaz.</Callout>
+
+## Alınamayanlar
+
+- Başkasının hesabının detaylı demografisi (Business Discovery yalnız herkese açık sayıları verir).
+- Kayıtlı/gizli metrikler.
+- Instagram'dan toplu duyuru gönderilemez (bkz. [Messenger ve Instagram DM](/docs/platformlar/messenger-instagram-dm)).
+
+## Hız limitleri
+
+Sayısal limitler resmî kaynaktan teyit edilmedi <Unverified />; adaptif sınırlama uygulanır (429'da yavaşla, başarıda yavaşça hızlan).

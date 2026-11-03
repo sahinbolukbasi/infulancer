@@ -1,0 +1,47 @@
+---
+title: WhatsApp Cloud API
+slug: whatsapp-cloud-api
+order: 4
+updatedAt: 2026-11-04
+verification: kismi
+summary: Her markaya ayrı numara bağlanır (1.000 ücretsiz servis mesajı numara başınadır); 24 saat dışında yalnız onaylı template gönderilir.
+sources:
+  - label: WhatsApp Business Platform — Pricing
+    url: https://developers.facebook.com/docs/whatsapp/pricing
+    checkedAt: 2026-11-02
+  - label: Messaging limits
+    url: https://developers.facebook.com/docs/whatsapp/messaging-limits
+    checkedAt: 2026-11-02
+---
+
+## Kurulum
+
+Embedded Signup **v4** ile marka başına ayrı numara bağlanır (v2/v3 15 Ekim 2026'da kullanımdan kalktı). Kurulum adımları: signup → erişim belirteci → webhook aboneliği → numara kaydı (2 adımlı PIN) → **markanın WhatsApp Manager'da ödeme yöntemi eklemesi**. Son adım olmadan mesaj gönderilemez; en çok burada takılınır.
+
+## Mesaj limiti ve ücretsiz kota
+
+- **Mesaj limiti portföy düzeyindedir** ve portföydeki tüm numaralar arasında paylaşılır; numara eklemek kapasite eklemez. Kademeler: 250 → 2.000 → 10.000 → 100.000 → sınırsız (24 saatte **tekil alıcı**).
+- **Ücretsiz 1.000 servis mesajı numara başınadır** ve numaralar arasında paylaşılmaz — bu yüzden her markaya ayrı numara bağlanır.
+- Kademeyi aşan kampanya reddedilmez; planlayıcı günlere böler ve tahmini süreyi gösterir.
+
+## 24 saat penceresi
+
+Müşteri yazdıktan sonraki 24 saat içinde serbest mesaj yazılabilir. Pencere dışında tek uyumlu giden kanal **onaylı template**'tir. Click-to-WhatsApp reklamından gelenlerle 7 gün ücretsiz konuşulur. Gelen kutusunda her konuşmada geri sayım vardır; kapanmaya 15 dk kala temsilciye bildirim gider.
+
+## Template kalitesi
+
+| Kalite | Sistem ne yapar |
+|---|---|
+| Yüksek | Normal gönderim |
+| Orta | Gönderim hızı %50'ye kısılır, marka uyarılır |
+| Düşük | Gönderim otomatik durur, admin'e eskalasyon |
+
+1. duraklatma 3 saat, 2. duraklatma 6 saat; 3. duraklatmada template devre dışı kalır. Kategoriler: marketing / utility / authentication. İnceleme süresi garanti değildir <Unverified />.
+
+## Fiyat takvimi
+
+Meta fiyat değişiklikleri yalnız 1 Ocak, 1 Nisan, 1 Temmuz ve 1 Ekim'de yürürlüğe girer (tarife kartı 1 ay, fiyat modeli eki 3 ay, model değişikliği 6 ay önceden bildirilir). Türkiye ücretleri Meta'nın kendi tarife kartından teyit edilmedi <Unverified />.
+
+## Bizdeki kural
+
+<Callout type="yasak">Kampanya (marketing) mesajı **İYS onayı olmadan gönderilmez**. Utility template'e indirim kuponu eklemek de mesajı ticari yapar ve aynı kapıya takılır. Bkz. [İYS](/docs/uyum/iys-ticari-elektronik-ileti).</Callout>

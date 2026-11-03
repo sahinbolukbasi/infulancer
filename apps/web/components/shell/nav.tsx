@@ -4,6 +4,8 @@ import type { ComponentType } from "react";
 import type { Role } from "@infulancer/core/enums";
 import {
   AlertIcon,
+  FileIcon,
+  UserIcon,
   BellIcon,
   BuildingIcon,
   CalendarIcon,
@@ -33,6 +35,8 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/reklam", label: "Reklam", icon: MegaphoneIcon },
     { href: "/admin/creative", label: "Creative", icon: SparkleIcon },
     { href: "/admin/kategoriler", label: "Kategoriler", icon: CalendarIcon },
+    { href: "/admin/davetler", label: "Davetler", icon: UserIcon },
+    { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
   ],
   BRAND: [
     { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
@@ -40,11 +44,14 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/marka/asistanlar", label: "Asistanlar", icon: SparkleIcon },
     { href: "/marka/kanallar", label: "Kanallar", icon: LinkIcon },
     { href: "/marka/uyum", label: "Uyum", icon: AlertIcon },
+    { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
   ],
   INFLUENCER: [
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
     { href: "/influencer/odemeler", label: "Ödemeler", icon: WalletIcon },
     { href: "/influencer/hesaplar", label: "Hesaplar", icon: LinkIcon },
+    { href: "/influencer/davet", label: "Davet et", icon: UserIcon },
+    { href: "/docs", label: "Rehber", icon: FileIcon },
   ],
 };
 

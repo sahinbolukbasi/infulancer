@@ -1,0 +1,31 @@
+---
+title: Kampanya skoru
+slug: kampanya-skoru
+order: 2
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: Skor = Σ (KPI gerçekleşme oranı × ağırlık); pencere açıkken projeksiyon her zaman skorun yanında gösterilir.
+sources: []
+---
+
+## Hesap
+
+**Skor = Σ (KPI gerçekleşme oranı × ağırlık)**, ağırlıkların toplamı 1,0.
+
+- KPI'lar: erişim, gösterim, etkileşim oranı (ER), tıklama, satış, izlenme.
+- Gerçekleşme oranı = pencere içindeki son ölçüm / hedef.
+- Durum: oran ≥ %100 “Ulaşıldı”, ≥ %85 “Kısmen”, altı “Ulaşılamadı”. Pencere açıkken “Ölçülüyor”.
+
+## Pencere
+
+Pencere ilk yayından başlar ve KPI'nın ölçüm gün sayısı kadar sürer (ör. 7 gün). Pencere kapanınca değer **donar**; sonradan girilen metrik o KPI'yı değiştirmez. Metrikleri henüz oturmamış yayın varsa (YouTube 72 saat) karar verilmez.
+
+## Projeksiyon
+
+Pencere açıkken mevcut gidişle pencere sonunda beklenen değer hesaplanır: `gerçekleşen × pencere günü / geçen gün`. ER gibi oran KPI'larında mevcut değer projeksiyon kabul edilir. Projeksiyon skorun yanında **her zaman** gösterilir; hedef gidişatı agent'ı her gün %100 altı projeksiyonlar için uyarı üretir.
+
+## Neden anlık skor tek başına yanıltıcıdır
+
+Örnek: 7 günlük erişim hedefi olan bir kampanya, ilk yayından **6 saat** sonra hedefin %8'ine ulaşmış olsun. Anlık skor **%8**'dir ve “çok geride” gibi görünür. Oysa aynı hızla devam ederse pencere sonundaki projeksiyon `8 × 7 / 0,25 ≈ %224`'tür — hedefin çok üstü. Tersine, ilk saatlerde patlayıp duran bir içerik erken saatlerde abartılı projeksiyon gösterir.
+
+Bu yüzden kararlar **skor + projeksiyon + pencere sonu** birlikte okunarak verilir; pencere kapanmadan “Ulaşılamadı” denmez.

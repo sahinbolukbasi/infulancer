@@ -1,0 +1,40 @@
+---
+title: Sorun giderme
+slug: sorun-giderme
+order: 3
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: Template duraklatması, erişilemeyen yayın linki, boş metrik API'si ve onaylanmayan çekim talebi için ne yapılır.
+sources: []
+---
+
+## Template duraklatıldı
+
+1. `/admin/kanallar` → template kalitesine bakın (Orta/Düşük).
+2. Son kampanyada şikâyet/engelleme artmış olabilir: hedef kitleyi daraltın, sıklığı düşürün, metni sadeleştirin.
+3. 1. duraklatma 3 saat, 2. 6 saat; **3. duraklatmada template kalıcı olarak devre dışı kalır** — yeni template oluşturmanız gerekir. İkinci duraklatmadan sonra o template'le toplu gönderim yapmayın.
+
+## Yayın linki erişilemiyor
+
+Silinme kontrolü agent'ı linki ölü bulduğunda Kritik bulgu açar. Ayırt edin:
+
+| Durum | Nasıl anlaşılır | Ne yapılır |
+|---|---|---|
+| Silinmiş | Link 404, influencer profilinde yok | Sözleşme ihlali; influencer'la iletişim, ödeme durdurulabilir |
+| Gizlilik | Hesap gizliye alınmış, profil açılmıyor | Influencer'dan hesabı açmasını isteyin |
+| Platform hatası | Diğer linkler de açılmıyor, kısa sürede düzeliyor | Bulguyu “Ez” ile kapatın, ertesi gün tekrar kontrol edilir |
+
+## Metrik API'si boş dönüyor
+
+Hesap bağlantısı kopmuş veya içerik henüz işlenmemiş olabilir. Profilde “Son senkron” ve hata mesajına bakın. Beklemeden **ekran görüntüsüyle manuel akışa** düşün: influencer iş sayfasından istatistik ekran görüntüsü yükler, sistem değerleri okuyup karşılaştırır.
+
+## Çekim talebi onaylanmıyor
+
+Çekilebilir bakiye için **dört kapının** hepsi açık olmalıdır:
+
+1. Kampanya **kapanmış** olmalı.
+2. Markanın ödemesi **alındı** olarak işaretlenmiş olmalı.
+3. Kapanış ve marka ödemesinden sonra **14 günlük** bekleme süresi geçmiş olmalı.
+4. Talep tutarı **en az 500 TL** olmalı.
+
+Ayrıca vergi profili kapısı: 20/B istisnalı influencer'a yalnız belirlenmiş IBAN'a ödeme yapılır; “fatura kesemiyor” durumundaki influencer'ın ödemesi mali müşavir görüşü yüklenip admin onaylayana kadar kilitlidir. IBAN bilgisi eksikse talep oluşturulamaz.

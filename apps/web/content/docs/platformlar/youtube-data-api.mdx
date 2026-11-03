@@ -1,0 +1,28 @@
+---
+title: YouTube Data API
+slug: youtube-data-api
+order: 8
+updatedAt: 2026-11-04
+verification: kismi
+summary: Herkese açık kanal istatistikleri API anahtarıyla çekilir; günlük 10.000 birim kota vardır, demografi için kanal sahibinin bağlantısı gerekir.
+sources:
+  - label: YouTube Data API — Quota
+    url: https://developers.google.com/youtube/v3/determine_quota_cost
+    checkedAt: 2026-11-02
+---
+
+## Ne çekilir
+
+`channels` uç noktası (`forHandle=@kanal`) ile abone sayısı, video sayısı ve toplam izlenme. Sistem video başına ortalama izlenmeyi hesaplar ve profilde gösterir.
+
+## Kota
+
+Varsayılan proje kotası günde **10.000 birim**; `channels.list` çağrısı 1 birim, `search.list` 100 birimdir. Senkron yalnız `channels` kullandığı için yüzlerce kanal günlük kotaya rahat sığar. Kota aşılırsa hata hesaba yazılır, ertesi gün tekrar denenir.
+
+## Alınamayanlar
+
+İzleyici demografisi, izlenme süresi ve gelir verileri **YouTube Analytics API** ile ve yalnız kanal sahibinin OAuth onayıyla alınabilir; bu bağlantı henüz yoktur. Bu veriler influencer'ın yüklediği ekran görüntüsünden girilir.
+
+## Reklam açıklaması
+
+YouTube'a özgü etiketleme mekaniği doğrulanmadı <Unverified />; genel [md. 23/A](/docs/uyum/reklam-aciklamasi-23a) kuralı uygulanır.

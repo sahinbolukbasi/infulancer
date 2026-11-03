@@ -5,8 +5,9 @@ import { withUnverified } from "@infulancer/core/unverified";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
-import { InfoNote, UnverifiedBadge } from "@/components/ui/unverified";
+import { UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { DocLink } from "@/components/docs/doc-components";
 import { PageGuide } from "@/components/ui/page-guide";
 import { CreativeForm, TopUpForm } from "@/components/forms/operations-forms";
 import { getConfig } from "@infulancer/core/config/store";
@@ -69,10 +70,7 @@ export default async function AdminCreativePage() {
           </ul>
         </Card>
       ) : null}
-      <InfoNote>
-        FLUX ailesi ve araştırma kökenli modeller, fal’ın hosted API’sinin BFL ticari lisansını kapsadığı yazılı olarak teyit edilene kadar kapalıdır. Lisansı “cleared” olmayan model müşteri
-        işinde çalışmaz. Gerçek kişinin yapay zekâ kopyasıyla üretim (md. 27/12) her zaman engellidir.
-      </InfoNote>
+      <DocLink slug="model-kaydi-ve-lisans" />
 
       <Card interactive={false} className="flex flex-col gap-4">
         <CardTitle>Model kaydı</CardTitle>
@@ -127,7 +125,7 @@ export default async function AdminCreativePage() {
               </li>
             ))}
           </ul>
-          <p className="text-[13px] text-fg-muted">Kredi gönderimde bloke edilir, yalnız başarılı çıktıda tahsil edilir. fal ön ödemeli bakiyesi aynı zamanda eşzamanlılık limitidir.</p>
+          <DocLink slug="kredi-ve-maliyet" />
         </Card>
         <Card interactive={false} className="flex flex-col gap-3">
           <CardTitle>AI açıklama kontrol listesi</CardTitle>
@@ -136,6 +134,7 @@ export default async function AdminCreativePage() {
               <li key={c}>{c}</li>
             ))}
           </ul>
+          <DocLink slug="ai-icerik-aciklamasi" />
         </Card>
       </section>
 

@@ -1,0 +1,31 @@
+---
+title: Messenger ve Instagram DM
+slug: messenger-instagram-dm
+order: 5
+updatedAt: 2026-11-04
+verification: kismi
+summary: 24 saat sonrası yalnız temsilci yanıtı (HUMAN_AGENT, 7 gün); promosyon, drip veya sepet hatırlatma yapılamaz.
+sources:
+  - label: Messenger Platform — Message tags
+    url: https://developers.facebook.com/docs/messenger-platform/send-messages/message-tags
+    checkedAt: 2026-11-02
+---
+
+## Kurallar
+
+- Konuşmayı işletme başlatamaz; kişi yazmalıdır.
+- Standart pencere 24 saat. Sonrasında yalnız **temsilci yanıtı** mümkündür (`HUMAN_AGENT`, son kullanıcı mesajından 7 gün), promosyon içeremez.
+- `ACCOUNT_UPDATE`, `CONFIRMED_EVENT_UPDATE`, `POST_PURCHASE_UPDATE` etiketleri 10 Şubat 2026'da kaldırıldı → **24 saat dışı yeniden etkileşim, drip kampanya ve sepet hatırlatma yapılamaz**.
+- Grup mesajlaşma yoktur.
+
+## Gelen kutusu notları
+
+- Requests klasöründe 30 gündür hareketsiz konuşmalar API'den dönmez.
+- Klasör bilgisi mesajla gelmez.
+- Webhook ile gelen mesajlar biz yanıt verene kadar Instagram'da okundu sayılmaz; yanıtımız konuşmayı General klasörüne taşır.
+- Paylaşılan post/medya için yalnız URL gelir.
+- Kullanıcı mesajı geri alırsa (unsend) mesaj, medyası ve arama kaydı kalıcı silinir.
+
+## Hız limitleri
+
+Sayısal limitler <Unverified />. “200 × etkileşimli kullanıcı/saat” formülü kullanılmaz; adaptif sınırlama uygulanır.

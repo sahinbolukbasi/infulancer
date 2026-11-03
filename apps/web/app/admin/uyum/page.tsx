@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
-import { adPenaltyCopy } from "@infulancer/core/compliance/disclosure";
 import { iysPenaltyBands } from "@infulancer/core/compliance/iys";
 import { TRANSFER_TARGETS } from "@infulancer/core/compliance/kvkk";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
-import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { DocLink } from "@/components/docs/doc-components";
 import { PageGuide } from "@/components/ui/page-guide";
 import { RunJobButton } from "@/components/forms/operations-forms";
 import { fmtDateTime } from "@/lib/time";
@@ -96,7 +95,7 @@ export default async function AdminCompliancePage() {
             </li>
           ))}
         </ul>
-        <InfoNote>Cezalar alıcı başına uygulanır: 50.000 alıcılı onaysız bir kampanya küçük bir şirket için varoluşsal risktir. (Toplu gönderimde 10× çarpan iddiası doğrulanmadı.)</InfoNote>
+        <DocLink slug="iys-ticari-elektronik-ileti" />
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-3">
@@ -122,7 +121,7 @@ export default async function AdminCompliancePage() {
             );
           })}
         </ul>
-        <p className="text-[13px] text-fg-muted">Bildirmeme cezası 90.308 – 1.806.377 TL. Makbuz yüklenmeden marka canlı moda geçemez.</p>
+        <DocLink slug="kvkk-yurtdisi-aktarim" />
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-3">
@@ -141,9 +140,7 @@ export default async function AdminCompliancePage() {
             ))}
           </ul>
         )}
-        <InfoNote>
-          Reklam ihlali cezası {adPenaltyCopy.range}. {adPenaltyCopy.example} {adPenaltyCopy.note}
-        </InfoNote>
+        <DocLink slug="reklam-aciklamasi-23a" />
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-3">

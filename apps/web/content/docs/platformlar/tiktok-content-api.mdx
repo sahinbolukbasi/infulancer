@@ -1,0 +1,34 @@
+---
+title: TikTok Content Posting ve Display API
+slug: tiktok-content-api
+order: 6
+updatedAt: 2026-11-04
+verification: kismi
+summary: Audit öncesi API ile yalnız SELF_ONLY gönderi yapılabilir; TikTok yayınları manuel yapılır, sisteme link girilir.
+sources:
+  - label: TikTok — Content Posting API
+    url: https://developers.tiktok.com/doc/content-posting-api-get-started
+    checkedAt: 2026-11-02
+---
+
+## Audit kısıtı
+
+Uygulama TikTok denetiminden geçene kadar API ile yalnızca `SELF_ONLY` görünürlükte gönderi yapılabilir; ücretli ortaklık açıklamalı içerik bu modda **yayınlanamaz**. Audit öncesi 24 saatte en fazla 5 kullanıcı gönderi yapabilir.
+
+→ Pratikte TikTok yayınları **manuel** yapılır, yayın linki sisteme girilir.
+
+Audit sonrası her yayından önce creator bilgisi sorgulanır; “şu an gönderi yapamaz” cevabı hata değildir (24 saatlik gönderi tavanı creator'ın kullandığı tüm uygulamalar arasında paylaşılır), kullanıcıya sonra denemesi söylenir. Zamanlanmış yayın parametresi olmadığı için zamanlama sunucu tarafında yapılır.
+
+## Mesajlaşma
+
+İşletmelerin kullanıcıya mesaj başlatmasını sağlayan bir API yoktur. Business Messaging yalnız kullanıcı başlatmalıdır, aracı sağlayıcı üzerindendir ve ABD/AEA/İsviçre/BK hesaplarında desteklenmez. Creator iletişimi e-posta, manuel mesaj veya erişim varsa TikTok One üzerinden yapılır. Panelde TikTok DM butonu bu yüzden yoktur.
+
+## Hesap bağlama ve takipçi verisi
+
+Influencer kendi panelinden “TikTok ile bağlan” der (Login Kit). Bağlantıdan sonra takipçi, video ve beğeni sayıları otomatik güncellenir. Kapak görseli bağlantıları süreli olduğu için saklanmaz.
+
+## Eksik metrikler
+
+İzlenme süresi, tamamlanma oranı ve takipçi demografisi public API'de **yoktur**; creator'ın yüklediği ekran görüntüsü veya media kit ile toplanır.
+
+TikTok One / Creator Marketplace API'ye bağımlı özellik **bilerek** yoktur (davet kapılı erişim).

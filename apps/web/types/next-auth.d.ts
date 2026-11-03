@@ -6,6 +6,7 @@ declare module "next-auth" {
     role?: Role;
     brandId?: string | null;
     influencerId?: string | null;
+    status?: "ACTIVE" | "PENDING" | "REJECTED" | "SUSPENDED";
   }
   interface Session {
     user: {
@@ -13,6 +14,7 @@ declare module "next-auth" {
       role: Role;
       brandId: string | null;
       influencerId: string | null;
+      status?: "ACTIVE" | "PENDING" | "REJECTED" | "SUSPENDED";
     } & DefaultSession["user"];
   }
 }
@@ -23,5 +25,6 @@ declare module "@auth/core/jwt" {
     role?: Role;
     brandId?: string | null;
     influencerId?: string | null;
+    status?: "ACTIVE" | "PENDING" | "REJECTED" | "SUSPENDED";
   }
 }

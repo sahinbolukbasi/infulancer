@@ -4,13 +4,13 @@ import { freeTierStatus } from "@infulancer/core/messaging/cost";
 import { qualityLabel, statusLabel } from "@infulancer/core/messaging/templates";
 import { tierCapacity } from "@infulancer/core/messaging/tiers";
 import { EMBEDDED_SIGNUP_VERSION } from "@infulancer/core/channels/onboarding";
-import { tiktokDmNotice } from "@infulancer/core/tiktok/index";
 import { UNVERIFIED_FACTS } from "@infulancer/core/unverified";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
-import { InfoNote, UnverifiedBadge } from "@/components/ui/unverified";
+import { UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { DocLink } from "@/components/docs/doc-components";
 import { PageGuide } from "@/components/ui/page-guide";
 import { RunJobButton } from "@/components/forms/operations-forms";
 import { fmtDate, fmtDateTime } from "@/lib/time";
@@ -138,10 +138,7 @@ export default async function AdminChannelsPage() {
           </Card>
         ))}
       </section>
-      <InfoNote>
-        Messaging limiti business portfolio düzeyindedir ve portföydeki tüm numaralar arasında paylaşılır; numara eklemek kapasite eklemez. Ücretsiz 1.000 servis mesajı numara
-        başınadır ve numaralar arasında paylaşılmaz — bu yüzden her markaya ayrı numara bağlanır.
-      </InfoNote>
+      <DocLink slug="whatsapp-cloud-api" />
 
       <Card interactive={false} className="flex flex-col gap-4">
         <CardTitle>Bağlantılar</CardTitle>
@@ -195,23 +192,14 @@ export default async function AdminChannelsPage() {
         </table>
       </Card>
 
-      <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Kanal kısıtları</CardTitle>
-        <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-fg-muted">
-          <li>Meta ailesinde 24 saat dışına çıkabilen tek uyumlu giden kanal onaylı WhatsApp template’idir. Instagram’dan toplu duyuru gönderilemez.</li>
-          <li>Messenger/Instagram’da 24 saat sonrası yalnız temsilci yanıtı (HUMAN_AGENT, 7 gün) mümkündür; promosyon, drip veya sepet hatırlatma yapılamaz.</li>
-          <li>{tiktokDmNotice}</li>
-          <li>
-            {UNVERIFIED_FACTS.igRateLimits} <UnverifiedBadge />
-          </li>
-          <li>
-            {UNVERIFIED_FACTS.tiktokRateLimits} <UnverifiedBadge />
-          </li>
-          <li>
-            {UNVERIFIED_FACTS.appReviewDuration} <UnverifiedBadge />
-          </li>
-          <li>Meta fiyat değişiklikleri yalnız 1 Ocak, 1 Nisan, 1 Temmuz ve 1 Ekim’de yürürlüğe girer (tarife kartı için 1 ay, fiyat modeli eki için 3 ay, model değişikliği için 6 ay önceden bildirim).</li>
-        </ul>
+      <Card interactive={false} className="flex flex-col gap-2">
+        <CardTitle>Kanal kuralları</CardTitle>
+        <DocLink slug="whatsapp-cloud-api" />
+        <DocLink slug="messenger-instagram-dm" />
+        <DocLink slug="tiktok-content-api" />
+        <p className="text-[12px] text-fg-passive">
+          {UNVERIFIED_FACTS.igRateLimits} <UnverifiedBadge />
+        </p>
       </Card>
     </div>
   );

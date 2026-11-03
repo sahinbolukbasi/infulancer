@@ -19,6 +19,19 @@ enum Role {
   INFLUENCER
 }
 
+enum UserStatus {
+  ACTIVE
+  PENDING
+  REJECTED
+  SUSPENDED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum TaxStatus {
   FATURA
   SERBEST_MESLEK_MAKBUZU
@@ -177,6 +190,9 @@ model User {
   passwordHash String
   name         String
   role         Role
+  /// Davetle kayıt olanlar admin onayına kadar PENDING; mevcut kullanıcılar ACTIVE.
+  status       UserStatus  @default(ACTIVE)
+  phone        String?
   brandId      String?
   brand        Brand?      @relation(fields: [brandId], references: [id], onDelete: SetNull)
   influencerId String?     @unique
@@ -184,14 +200,17 @@ model User {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  notifications     Notification[]
-  briefsCreated     CampaignBrief[]
-  statusChanges     DeliverableStatusChange[]
-  reviews           DeliverableReview[]
-  assetsUploaded    Asset[]
-  metricsEntered    MetricSnapshot[]
-  agentRunsResolved AgentRun[]
-  payoutBatches     PayoutBatch[]
+  notifications        Notification[]
+  briefsCreated        CampaignBrief[]
+  statusChanges        DeliverableStatusChange[]
+  reviews              DeliverableReview[]
+  assetsUploaded       Asset[]
+  metricsEntered       MetricSnapshot[]
+  agentRunsResolved    AgentRun[]
+  payoutBatches        PayoutBatch[]
+  invitesCreated       Invite[]                  @relation("InviteCreatedBy")
+  application          SignupApplication?        @relation("ApplicationUser")
+  applicationsReviewed SignupApplication[]       @relation("ApplicationReviewer")
 
   @@index([brandId])
 }
@@ -1305,4 +1324,44 @@ model AgentJobRun {
   error      String?
 
   @@index([job, startedAt])
+}
+
+// ═════════════ Davetle kayıt ═════════════
+/// Davet kodu: admin (influencer veya marka için) ya da influencer (yalnız influencer için) üretir.
+model Invite {
+  id                  String    @id @default(cuid())
+  code                String    @unique
+  targetRole          Role
+  createdById         String
+  createdBy           User      @relation("InviteCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  inviterInfluencerId String?
+  maxUses             Int       @default(1)
+  uses                Int       @default(0)
+  expiresAt           DateTime
+  note                String?
+  revokedAt           DateTime?
+  createdAt           DateTime  @default(now())
+
+  applications SignupApplication[]
+
+  @@index([createdById])
+}
+
+/// Kayıt başvurusu: onaylanınca influencer/marka profili oluşturulur ve kullanıcı ACTIVE olur.
+model SignupApplication {
+  id           String            @id @default(cuid())
+  userId       String            @unique
+  user         User              @relation("ApplicationUser", fields: [userId], references: [id], onDelete: Cascade)
+  inviteId     String
+  invite       Invite            @relation(fields: [inviteId], references: [id], onDelete: Restrict)
+  targetRole   Role
+  data         Json
+  status       ApplicationStatus @default(PENDING)
+  reviewedById String?
+  reviewedBy   User?             @relation("ApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+  reviewNote   String?
+  createdAt    DateTime          @default(now())
+
+  @@index([status, createdAt])
 }

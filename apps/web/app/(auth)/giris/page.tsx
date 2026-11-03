@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { safeNextPath } from "@/lib/roles";
+import Link from "next/link";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Giriş" };
@@ -13,8 +14,8 @@ const DEV_ACCOUNTS = [
   },
 ];
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
-  const { next } = await searchParams;
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string | string[]; onaylandi?: string }> }) {
+  const { next, onaylandi } = await searchParams;
   const nextPath = safeNextPath(Array.isArray(next) ? next[0] : next);
   const showDevHint = process.env.NODE_ENV !== "production";
 
@@ -26,9 +27,20 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <h1 className="text-title">Giriş yap</h1>
           <p className="text-sm text-fg-muted">Ajans, marka ve influencer hesapları için tek giriş.</p>
         </div>
+        {onaylandi ? (
+          <p role="status" className="rounded-[8px] border border-border p-4 text-sm text-fg">
+            Üyeliğiniz onaylandı. E-posta ve şifrenizle giriş yapın.
+          </p>
+        ) : null}
         <div className="rounded-[8px] border border-border bg-surface p-6">
           <LoginForm next={nextPath} />
         </div>
+        <p className="text-center text-[13px] text-fg-muted">
+          Davet kodunuz mu var?{" "}
+          <Link href="/kayit" className="text-fg underline underline-offset-4">
+            Kayıt olun
+          </Link>
+        </p>
         {showDevHint ? (
           <section aria-labelledby="demo-hesaplar" className="flex flex-col gap-3 rounded-[8px] border border-dashed border-border p-4">
             <h2 id="demo-hesaplar" className="text-label text-fg-passive">

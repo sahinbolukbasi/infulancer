@@ -1,0 +1,57 @@
+---
+title: Meta Marketing API
+slug: meta-marketing-api
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: Reklam yazma limitleri (saatte 4 bütçe değişikliği, aynı nesneye 30 sn) nedeniyle bütçe motoru saatlik çalışır.
+sources:
+  - label: Meta Marketing API — Rate Limiting
+    url: https://developers.facebook.com/docs/marketing-api/overview/rate-limiting
+    checkedAt: 2026-11-02
+---
+
+## Yazma limitleri
+
+- **Mutation:** 100 istek/sn (app + ad account bazlı).
+- **Aynı nesne:** 30 saniyede bir düzenleme (hata alt kodu `4841018`).
+- **Ad set bütçesi:** saatte 4 değişiklik; sonrasında 1 saat blok.
+- **Hesap harcama limiti:** günde 10 değişiklik.
+
+## Bizdeki karşılığı
+
+Bütçe motoru **saatlik batch** çalışır; dakikalık otomatik müdahale yapılmaz. Limit aşan bir istek reddedilmez, sıradaki uygun saate ötelenir ve `/admin/reklam` ekranındaki bütçe kuyruğunda görünür. Aynı ad set için arada biriken değişikliklerden yalnız sonuncusu uygulanır.
+
+## Erişim seviyesi
+
+- **Full Access:** son 15 günde 500 çağrı ve son 500 çağrıda hata oranı %15 altı. Ekran kaydı zorunluluğu yok.
+- **Development:** saatte 300 + 40 × aktif reklam; yalnız pilot içindir. Ödeme yapan müşteri öncesi Full Access alınmalıdır.
+
+## Kota ve skor
+
+Okuma 1, yazma 3 puan; puanlar 300 saniyede erir. Development'ta tavan 60 (dolunca 300 sn blok), Full Access'te 9.000 (dolunca 60 sn blok). Tüm sayılar kodda değil yapılandırmada tutulur.
+
+## Rate limit header'ları
+
+Her yanıtta okunur ve loglanır:
+
+| Header | Alanlar |
+|---|---|
+| `X-Ad-Account-Usage` | `acc_id_util_pct`, `reset_time_duration`, `ads_api_access_tier` |
+| `X-Business-Use-Case` | `call_count`, `total_cputime`, `total_time`, `estimated_time_to_regain_access` |
+| `X-FB-Ads-Insights-Throttle` | insights kullanım yüzdeleri |
+
+## 429 ve geri çekilme
+
+Hız sınırı hatalarında (HTTP 429, kod 4/17/32/613) **exponential backoff + jitter** uygulanır: bekleme 0,5 sn'den başlayıp her hatada iki katına çıkar (en fazla 60 sn); `estimated_time_to_regain_access` varsa ona uyulur. Kuyruk önceliği: bütçe durdurma > bütçe azaltma > bütçe artırma > insights okuma.
+
+## Hata kodu → aksiyon
+
+| Kod | Anlam | Sistem ne yapar |
+|---|---|---|
+| `4841018` | Aynı nesne 30 sn içinde düzenlendi | 30 sn sonraya kuyruklar |
+| 17 / 613 | Hesap/uygulama hız sınırı | Backoff, kuyruk bekler |
+| 190 | Erişim belirteci iptal | Bağlantıyı durdurur, markayı uyarır |
+| 200 | İzin eksik | “İzin eksik” uyarısı, kurulum adımına yönlendirir |
+
+<Callout type="uyari">Marketing API bağlantısı kurulana kadar `/admin/reklam` demo modundadır: istekler ve limit davranışı kaydedilir, Meta'ya gönderilmez.</Callout>

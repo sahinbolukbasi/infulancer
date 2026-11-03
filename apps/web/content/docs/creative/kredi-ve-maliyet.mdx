@@ -1,0 +1,24 @@
+---
+title: Kredi ve maliyet
+slug: kredi-ve-maliyet
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: Kredi gönderimde bloke edilir, yalnız başarılı çıktıda tahsil edilir; fal ön ödemeli bakiyesi aynı zamanda eşzamanlılık limitidir.
+sources: []
+---
+
+## Nasıl işler
+
+1. Üretim gönderilirken markanın kredi bakiyesinden tahmini tutar **bloke** edilir (henüz tahsil edilmez).
+2. Çıktı başarıyla gelince bloke tutar **tahsil** edilir ve varlık C2PA kimlik bilgisiyle kaydedilir.
+3. Üretim başarısız olursa bloke **serbest bırakılır**; ücret alınmaz (fal da sunucu hatasını faturalamaz).
+4. Aynı sonuç tekrar gelirse (webhook tekrarı) ikinci tahsilat yapılmaz.
+
+## Kredi birimi
+
+1 kredi ≈ 0,05 $ ham maliyet varsayılır; müşteri fiyatı 3–5 kat olarak kurulur. Örnek “ad set paketi”: 6 görsel (Nano Banana Pro) + 8 sn video + ~300 karakter seslendirme ≈ 1,05 $ ham maliyet <Unverified />.
+
+## Bakiye ve eşzamanlılık
+
+fal ön ödemeli bakiyesi aynı zamanda eşzamanlılık limitidir; toplu üretimde bakiye düşükse işler bekler. Marka bakiyesi düşük kredi eşiğinin altına inince admin'e bildirim gider. Marka başına bakiye ve son üretimler `/admin/creative` ekranında, kredi yükleme aynı ekrandadır.

@@ -1,0 +1,41 @@
+---
+title: KVKK yurt dışı aktarım
+slug: kvkk-yurtdisi-aktarim
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: İki ayrı aktarım (AWS ve Meta) için standart sözleşme; Kurul bildirim makbuzu yüklenmeden marka canlı moda geçemez.
+sources:
+  - label: KVKK — Standart Sözleşme
+    url: https://www.kvkk.gov.tr
+    checkedAt: 2026-11-02
+---
+
+## Roller
+
+Kampanya, alıcı ve mesaj verileri için **marka veri sorumlusu**, platform **veri işleyendir**. Platformun kendi kullanıcı hesapları, faturalama ve telemetri için platform veri sorumlusudur.
+
+## İki ayrı aktarım
+
+| Alt-işleyen | Amaç |
+|---|---|
+| AWS eu-central-1 (Frankfurt) | Barındırma |
+| Meta WhatsApp Cloud API | Mesaj işleme |
+
+Türkiye Meta'nın yerel depolama listesinde değildir; mesaj içeriği uluslararası veri merkezlerinde işlenebilir. Meta, aydınlatma metninde ve marka sözleşmesinde açıkça alt-işleyen olarak yazılır.
+
+## Akış (markanın Uyum sayfası)
+
+1. Veri sorumlusu → veri işleyen standart sözleşmesi imzalanır.
+2. Sistem **5 iş günü** sayacını başlatır ve hatırlatma gönderir.
+3. Marka Kurul'un Standart Sözleşme Bildirim Modülü'ne bildirimi yapar.
+4. **Her iki aktarımın** bildirim makbuzu yüklenir.
+
+<Callout type="yasak">Makbuz yüklenmeden marka canlı moda geçemez — bu sistemde sert kapıdır. Bildirmeme cezası **90.308 – 1.806.377 TL**.</Callout>
+
+## Diğer kurallar
+
+- Sürekli aktarım için açık rızaya dayanılmaz; standart sözleşme kullanılır.
+- Pazarlama mesajı onayı (İYS) ile mesajların yapay zekâ ile işlenmesine açık rıza **ayrı ayrı** alınır.
+- Markanın mesaj içeriği platformun model eğitiminde **asla** kullanılmaz; markalar arası paylaşım yoktur.
+- Özel nitelikli veri (sağlık, biyometrik, din, siyasi görüş) sözleşmeyle yasaklıdır.

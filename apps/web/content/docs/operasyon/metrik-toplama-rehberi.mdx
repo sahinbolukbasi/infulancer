@@ -1,0 +1,50 @@
+---
+title: Metrik toplama rehberi
+slug: metrik-toplama-rehberi
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: Hangi metrik hangi kaynaktan gelir, hangi aşamada zorunludur ve ekran görüntüsü nasıl olmalıdır.
+sources: []
+---
+
+## Kaynaklar ve güven düzeyi
+
+| Kaynak | Kim girer | Güven |
+|---|---|---|
+| API | Sistem (bağlı hesaplar) | Yüksek |
+| Marka verisi | Marka/ajans (kupon, satış, ciro) | Yüksek |
+| Ekran görüntüsü | Influencer (istatistik ekranı + form) | Orta — sistem görüntüden okuyup formla karşılaştırır |
+| Manuel | Yalnız admin, görüntüsüz | Düşük |
+
+## Metrik → kaynak
+
+| Metrik | Instagram | TikTok | YouTube |
+|---|---|---|---|
+| Erişim, gösterim | API / ekran görüntüsü | Ekran görüntüsü | Ekran görüntüsü |
+| Beğeni, yorum, kaydetme, paylaşım | API / ekran görüntüsü | Ekran görüntüsü | Ekran görüntüsü |
+| İzlenme süresi, tamamlanma | — | Yalnız ekran görüntüsü | Yalnız ekran görüntüsü |
+| Kitle demografisi | API (kendi hesap) / ekran görüntüsü | Yalnız ekran görüntüsü | Yalnız ekran görüntüsü |
+| Tıklama, satış, ciro | UTM + kupon (marka verisi) | UTM + kupon | UTM + kupon |
+
+## Aşamalar
+
+24 saat, 7 gün, 30 gün ve ara ölçüm. Bir içeriğin “Tamamlandı” olması için **en az bir** metrik kaydı gerekir; **Instagram Story için ekran görüntülü** metrik zorunludur. Metrik aşamaları kampanya hedeflerindeki ölçüm penceresine (ör. 7 gün) göre skora girer.
+
+## Ekran görüntüsü kuralları
+
+- Tam ekran; tarih ve hesap adı görünür.
+- Kırpma, düzenleme veya birleştirme yok.
+- Her aşama için ayrı görüntü.
+
+## Tutarlılık kontrolü
+
+Formdaki değer ile ekran görüntüsünden okunan değer arasındaki fark **%5'i aşarsa** metrik tutarlılık bulgusu açılır. Etkileşim oranı platform için makul aralığın dışındaysa da bulgu üretilir.
+
+## Story için 24 saat kuralı
+
+Story istatistikleri 24 saatte kaybolur. Yayından **20 saat** sonra ekran görüntüsü yoksa influencer'a hatırlatma gider.
+
+## Kupon ve UTM eşleşmesi
+
+Her içeriğin linkine otomatik UTM eklenir (kaynak, kampanya, influencer, içerik). Kupon kodu atama (influencer) düzeyindedir; kuponla gelen tıklama/satış/ciro o atamanın iptal olmayan içeriklerine **eşit bölünür**. Çifte sayımı önlemek için aynı satış hem UTM hem kupon ile geldiyse marka verisi tek kayıt olarak girilmelidir.

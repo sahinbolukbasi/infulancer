@@ -17,9 +17,17 @@ export default auth((req) => {
   const user = req.auth?.user;
 
   if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/webhooks/")) return NextResponse.next();
+  const pending = !!user?.role && user.status && user.status !== "ACTIVE";
+  if (pathname === "/onay-bekliyor") return user?.role ? NextResponse.next() : NextResponse.redirect(new URL("/giris", req.nextUrl));
+  if (pathname === "/kayit") return user?.role ? NextResponse.redirect(new URL(pending ? "/onay-bekliyor" : roleHome[user.role], req.nextUrl)) : NextResponse.next();
   if (pathname === "/giris") {
-    if (user?.role) return NextResponse.redirect(new URL(roleHome[user.role], req.nextUrl));
+    if (user?.role) return NextResponse.redirect(new URL(pending ? "/onay-bekliyor" : roleHome[user.role], req.nextUrl));
     return NextResponse.next();
+  }
+  // Onay bekleyen/reddedilen kullanıcı panele giremez (sayfa korumaları ayrıca veritabanından doğrular).
+  if (pending) {
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Üyeliğiniz onay bekliyor." }, { status: 403 });
+    return NextResponse.redirect(new URL("/onay-bekliyor", req.nextUrl));
   }
 
   if (!user?.role) {

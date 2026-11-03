@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { getConfig } from "@infulancer/core/config/store";
-import { partnershipNotes } from "@infulancer/core/ads/partnership";
-import { tiktokDmNotice, unauditedPublishingNotice } from "@infulancer/core/tiktok/index";
-import { UNVERIFIED_FACTS } from "@infulancer/core/unverified";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
-import { InfoNote, UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { DocLink } from "@/components/docs/doc-components";
 import { PageGuide } from "@/components/ui/page-guide";
 import { BudgetRequestForm, RunJobButton } from "@/components/forms/operations-forms";
 import { fmtDateTime } from "@/lib/time";
@@ -46,26 +43,21 @@ export default async function AdminAdsPage() {
         <BudgetRequestForm brands={brands} />
       </Card>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Yazma limitleri</CardTitle>
-          <ul className="flex flex-col gap-1 text-sm text-fg-muted">
-            <li>Mutation: {limits.mutationQps} istek/sn (app + ad account)</li>
-            <li>Aynı nesne: {limits.sameObjectEditSeconds} sn’de bir düzenleme (hata 4841018)</li>
-            <li>Ad set bütçesi: saatte {limits.adSetBudgetChangesPerHour} değişiklik; fazlası sonraki saate ötelenir</li>
-            <li>Hesap harcama limiti: günde {limits.spendCapChangesPerDay} değişiklik</li>
-          </ul>
-          <p className="text-[13px] text-fg-muted">Bütçe motoru saatlik batch çalışır; dakikalık otomatik müdahale yapılmaz.</p>
-        </Card>
-        <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Erişim seviyesi</CardTitle>
-          <p className="text-sm text-fg-muted">
-            Full Access için son {quota.fullAccessThreshold.days} günde {quota.fullAccessThreshold.calls} çağrı ve son {quota.fullAccessThreshold.window} çağrıda hata oranı %
-            {quota.fullAccessThreshold.maxErrorRate * 100} altı gerekir. Development seviyesi (saatte {quota.development.adsManagementBase} + 40 × aktif reklam) yalnız pilot içindir;
-            ödeme yapan müşteri öncesi Full Access alınmalıdır.
-          </p>
-        </Card>
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Yazma limitleri">
+        {[
+          ["Mutation", `${limits.mutationQps} istek/sn`],
+          ["Aynı nesne", `${limits.sameObjectEditSeconds} sn'de 1`],
+          ["Ad set bütçesi", `saatte ${limits.adSetBudgetChangesPerHour}`],
+          ["Harcama limiti", `günde ${limits.spendCapChangesPerDay}`],
+        ].map(([l, v]) => (
+          <Card key={l} interactive={false} className="flex flex-col gap-1">
+            <span className="text-label text-fg-muted">{l}</span>
+            <span className="text-[20px] font-semibold tabular-nums">{v}</span>
+          </Card>
+        ))}
       </section>
+      <DocLink slug="meta-marketing-api" />
+      <p className="text-[12px] text-fg-passive">Full Access eşiği: son {quota.fullAccessThreshold.days} günde {quota.fullAccessThreshold.calls} çağrı, hata oranı %{quota.fullAccessThreshold.maxErrorRate * 100} altı.</p>
 
       <Card interactive={false} className="flex flex-col gap-3">
         <CardTitle>Bütçe değişiklik kuyruğu</CardTitle>
@@ -90,15 +82,7 @@ export default async function AdminAdsPage() {
 
       <Card interactive={false} className="flex flex-col gap-3">
         <CardTitle>Partnership Ads</CardTitle>
-        <p className="text-sm text-fg-muted">
-          Kod creator’ın kendi Instagram oturumuyla (instagram_branded_content_creator) üretilir; markanın erişim belirteciyle üretilemez. Creator kodu istediği an iptal edebilir — kod
-          lansmandan hemen önce yeniden doğrulanır.
-        </p>
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-[13px] text-fg-muted">
-          {partnershipNotes.map((n) => (
-            <li key={n}>{n}</li>
-          ))}
-        </ul>
+        <DocLink slug="meta-partnership-ads" />
         <ul className="flex flex-col divide-y divide-border text-sm">
           {codes.map((c) => (
             <li key={c.id} className="flex justify-between py-2">
@@ -109,17 +93,10 @@ export default async function AdminAdsPage() {
         </ul>
       </Card>
 
-      <Card interactive={false} className="flex flex-col gap-3">
+      <Card interactive={false} className="flex flex-col gap-2">
         <CardTitle>TikTok</CardTitle>
-        <InfoNote>{unauditedPublishingNotice}</InfoNote>
-        <InfoNote>{tiktokDmNotice}</InfoNote>
-        <p className="text-[13px] text-fg-muted">
-          {UNVERIFIED_FACTS.tiktokRateLimits} <UnverifiedBadge />
-        </p>
-        <p className="text-[13px] text-fg-muted">
-          İzlenme süresi, tamamlanma oranı ve takipçi demografisi TikTok public API’sinde yok; creator’ın yüklediği ekran görüntüsü veya media kit ile toplanır. TikTok One / Creator
-          Marketplace API’ye bağımlı özellik yoktur.
-        </p>
+        <DocLink slug="tiktok-content-api" />
+        <DocLink slug="tiktok-marketing-api" />
       </Card>
     </div>
   );

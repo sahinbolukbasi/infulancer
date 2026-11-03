@@ -7,6 +7,7 @@ import { vault } from "../src/channels/vault";
 import { mockIys } from "../src/compliance/iys";
 
 const TABLES = [
+  "SignupApplication", "Invite",
   "PayoutRequest", "PayoutBatch", "LedgerEntry", "Notification", "AgentRun", "DeliverableStatusChange", "DeliverableReview",
   "MetricSnapshot", "Asset", "Deliverable", "Assignment", "CampaignBrief", "Campaign", "SocialAccountSnapshot", "SocialAccount",
   "User", "Influencer", "Brand",

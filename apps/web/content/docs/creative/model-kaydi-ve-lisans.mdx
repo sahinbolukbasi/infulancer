@@ -1,0 +1,35 @@
+---
+title: Model kaydı ve lisans
+slug: model-kaydi-ve-lisans
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulanmadi
+summary: Model ID'leri kodda değil model kaydında; lisansı onaylı olmayan model müşteri işinde çalışmaz. Fiyatlar henüz doğrulanmadı.
+sources:
+  - label: fal.ai — Pricing
+    url: https://fal.ai/pricing
+    checkedAt: 2026-11-02
+  - label: Black Forest Labs — Licensing
+    url: https://bfl.ai/licensing
+    checkedAt: 2026-11-02
+---
+
+## Model kaydı
+
+- Model ID'leri **kodda değil** model kaydında (`/admin/creative`) tutulur; modellerin ömrü yaklaşık 12 ay varsayılır.
+- Kullanım dışı kalan modele gelen iş otomatik olarak yerine geçen modele yönlendirilir ve admin uyarılır (örnek: Kling 2.1 Pro → Kling v2.5 Turbo Pro).
+- Deterministik olmayan modellerde (ör. Seedance, token bazlı) süre/çözünürlük **tavanı** uygulanır.
+
+## Lisans kapısı
+
+Lisans durumu `cleared` olmayan model **müşteri işinde çalışmaz**.
+
+<Callout type="uyari">FLUX ailesi ve araştırma kökenli modeller, fal'ın hosted API'sinin BFL ticari lisansını kapsadığı **yazılı olarak teyit edilene kadar** kapalıdır. BFL'nin “Builder” lisansı müşteriye hizmet veren kullanımı kapsamaz.</Callout>
+
+## Fiyatlar
+
+Model kaydındaki fiyatların tamamı şu an doğrulanmadı <Unverified /> (2 Kasım 2026 gözlemi). Her modelin fiyatı kendi sayfasından teyit edilip kayıtta “doğrulandı” işaretlenene kadar ekranda etiketli gösterilir. GPT Image 2'nin fiyat birimi tanımsızdır; tek görsel varsayılmaz.
+
+## Bedrock'un rolü
+
+Amazon Nova Canvas 30 Eylül 2026'da kullanımdan kalktı; Amazon'un kendi görsel modelleri etrafında mimari kurulmadı. Bedrock yalnız Stability araçları (büyütme, arka plan silme, genişletme) ve içerik filtresi için kullanılır.

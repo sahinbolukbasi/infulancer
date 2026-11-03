@@ -1,4 +1,5 @@
 import { prisma } from "../db";
+import { notifyAdmins, recordRun } from "../agents/common";
 
 /**
  * Partnership Ads (creator içeriğiyle reklam). Kod creator'ın KENDİ OAuth'u ile üretilir:
@@ -49,7 +50,23 @@ export async function verifyBeforeLaunch(tenantId: string, igMediaId: string, cr
     where: { id: row.id },
     data: active ? { lastVerifiedAt: new Date(), state: "verified" } : { state: "revoked", revokedAt: new Date() },
   });
-  return active ? { ok: true as const } : { ok: false as const, reason: "Creator partnership kodunu iptal etmiş; reklam yayınlanamaz." };
+  if (!active) {
+    // Kod iptali: Kritik bulgu + reklamın durdurulması için admin talimatı.
+    await recordRun({
+      checkType: "YAYIN_KONTROL",
+      targetType: "PartnershipAdCode",
+      targetId: row.id,
+      bucket: `iptal:${row.adCode}`,
+      severity: "KRITIK",
+      summary: `Creator partnership kodunu iptal etti (medya ${igMediaId}); bu koda bağlı reklam durdurulmalı.`,
+      findings: { igMediaId, adCode: row.adCode },
+      model: "kod",
+      promptVersion: "kod@1",
+    });
+    await notifyAdmins("Partnership kodu iptal edildi", `Medya ${igMediaId} için kod iptal edildi; ilgili reklamı Ads Manager'dan durdurun.`, "/admin/reklam");
+    return { ok: false as const, reason: "Creator partnership kodunu iptal etmiş; reklam yayınlanamaz." };
+  }
+  return { ok: true as const };
 }
 
 export const partnershipNotes = [
