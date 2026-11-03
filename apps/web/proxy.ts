@@ -4,15 +4,19 @@ import { authConfig } from "./auth.config";
 import { requiredRoleForPath, roleHome } from "./lib/roles";
 
 const { auth } = NextAuth(authConfig);
+const PUBLIC_PATHS = new Set(["/gizlilik", "/kullanim-kosullari", "/fiyatlandirma"]);
 
 /**
- * Oturum ve rol öneki kontrolü. Yalnız /giris ve /api/auth/* herkese açıktır.
+ * Oturum ve rol öneki kontrolü. Herkese açık: /giris, /api/auth/*, yasal sayfalar (/gizlilik,
+ * /kullanim-kosullari — App Review için girişsiz erişilebilir olmalı), /fiyatlandirma ve imzayla
+ * doğrulanan webhook uçları (/api/webhooks/*).
  * Her sayfa/aksiyon ayrıca lib/auth-guard ile rolü yeniden doğrular (derinlemesine savunma).
  */
 export default auth((req) => {
   const { pathname, search } = req.nextUrl;
   const user = req.auth?.user;
 
+  if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/webhooks/")) return NextResponse.next();
   if (pathname === "/giris") {
     if (user?.role) return NextResponse.redirect(new URL(roleHome[user.role], req.nextUrl));
     return NextResponse.next();

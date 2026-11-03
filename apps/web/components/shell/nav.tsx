@@ -3,6 +3,8 @@
 import type { ComponentType } from "react";
 import type { Role } from "@infulancer/core/enums";
 import {
+  AlertIcon,
+  BellIcon,
   BuildingIcon,
   CalendarIcon,
   HomeIcon,
@@ -26,9 +28,16 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/markalar", label: "Markalar", icon: BuildingIcon },
     { href: "/admin/finans", label: "Finans", icon: WalletIcon },
     { href: "/admin/agent", label: "Agent", icon: SparkleIcon },
+    { href: "/admin/kanallar", label: "Kanallar", icon: LinkIcon },
+    { href: "/admin/uyum", label: "Uyum", icon: AlertIcon },
+    { href: "/admin/reklam", label: "Reklam", icon: MegaphoneIcon },
+    { href: "/admin/creative", label: "Creative", icon: SparkleIcon },
   ],
   BRAND: [
     { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
+    { href: "/marka/gelen-kutusu", label: "Gelen kutusu", icon: BellIcon },
+    { href: "/marka/kanallar", label: "Kanallar", icon: LinkIcon },
+    { href: "/marka/uyum", label: "Uyum", icon: AlertIcon },
   ],
   INFLUENCER: [
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
