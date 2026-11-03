@@ -12,14 +12,14 @@ const tone: Record<KpiStatus, StatusTone> = {
 };
 
 /** Skor halkası + KPI kırılımı (hedef, gerçekleşen, oran çubuğu, durum, projeksiyon). */
-export function KpiBreakdown({ score }: { score: CampaignScore }) {
+export function KpiBreakdown({ score, large = false }: { score: CampaignScore; large?: boolean }) {
   if (score.kpis.length === 0) {
     return <p className="text-sm text-fg-passive">Bu kampanyada hedef tanımlı değil; skor hesaplanamaz.</p>;
   }
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
       <div className="shrink-0">
-        <ScoreRing value={score.score ?? 0} />
+        <ScoreRing value={score.score ?? 0} {...(large ? { size: 220, valueSize: 48 } : {})} />
       </div>
       <ul className="flex flex-1 flex-col divide-y divide-border">
         {score.kpis.map((k) => (

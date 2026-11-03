@@ -3,7 +3,9 @@ import Link from "next/link";
 import { toInfluencerAssignmentView } from "@infulancer/core/access/dto";
 import { prisma } from "@infulancer/core/db";
 import { contentTypeLabels, deliverableStatusLabels, platformLabels } from "@infulancer/core/domain/labels";
+import { computeBalances, holdDays } from "@infulancer/core/domain/ledger";
 import { WeekAgenda, WeekCalendar } from "@/components/calendar/week-calendar";
+import { BalanceCards } from "@/components/finance/balance-cards";
 import { ContractDecision } from "@/components/forms/small-forms";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -20,13 +22,14 @@ export const metadata: Metadata = { title: "İşlerim" };
 export default async function InfluencerHomePage() {
   const actor = await requireActor("INFLUENCER");
   const influencerId = actor.influencerId!;
-  const [me, assignments] = await Promise.all([
+  const [me, assignments, balances] = await Promise.all([
     prisma.influencer.findUniqueOrThrow({ where: { id: influencerId }, select: { id: true, name: true, audienceTimezone: true } }),
     prisma.assignment.findMany({
       where: { influencerId },
       orderBy: { createdAt: "desc" },
       include: { campaign: { include: { brand: { select: { name: true } } } }, deliverables: { orderBy: { plannedAt: "asc" } } },
     }),
+    computeBalances(influencerId),
   ]);
   // Influencer ekranına veri yalnız DTO üzerinden (bütçe/komisyon yok).
   const views = assignments.map(toInfluencerAssignmentView);
@@ -45,6 +48,13 @@ export default async function InfluencerHomePage() {
   return (
     <Stagger className="flex flex-col gap-6">
       <PageHeader title="İşlerim" description="Brief, dosyalar, yayın tarihleri ve metrik girişi." />
+
+      <section aria-label="Bakiye" className="flex flex-col gap-2">
+        <BalanceCards balances={balances} holdDays={holdDays()} />
+        <Link href="/influencer/odemeler" className="text-[13px] text-fg-muted hover:text-fg">
+          Ödemeler ve çekim talebi →
+        </Link>
+      </section>
 
       {offers.length > 0 ? (
         <Card interactive={false} className="flex flex-col gap-4">

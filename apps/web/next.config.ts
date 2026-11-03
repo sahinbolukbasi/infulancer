@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Monorepo kökü: standalone çıktısı workspace paketlerini de izler.
   outputFileTracingRoot: repoRoot,
+  // PDF raporu fontları fs'den okunur; standalone çıktısına dahil edilmeli.
+  outputFileTracingIncludes: { "/api/raporlar/kampanya/[id]/pdf": ["./assets/fonts/**"] },
   transpilePackages: ["@infulancer/core"],
   serverExternalPackages: ["pg", "@prisma/client", "@prisma/adapter-pg"],
 };

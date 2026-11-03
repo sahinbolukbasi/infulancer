@@ -27,11 +27,14 @@ export function ProgressBar({ value, label, className }: { value: number; label:
 export function ScoreRing({
   value,
   size = 168,
+  valueSize = 36,
   label = "Kampanya skoru",
   children,
 }: {
   value: number;
   size?: number;
+  /** Ortadaki yüzde metninin piksel boyutu. */
+  valueSize?: number;
   label?: string;
   children?: ReactNode;
 }) {
@@ -61,7 +64,9 @@ export function ScoreRing({
           />
         </svg>
         <div aria-hidden className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[36px] leading-none font-semibold tabular-nums">{pct.format(value)}</span>
+          <span className="leading-none font-semibold tabular-nums" style={{ fontSize: valueSize }}>
+            {pct.format(value)}
+          </span>
           <span className="mt-1 text-label text-fg-passive">{label}</span>
         </div>
       </div>

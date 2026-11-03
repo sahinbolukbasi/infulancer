@@ -111,7 +111,7 @@ export async function computeBalances(
 
 /**
  * Deliverable için HAKEDIS çifti yazar. Atama bedeli, iptal edilmemiş
- * deliverable'lara bölünür (kalan kuruş ilk deliverable'a). Deliverable başına
+ * deliverable'lara bölünür (kalan kuruş son deliverable'a). Deliverable başına
  * idempotenttir: daha önce yazıldıysa null döner.
  */
 export async function recordEarning(
@@ -155,8 +155,8 @@ export async function recordEarning(
   const count = Math.max(assignment.deliverables.length, 1);
   const base = Math.floor(assignment.feeKurus / count);
   const remainder = assignment.feeKurus - base * count;
-  const isFirst = assignment.deliverables[0]?.id === deliverableId;
-  const amountKurus = base + (isFirst ? remainder : 0);
+  const isLast = assignment.deliverables[assignment.deliverables.length - 1]?.id === deliverableId;
+  const amountKurus = base + (isLast ? remainder : 0);
   if (amountKurus <= 0) return null;
 
   const txId = randomUUID();
