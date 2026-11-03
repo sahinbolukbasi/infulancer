@@ -15,6 +15,7 @@ import { purgeExpiredDedupe } from "../channels/webhook";
 import { checkIysSla, registerPendingConsents } from "../compliance/iys";
 import { remindKvkkFilings } from "../compliance/kvkk";
 import { warnClosingWindows } from "../messaging/inbox";
+import { syncStaleAccounts } from "../social/sync";
 
 export type EventHandler<T extends AppEventType = AppEventType> = (
   event: Extract<AppEvent, { type: T }>,
@@ -67,6 +68,7 @@ export const scheduledJobs: ScheduledJob[] = [
   { name: "channel-health", schedule: "rate(1 hour)", intervalMs: HOUR, run: async () => ({ created: (await healthCheckConnections()).revoked, skipped: 0 }) },
   { name: "window-warnings", schedule: "rate(5 minutes)", intervalMs: 5 * MIN, run: async () => ({ created: await warnClosingWindows(), skipped: 0 }) },
   { name: "ads-budget-batch", schedule: "cron(0 * * * ? *)", intervalMs: HOUR, run: async () => ({ created: (await runBudgetBatch()).applied, skipped: 0 }) },
+  { name: "social-sync", schedule: "rate(6 hours)", intervalMs: 6 * HOUR, run: async () => { const r = await syncStaleAccounts(50); return { created: r.ok, skipped: r.checked - r.ok }; } },
   { name: "webhook-dedupe-ttl", schedule: "cron(30 3 * * ? *)", intervalMs: 24 * HOUR, run: async () => ({ created: await purgeExpiredDedupe(), skipped: 0 }) },
   { name: "influencer-recommendation", schedule: "cron(0 6 * * ? *)", intervalMs: 24 * HOUR, run: async () => tally(await runInfluencerRecommendationAll()) },
 ];

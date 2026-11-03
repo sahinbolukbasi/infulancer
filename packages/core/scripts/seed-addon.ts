@@ -11,6 +11,7 @@ import { seedModelRegistry } from "../src/creative/registry";
 import { topUp } from "../src/creative/credits";
 import { signStandardContract, uploadFilingReceipt } from "../src/compliance/kvkk";
 import { recordConsent } from "../src/compliance/iys";
+import { backfillLegacyCategories } from "../src/domain/categories";
 
 const ADDON_TABLES = [
   "config_values", "tenant_settings", "tenant_policy_flags", "whatsapp_numbers", "channel_connections", "webhook_dedupe",
@@ -29,6 +30,7 @@ export async function seedAddon() {
   await seedConfig();
   await seedAgentTemplates();
   await seedModelRegistry();
+  await backfillLegacyCategories();
 
   // Ülke oranları — Türkiye DOĞRULANMADI (tek kaynak BSP tarife kartı); Meta'nın kendi kartından okunmalı.
   const eff = new Date("2026-10-01T00:00:00Z");

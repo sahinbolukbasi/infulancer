@@ -3,6 +3,7 @@
  * Uzun süre çalışır; arka planda başlatın: npm run agents:scheduler
  */
 import { scheduledJobs, type ScheduledJob } from "../src/agents/registry";
+import { runJob } from "../src/agents/runner";
 
 const running = new Set<string>();
 
@@ -10,7 +11,7 @@ async function tick(job: ScheduledJob) {
   if (running.has(job.name)) return; // üst üste binmeyi önle
   running.add(job.name);
   try {
-    const r = await job.run();
+    const r = await runJob(job.name);
     console.log(`[${new Date().toISOString()}] ${job.name} oluşturulan=${r.created} atlanan=${r.skipped}`);
   } catch (err) {
     console.error(`[${new Date().toISOString()}] ${job.name} hata`, err);

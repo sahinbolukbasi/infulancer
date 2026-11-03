@@ -18,7 +18,8 @@
     "agents:run": "tsx scripts/agents-run.ts",
     "agents:scheduler": "tsx scripts/agents-scheduler.ts",
     "build:lambda": "tsx scripts/build-lambda.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "social:sync": "tsx scripts/social-sync.ts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1161.0",

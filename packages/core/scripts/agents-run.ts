@@ -4,6 +4,7 @@
  *   npm run agents:run -- --job publish-check
  */
 import { findJob, scheduledJobs } from "../src/agents/registry";
+import { runJob } from "../src/agents/runner";
 import { prisma } from "../src/db";
 
 async function main() {
@@ -20,9 +21,9 @@ async function main() {
   }
   let total = 0;
   for (const job of jobs) {
-    const r = await job.run();
+    const r = await runJob(job.name, args.includes("--all") ? "cli" : "schedule");
     total += r.created;
-    console.log(`${job.name.padEnd(26)} oluşturulan=${r.created} atlanan=${r.skipped}`);
+    console.log(`${job.name.padEnd(26)} oluşturulan=${r.created} atlanan=${r.skipped}${r.disabled ? " (kapalı)" : ""}`);
   }
   console.log(`TOPLAM oluşturulan=${total}`);
 }

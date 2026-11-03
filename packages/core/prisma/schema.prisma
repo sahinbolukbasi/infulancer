@@ -216,6 +216,7 @@ model Brand {
   users          User[]
   campaigns      Campaign[]
   tenantSettings TenantSettings?
+  categories     BrandCategory[]
 }
 
 model Influencer {
@@ -227,6 +228,8 @@ model Influencer {
   taxStatus        TaxStatus
   canIssueInvoice  Boolean
   audienceTimezone String    @default("Europe/Istanbul")
+  city             String?
+  bio              String?
   riskScore        Int?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -237,6 +240,7 @@ model Influencer {
   ledgerEntries  LedgerEntry[]
   payoutRequests PayoutRequest[]
   taxProfile     InfluencerTaxProfile?
+  categories     InfluencerCategory[]
 }
 
 model SocialAccount {
@@ -248,6 +252,20 @@ model SocialAccount {
   followers      Int
   engagementRate Decimal    @db.Decimal(6, 4)
   demographics   Json
+  /// Senkron: manual | instagram_business_discovery | youtube_data | tiktok_oauth
+  syncSource     String     @default("manual")
+  externalId     String?
+  profileUrl     String?
+  avatarUrl      String?
+  postsCount     Int?
+  avgLikes       Int?
+  avgComments    Int?
+  avgViews       Int?
+  verified       Boolean    @default(false)
+  /// TikTok OAuth token'ı kasada (Secrets Manager); burada yalnız referans
+  tokenRef       String?
+  lastSyncedAt   DateTime?
+  syncError      String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -1230,4 +1248,61 @@ model DisclosureCheck {
 
   @@unique([deliverableId, frameIndex])
   @@map("disclosure_checks")
+}
+
+// ═════════════ Kategori taksonomisi ═════════════
+/// Ana/alt kategori (admin panelinden düzenlenir). Influencer.category / Brand.category geriye
+/// uyumluluk için ana kategorinin adını tutmaya devam eder.
+model Category {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  name      String
+  parentId  String?
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Category[] @relation("CategoryTree")
+  sort      Int        @default(0)
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+
+  influencers InfluencerCategory[]
+  brands      BrandCategory[]
+
+  @@index([parentId])
+}
+
+model InfluencerCategory {
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  primary      Boolean    @default(false)
+
+  @@id([influencerId, categoryId])
+  @@index([categoryId])
+}
+
+model BrandCategory {
+  brandId    String
+  brand      Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  primary    Boolean  @default(false)
+
+  @@id([brandId, categoryId])
+  @@index([categoryId])
+}
+
+/// Denetim/sistem job'larının çalışma geçmişi (Agent merkezi: son çalışma, süre, sonuç).
+model AgentJobRun {
+  id         String    @id @default(cuid())
+  job        String
+  trigger    String    @default("schedule")
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  created    Int       @default(0)
+  skipped    Int       @default(0)
+  ok         Boolean   @default(true)
+  error      String?
+
+  @@index([job, startedAt])
 }
