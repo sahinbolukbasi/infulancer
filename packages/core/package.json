@@ -14,7 +14,10 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx scripts/seed.ts",
     "audit:migrate": "tsx scripts/audit-migrate.ts",
-    "storage:init": "tsx scripts/storage-init.ts"
+    "storage:init": "tsx scripts/storage-init.ts",
+    "agents:run": "tsx scripts/agents-run.ts",
+    "agents:scheduler": "tsx scripts/agents-scheduler.ts",
+    "build:lambda": "tsx scripts/build-lambda.ts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1161.0",

@@ -1,0 +1,11 @@
+# cp terraform.tfvars.example terraform.tfvars  (terraform.tfvars gitignore'dadır)
+aws_profile       = "sahinbolukbasi"
+region            = "eu-central-1"
+environment       = "prod"
+image_tag         = "latest"
+app_desired_count = 1
+seed_on_start     = true
+
+# Bedrock: konsolda model erişimi açıldıktan sonra "bedrock" yapın.
+llm_provider          = "mock"
+bedrock_text_model_id = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"

@@ -27,7 +27,8 @@ import { buildKey } from "../src/storage/s3";
 const now = new Date();
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
-const PASSWORD = "Demo1234!";
+// AWS ortamında SEED_PASSWORD Secrets Manager'dan gelir; yerelde demo parolası.
+const PASSWORD = process.env.SEED_PASSWORD || "Demo1234!";
 
 /** Bugüne göre gün ofseti + İstanbul saati (UTC+3) → UTC Date. */
 function at(dayOffset: number, hourTR = 12, minute = 0): Date {

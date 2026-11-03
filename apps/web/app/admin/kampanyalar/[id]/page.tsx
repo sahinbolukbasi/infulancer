@@ -12,6 +12,7 @@ import {
   platformLabels,
 } from "@infulancer/core/domain/labels";
 import { AgentRunList } from "@/components/agent/agent-run-list";
+import { ApproveSummaryButton, RecommendButton } from "@/components/forms/agent-job-forms";
 import { BriefPanel } from "@/components/brief-panel";
 import { KpiBreakdown } from "@/components/campaign/kpi-breakdown";
 import { AssetList } from "@/components/files/asset-list";
@@ -293,7 +294,10 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
             <AssignmentForm campaignId={campaign.id} influencers={influencers} />
           </Card>
           <Card interactive={false} className="flex flex-col gap-4 md:col-span-5">
-            <CardTitle>Önerilen adaylar</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>Önerilen adaylar</CardTitle>
+              <RecommendButton campaignId={campaign.id} />
+            </div>
             {suggestions.length === 0 ? (
               <EmptyState message="Henüz aday önerisi yok. Influencer öneri agent'ı çalıştığında burada listelenir." />
             ) : (
@@ -363,11 +367,25 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
     </Card>
   );
 
+  const summaryDraft = runs.find((r) => r.checkType === "KAMPANYA_OZETI");
+  const draftText = (summaryDraft?.findings as { draft?: string } | null)?.draft;
   const agent = (
+    <div className="flex flex-col gap-6">
+      {summaryDraft && draftText ? (
+        <Card interactive={false} className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Rapor özeti taslağı</CardTitle>
+            <ApproveSummaryButton runId={summaryDraft.id} />
+          </div>
+          <p className="whitespace-pre-line text-sm text-fg-muted">{draftText}</p>
+          {campaign.reportSummary ? <p className="text-[13px] text-fg-passive">Rapordaki mevcut özet bu taslakla değiştirilir.</p> : null}
+        </Card>
+      ) : null}
     <AgentRunList
       runs={runs.map((r) => ({ ...r, resolvedByName: r.resolvedBy?.name }))}
       emptyText="Bu kampanya için agent bulgusu yok."
     />
+    </div>
   );
 
   return (
