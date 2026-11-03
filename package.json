@@ -19,6 +19,7 @@
     "storage:init": "npm run storage:init -w @infulancer/core",
     "agents:run": "npm run agents:run -w @infulancer/core --",
     "agents:scheduler": "npm run agents:scheduler -w @infulancer/core",
-    "build:lambda": "npm run build:lambda -w @infulancer/core"
+    "build:lambda": "npm run build:lambda -w @infulancer/core",
+    "test": "npm run test --workspaces --if-present"
   }
 }

@@ -184,14 +184,14 @@ model User {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  notifications      Notification[]
-  briefsCreated      CampaignBrief[]
-  statusChanges      DeliverableStatusChange[]
-  reviews            DeliverableReview[]
-  assetsUploaded     Asset[]
-  metricsEntered     MetricSnapshot[]
-  agentRunsResolved  AgentRun[]
-  payoutBatches      PayoutBatch[]
+  notifications     Notification[]
+  briefsCreated     CampaignBrief[]
+  statusChanges     DeliverableStatusChange[]
+  reviews           DeliverableReview[]
+  assetsUploaded    Asset[]
+  metricsEntered    MetricSnapshot[]
+  agentRunsResolved AgentRun[]
+  payoutBatches     PayoutBatch[]
 
   @@index([brandId])
 }
@@ -213,8 +213,9 @@ model Brand {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  users     User[]
-  campaigns Campaign[]
+  users          User[]
+  campaigns      Campaign[]
+  tenantSettings TenantSettings?
 }
 
 model Influencer {
@@ -235,19 +236,20 @@ model Influencer {
   assignments    Assignment[]
   ledgerEntries  LedgerEntry[]
   payoutRequests PayoutRequest[]
+  taxProfile     InfluencerTaxProfile?
 }
 
 model SocialAccount {
-  id             String   @id @default(cuid())
+  id             String     @id @default(cuid())
   influencerId   String
   influencer     Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
   platform       Platform
   handle         String
   followers      Int
-  engagementRate Decimal  @db.Decimal(6, 4)
+  engagementRate Decimal    @db.Decimal(6, 4)
   demographics   Json
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   snapshots SocialAccountSnapshot[]
 
@@ -340,25 +342,37 @@ model Assignment {
 // ───────────── Deliverable (atomik birim) ─────────────
 
 model Deliverable {
-  id                 String            @id @default(cuid())
-  assignmentId       String
-  assignment         Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  platform           Platform
-  contentType        ContentType
+  id                      String            @id @default(cuid())
+  assignmentId            String
+  assignment              Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  platform                Platform
+  contentType             ContentType
   /// UTC olarak saklanır; influencer kitlesinin saat diliminde gösterilir.
-  plannedAt          DateTime
-  approvalDeadline   DateTime
-  status             DeliverableStatus @default(TASLAK)
-  postUrl            String?
-  publishedAt        DateTime?
-  caption            String?
-  hashtags           String[]
-  mentions           String[]
-  link               String?
-  disclosureRequired Boolean
-  contractViolation  Boolean           @default(false)
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  plannedAt               DateTime
+  approvalDeadline        DateTime
+  status                  DeliverableStatus @default(TASLAK)
+  postUrl                 String?
+  publishedAt             DateTime?
+  caption                 String?
+  hashtags                String[]
+  mentions                String[]
+  link                    String?
+  disclosureRequired      Boolean
+  contractViolation       Boolean           @default(false)
+  /// md. 23/A: story serisinde kare sayısı (kontrol kare başına), platform açıklama toggle'ları
+  frameCount              Int               @default(1)
+  frameTexts              String[]
+  paidPartnershipToggle   Boolean           @default(false)
+  commercialContentToggle Boolean           @default(false)
+  spokenDisclosure        Boolean           @default(false)
+  hasAudio                Boolean           @default(false)
+  isLive                  Boolean           @default(false)
+  /// Kullanım hakkı (Türkiye'de faturayı değiştirir): süre, mecra, coğrafya
+  usageRightsDays         Int?
+  usageRightsChannel      UsageChannel?
+  usageRightsGeo          String[]
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
 
   statusChanges   DeliverableStatusChange[]
   reviews         DeliverableReview[]
@@ -549,4 +563,671 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt])
+}
+
+// ═════════════ EK MODÜL: Kanallar, Agent'lar, Reklam, Creative, Uyum ═════════════
+// tenant = Brand (tenantId = Brand.id). Tenant kapsamlı tablolarda RLS politikası vardır
+// (migration SQL); kapsamlı okumalar src/tenancy.ts withTenant() üzerinden yapılır.
+
+enum ChannelProvider {
+  WHATSAPP
+  INSTAGRAM
+  MESSENGER
+  TIKTOK
+  META_ADS
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+  ERROR
+}
+
+enum PaymentMethodState {
+  payment_method_pending
+  payment_method_confirmed
+}
+
+enum ConversationStatus {
+  open
+  awaiting_human
+  assigned
+  closed
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum TemplateStatus {
+  IN_REVIEW
+  REJECTED
+  ACTIVE
+  PAUSED
+  DISABLED
+  APPEAL_REQUESTED
+}
+
+enum TemplateQuality {
+  PENDING
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TemplateCategory {
+  marketing
+  utility
+  authentication
+}
+
+enum MessageCategory {
+  marketing
+  utility
+  authentication
+  service
+  meta_business_agent
+}
+
+enum ConsentChannel {
+  MESAJ
+  EPOSTA
+  ARAMA
+}
+
+enum ConsentState {
+  ONAY
+  RET
+}
+
+enum TenantMode {
+  sandbox
+  production
+}
+
+enum TaxProfileStatus {
+  istisna_20b
+  kayitli_mukellef
+  diger
+}
+
+enum LicenseStatus {
+  cleared
+  pending
+  restricted
+}
+
+enum ModelStatus {
+  active
+  deprecated
+  retired
+}
+
+enum CreativeJobStatus {
+  HELD
+  IN_QUEUE
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  REJECTED
+}
+
+enum OutOfHoursBehavior {
+  queue
+  auto_reply_then_queue
+}
+
+/// Basit anahtar/değer yapılandırma (tatil takvimi, kota limitleri, model ID'leri, kademeler).
+model ConfigValue {
+  key       String   @id
+  value     Json
+  note      String?
+  verified  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@map("config_values")
+}
+
+/// Tenant (marka) ayarları ve uyum modu.
+model TenantSettings {
+  tenantId                 String     @id
+  brand                    Brand      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mode                     TenantMode @default(sandbox)
+  messageRetentionDays     Int        @default(90)
+  marketingMaxPriceUsd     Decimal?   @db.Decimal(10, 5)
+  prohibitedVerticalAck    Boolean    @default(false)
+  prohibitedVerticalAt     DateTime?
+  businessVerificationHelp Boolean    @default(false)
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
+
+  @@map("tenant_settings")
+}
+
+model TenantPolicyFlag {
+  id        String   @id @default(cuid())
+  tenantId  String
+  flag      String
+  detail    String?
+  blocking  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, flag])
+  @@map("tenant_policy_flags")
+}
+
+model ChannelConnection {
+  id             String           @id @default(cuid())
+  tenantId       String
+  provider       ChannelProvider
+  externalIds    Json             @map("external_ids")
+  tokenRef       String           @map("token_ref")
+  scopes         String[]
+  status         ConnectionStatus @default(PENDING)
+  connectedAt    DateTime?        @map("connected_at")
+  lastVerifiedAt DateTime?        @map("last_verified_at")
+  revokedAt      DateTime?        @map("revoked_at")
+  lastError      String?
+  createdAt      DateTime         @default(now())
+
+  phoneNumbers WhatsAppNumber[]
+
+  @@index([tenantId])
+  @@map("channel_connections")
+}
+
+/// Tenant başına TEK WhatsApp numarası (aylık 1.000 ücretsiz servis mesajı numara başınadır).
+model WhatsAppNumber {
+  id                  String             @id @default(cuid())
+  tenantId            String             @unique
+  connectionId        String
+  connection          ChannelConnection  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  wabaId              String
+  phoneNumberId       String             @unique
+  displayNumber       String?
+  businessPortfolioId String?
+  pinCiphertext       String?
+  paymentMethod       PaymentMethodState @default(payment_method_pending)
+  callingEnabled      Boolean            @default(false)
+  messagingLimit      String             @default("TIER_250")
+  qualityRating       String?
+  throughputLevel     String?
+  onboardingStep      String             @default("signup")
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@map("whatsapp_numbers")
+}
+
+model WebhookDedupe {
+  messageId String   @id @map("message_id")
+  provider  String
+  ttl       DateTime
+  createdAt DateTime @default(now())
+
+  @@index([ttl])
+  @@map("webhook_dedupe")
+}
+
+model RawWebhook {
+  id          String    @id @default(cuid())
+  provider    String
+  s3Key       String
+  tenantId    String?
+  processedAt DateTime?
+  error       String?
+  receivedAt  DateTime  @default(now())
+
+  @@index([processedAt])
+  @@map("raw_webhooks")
+}
+
+model Contact {
+  id         String          @id @default(cuid())
+  tenantId   String
+  channel    ChannelProvider
+  externalId String
+  phoneE164  String?
+  email      String?
+  name       String?
+  country    String?
+  isMinor    Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+
+  conversations Conversation[]
+
+  @@unique([tenantId, channel, externalId])
+  @@map("contacts")
+}
+
+model Conversation {
+  id                        String             @id @default(cuid())
+  tenantId                  String
+  channel                   ChannelProvider
+  contactId                 String
+  contact                   Contact            @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status                    ConversationStatus @default(open)
+  assignedUserId            String?
+  tags                      String[]
+  serviceWindowExpiresAt    DateTime?          @map("service_window_expires_at")
+  fepWindowExpiresAt        DateTime?          @map("fep_window_expires_at")
+  humanAgentWindowExpiresAt DateTime?          @map("human_agent_window_expires_at")
+  lastInboundAt             DateTime?
+  slaStartedAt              DateTime?
+  agentKey                  String?
+  agentTurns                Int                @default(0)
+  aiChargeable              Boolean            @default(true)
+  handoffReason             String?
+  windowWarningSentAt       DateTime?
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+
+  messages Message[]
+
+  @@index([tenantId, status])
+  @@map("conversations")
+}
+
+model Message {
+  id             String           @id @default(cuid())
+  tenantId       String
+  conversationId String
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  externalId     String?
+  direction      MessageDirection
+  body           String?
+  templateId     String?
+  category       MessageCategory?
+  mediaS3Key     String?
+  mediaUrl       String?
+  status         String?
+  statusAt       DateTime?
+  fromAi         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  @@unique([tenantId, externalId])
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+/// Analitik agregasyon (günlük mesaj sayıları); purge mesajın katkısını düşer.
+model MessageDailyStat {
+  tenantId  String
+  day       String
+  channel   ChannelProvider
+  direction MessageDirection
+  count     Int              @default(0)
+
+  @@id([tenantId, day, channel, direction])
+  @@map("message_daily_stats")
+}
+
+model MessageTemplate {
+  id                   String           @id @default(cuid())
+  tenantId             String
+  name                 String
+  language             String           @default("tr")
+  category             TemplateCategory
+  body                 String
+  containsPromotion    Boolean          @default(false)
+  status               TemplateStatus   @default(IN_REVIEW)
+  quality              TemplateQuality  @default(PENDING)
+  pauseCount           Int              @default(0)
+  pausedUntil          DateTime?
+  sendRateFactor       Decimal          @default(1) @db.Decimal(4, 2)
+  readRate             Decimal?         @db.Decimal(5, 4)
+  blockRate            Decimal?         @db.Decimal(5, 4)
+  negativeFeedbackRate Decimal?         @db.Decimal(5, 4)
+  externalId           String?
+  statusUpdatedAt      DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@unique([tenantId, name, language])
+  @@map("message_templates")
+}
+
+model KnowledgeSource {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      String
+  uri       String
+  status    String   @default("pending")
+  messageId String?
+  createdAt DateTime @default(now())
+
+  chunks KnowledgeChunk[]
+
+  @@index([tenantId])
+  @@map("knowledge_sources")
+}
+
+model KnowledgeChunk {
+  id        String                      @id @default(cuid())
+  tenantId  String
+  sourceId  String
+  source    KnowledgeSource             @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  content   String
+  embedding Unsupported("vector(256)")?
+  messageId String?
+  createdAt DateTime                    @default(now())
+
+  @@index([tenantId])
+  @@index([messageId])
+  @@map("knowledge_chunks")
+}
+
+/// Hazır agent kataloğu (platform şablonları).
+model AgentTemplate {
+  key             String   @id
+  name            String
+  description     String
+  systemPrompt    String
+  tools           String[]
+  defaultKeywords String[]
+
+  @@map("agent_templates")
+}
+
+model AgentConfig {
+  id                    String             @id @default(cuid())
+  tenantId              String
+  agentId               String
+  enabled               Boolean            @default(true)
+  systemPrompt          String
+  confidenceThreshold   Decimal            @default(0.70) @map("confidence_threshold") @db.Decimal(3, 2)
+  maxTurnsBeforeHandoff Int                @default(4) @map("max_turns_before_handoff")
+  handoffKeywords       String[]           @default(["insan", "temsilci", "müşteri hizmetleri", "yetkili", "şikayet"]) @map("handoff_keywords")
+  businessHours         Json?              @map("business_hours")
+  outOfHoursBehavior    OutOfHoursBehavior @default(queue) @map("out_of_hours_behavior")
+  createdAt             DateTime           @default(now())
+
+  @@unique([tenantId, agentId])
+  @@map("agent_config")
+}
+
+model InfluencerCandidate {
+  id               String   @id @default(cuid())
+  tenantId         String
+  source           String   @default("inbound_dm")
+  conversationId   String?
+  handle           String?
+  followers        Int?
+  category         String?
+  priceExpectation String?
+  mediaKitUrl      String?
+  contact          String?
+  status           String   @default("new")
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId])
+  @@map("influencer_candidates")
+}
+
+model IysBrand {
+  id                      String   @id @default(cuid())
+  tenantId                String   @unique
+  markaAdi                String   @map("marka_adi")
+  iysIntegratorAccountRef String   @map("iys_integrator_account_ref")
+  status                  String   @default("active")
+  createdAt               DateTime @default(now())
+
+  consents Consent[]
+
+  @@map("iys_brands")
+}
+
+model Consent {
+  id                String         @id @default(cuid())
+  tenantId          String
+  brandId           String
+  brand             IysBrand       @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  recipient         String
+  channel           ConsentChannel
+  state             ConsentState
+  source            String
+  sourceDetail      String?        @map("source_detail")
+  consentedAt       DateTime       @map("consented_at")
+  iysTransactionId  String?        @map("iys_transaction_id")
+  aydinlatmaVersion String         @map("aydinlatma_version")
+  aydinlatmaText    String?
+  ip                String?
+  device            String?
+  evidence          String?
+  registeredAt      DateTime?      @map("registered_at")
+  createdAt         DateTime       @default(now()) @map("created_at")
+
+  events ConsentEvent[]
+
+  @@unique([recipient, channel, brandId])
+  @@map("consents")
+}
+
+model ConsentEvent {
+  id          String    @id @default(cuid())
+  consentId   String
+  consent     Consent   @relation(fields: [consentId], references: [id], onDelete: Restrict)
+  eventType   String    @map("event_type")
+  payload     Json
+  dueAt       DateTime  @map("due_at")
+  processedAt DateTime? @map("processed_at")
+  attempts    Int       @default(0)
+  lastError   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([processedAt, dueAt])
+  @@map("consent_events")
+}
+
+/// Append-only delil deposu (10 yıl): her onay/ret değişikliğinin tam kaydı.
+model ConsentEvidenceLog {
+  id        BigInt       @id @default(autoincrement())
+  tenantId  String
+  consentId String
+  state     ConsentState
+  snapshot  Json
+  at        DateTime     @default(now())
+
+  @@index([tenantId, at])
+  @@map("consent_evidence_log")
+}
+
+model CrossBorderFiling {
+  id                String    @id @default(cuid())
+  tenantId          String
+  transferTarget    String
+  contractSignedAt  DateTime
+  dueAt             DateTime
+  remindedAt        DateTime?
+  receiptS3Key      String?
+  receiptUploadedAt DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@unique([tenantId, transferTarget])
+  @@map("cross_border_filings")
+}
+
+model InfluencerTaxProfile {
+  influencerId        String           @id @map("influencer_id")
+  influencer          Influencer       @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  status              TaxProfileStatus @default(diger)
+  istisnaBelgesiS3Key String?          @map("istisna_belgesi_s3_key")
+  designatedIban      String?          @map("designated_iban")
+  vatRegistered       Boolean          @default(false) @map("vat_registered")
+  advisorOpinionS3Key String?
+  adminUnlockedAt     DateTime?
+  adminUnlockedById   String?
+  verifiedAt          DateTime?        @map("verified_at")
+  verifiedBy          String?          @map("verified_by")
+  updatedAt           DateTime         @updatedAt
+
+  @@map("influencer_tax_profile")
+}
+
+model MessageCostLedger {
+  id                String          @id @default(cuid())
+  tenantId          String
+  phoneNumberId     String          @map("phone_number_id")
+  messageId         String          @map("message_id")
+  category          MessageCategory
+  recipientCountry  String          @map("recipient_country")
+  metaRateUsd       Decimal         @map("meta_rate_usd") @db.Decimal(10, 5)
+  platformMarkupUsd Decimal         @map("platform_markup_usd") @db.Decimal(10, 5)
+  freeTierConsumed  Boolean         @map("free_tier_consumed")
+  inFepWindow       Boolean         @default(false)
+  billedAt          DateTime        @default(now()) @map("billed_at")
+
+  @@unique([tenantId, messageId])
+  @@index([phoneNumberId, billedAt])
+  @@map("message_cost_ledger")
+}
+
+model CountryRate {
+  countryCode   String          @map("country_code")
+  category      MessageCategory
+  rateUsd       Decimal         @map("rate_usd") @db.Decimal(10, 5)
+  effectiveFrom DateTime        @map("effective_from")
+  source        String
+  verified      Boolean         @default(false)
+
+  @@id([countryCode, category, effectiveFrom])
+  @@map("country_rates")
+}
+
+model AdObjectMutation {
+  objectId       String   @id
+  objectType     String
+  lastMutationAt DateTime @map("last_mutation_at")
+
+  @@map("ad_object_mutations")
+}
+
+model AdBudgetChange {
+  id             String    @id @default(cuid())
+  tenantId       String
+  adSetId        String
+  newBudgetMinor Int
+  requestedAt    DateTime  @default(now())
+  scheduledFor   DateTime
+  appliedAt      DateTime?
+  status         String    @default("queued")
+  reason         String?
+
+  @@index([adSetId, appliedAt])
+  @@map("ad_budget_changes")
+}
+
+model PartnershipAdCode {
+  id             String    @id @default(cuid())
+  tenantId       String
+  influencerId   String
+  igMediaId      String
+  adCode         String?
+  state          String    @default("requested")
+  lastVerifiedAt DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@unique([tenantId, igMediaId])
+  @@map("partnership_ad_codes")
+}
+
+model ModelRegistry {
+  key            String        @id
+  provider       String
+  modelId        String        @map("model_id")
+  kind           String
+  unit           String
+  unitPriceUsd   Decimal       @map("unit_price_usd") @db.Decimal(12, 6)
+  creditsPerUnit Decimal       @map("credits_per_unit") @db.Decimal(10, 3)
+  deterministic  Boolean       @default(true)
+  maxUnits       Int?
+  status         ModelStatus   @default(active)
+  deprecatedAt   DateTime?     @map("deprecated_at")
+  replacementKey String?       @map("replacement_key")
+  licenseStatus  LicenseStatus @default(pending) @map("license_status")
+  emitsC2pa      Boolean?      @map("emits_c2pa")
+  featureFlag    String?
+  priceVerified  Boolean       @default(false)
+
+  @@map("model_registry")
+}
+
+model CreditAccount {
+  tenantId        String   @id
+  balanceCredits  Decimal  @default(0) @db.Decimal(14, 3)
+  heldCredits     Decimal  @default(0) @db.Decimal(14, 3)
+  lowBalanceAlert Decimal  @default(100) @db.Decimal(14, 3)
+  updatedAt       DateTime @updatedAt
+
+  @@map("credit_accounts")
+}
+
+model CreditHold {
+  id        String    @id @default(cuid())
+  tenantId  String
+  credits   Decimal   @db.Decimal(14, 3)
+  status    String    @default("held")
+  settledAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("credit_holds")
+}
+
+model CreativeJob {
+  id           String            @id @default(cuid())
+  tenantId     String
+  campaignId   String?
+  modelKey     String
+  modelId      String
+  prompt       String
+  promptHash   String
+  units        Decimal           @db.Decimal(10, 3)
+  requestId    String?           @unique
+  creditHoldId String?
+  status       CreativeJobStatus @default(HELD)
+  rejectReason String?
+  inferenceMs  Int?
+  submittedAt  DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime          @default(now())
+
+  @@index([tenantId])
+  @@map("creative_jobs")
+}
+
+model GeneratedAsset {
+  id             String   @id @default(cuid())
+  tenantId       String
+  campaignId     String?  @map("campaign_id")
+  jobId          String?
+  modelKey       String   @map("model_key")
+  modelId        String   @map("model_id")
+  promptHash     String   @map("prompt_hash")
+  parentAssetId  String?  @map("parent_asset_id")
+  s3Key          String
+  c2paManifestId String   @map("c2pa_manifest_id")
+  isAiGenerated  Boolean  @default(true) @map("is_ai_generated")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("generated_assets")
+}
+
+/// md. 23/A içerik kontrolü: kare bazlı kontrol listesi ve delil.
+model DisclosureCheck {
+  id            String   @id @default(cuid())
+  deliverableId String
+  frameIndex    Int      @default(0)
+  platform      Platform
+  compliant     Boolean
+  issues        String[]
+  evidenceS3Key String?
+  checkedAt     DateTime @default(now())
+
+  @@unique([deliverableId, frameIndex])
+  @@map("disclosure_checks")
 }

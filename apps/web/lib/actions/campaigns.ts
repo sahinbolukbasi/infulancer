@@ -6,6 +6,7 @@ import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
 import { prisma } from "@infulancer/core/db";
 import { targetsSchema } from "@infulancer/core/domain/campaign-score";
+import { assertCampaignCanGoLive, CampaignGateError } from "@infulancer/core/compliance/disclosure";
 import { DomainError } from "@infulancer/core/domain/errors";
 import { utmSafe } from "@infulancer/core/domain/utm";
 import { publish } from "@infulancer/core/events";
@@ -96,6 +97,19 @@ export async function saveCampaign(_prev: ActionState, fd: FormData): Promise<Ac
     if (existing?.status === "KAPANDI") throw new DomainError("KURAL_IHLALI", "Kapanmış kampanya düzenlenemez.");
     const brand = await prisma.brand.findUnique({ where: { id: input.brandId }, select: { id: true } });
     if (!brand) throw new DomainError("DOGRULAMA", "Marka bulunamadı.");
+    // md. 23/A: etiketsiz veya kullanım hakkı tanımsız içerikle kampanya canlıya alınamaz (BLOK).
+    if (input.status === "AKTIF" && existing?.status !== "AKTIF") {
+      if (!id) throw new DomainError("KURAL_IHLALI", "Kampanyayı önce taslak olarak kaydedin; içerikler md. 23/A kontrolünden geçtikten sonra aktif yapılabilir.");
+      try {
+        await assertCampaignCanGoLive(id);
+      } catch (e) {
+        if (e instanceof CampaignGateError) {
+          const first = e.details[0];
+          throw new DomainError("KURAL_IHLALI", `${e.message}${first ? ` İlk sorun: ${first.issues[0]}` : ""}`);
+        }
+        throw e;
+      }
+    }
     const slug = await uniqueSlug(input.slug, id);
     const data = {
       ...input,

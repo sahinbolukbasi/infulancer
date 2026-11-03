@@ -8,6 +8,7 @@
  */
 import bcrypt from "bcryptjs";
 import { closeAuditPool } from "../src/audit";
+import { seedAddon } from "./seed-addon";
 import {
   prisma,
   type AssetKind,
@@ -910,6 +911,7 @@ async function main() {
     payouts: await prisma.payoutRequest.count(),
     agentRuns: await prisma.agentRun.count(),
   };
+  await seedAddon();
   console.log("seed: tamamlandı", counts);
   console.log(`\nGiriş bilgileri (yalnızca geliştirme, şifre: ${PASSWORD})`);
   const users = await prisma.user.findMany({ orderBy: [{ role: "asc" }, { email: "asc" }], select: { email: true, role: true, name: true } });

@@ -1,4 +1,5 @@
 import { audit } from "../audit";
+import { taxGateForPayout } from "./tax-profile";
 import { requireRole, toAuditActor, type Actor } from "../access/actor";
 import { prisma, type PayoutStatus, type Tx } from "../db";
 import { DomainError } from "./errors";
@@ -107,12 +108,15 @@ export async function requestPayout(actorIn: Actor, amountKurus: number) {
       if (!influencer.iban.trim() || !influencer.ibanHolder.trim()) {
         throw new DomainError("KURAL_IHLALI", "Kayıtlı IBAN bilgisi eksik; ajansınızla iletişime geçin.");
       }
+      // Vergi kapısı: 20/B → yalnız belirlenmiş IBAN; 'diger' → admin + mali müşavir onayı olmadan kilitli.
+      const taxGate = await taxGateForPayout(influencerId, influencer.iban, tx);
+      if (!taxGate.ok) throw new DomainError("KURAL_IHLALI", taxGate.reason);
       const payout = await tx.payoutRequest.create({
         data: {
           influencerId,
           amountKurus,
           status: "TALEP_EDILDI",
-          ibanSnapshot: influencer.iban,
+          ibanSnapshot: taxGate.iban,
           ibanHolderSnapshot: influencer.ibanHolder,
         },
         select: { id: true, amountKurus: true, status: true },

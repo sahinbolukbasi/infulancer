@@ -9,6 +9,12 @@ import { runMetricConsistency, runMetricConsistencyAll } from "./metric-consiste
 import { runPublishCheck } from "./publish-check";
 import { runStoryReminder } from "./story-reminder";
 import { runTargetProjection } from "./target-projection";
+import { runBudgetBatch } from "../ads/budget-optimizer";
+import { healthCheckConnections } from "../channels/onboarding";
+import { purgeExpiredDedupe } from "../channels/webhook";
+import { checkIysSla, registerPendingConsents } from "../compliance/iys";
+import { remindKvkkFilings } from "../compliance/kvkk";
+import { warnClosingWindows } from "../messaging/inbox";
 
 export type EventHandler<T extends AppEventType = AppEventType> = (
   event: Extract<AppEvent, { type: T }>,
@@ -54,6 +60,14 @@ export const scheduledJobs: ScheduledJob[] = [
   { name: "brief-compliance", schedule: "rate(1 hour)", intervalMs: HOUR, run: async () => tally(await runBriefComplianceAll()) },
   { name: "metric-consistency", schedule: "rate(1 hour)", intervalMs: HOUR, run: async () => tally(await runMetricConsistencyAll()) },
   { name: "campaign-summary", schedule: "rate(1 hour)", intervalMs: HOUR, run: async () => tally(await runCampaignSummaryAll()) },
+  // Ek modül: kanallar, uyum, reklam
+  { name: "iys-register", schedule: "rate(1 hour)", intervalMs: HOUR, run: async () => ({ created: (await registerPendingConsents()).registered, skipped: 0 }) },
+  { name: "iys-sla", schedule: "rate(1 hour)", intervalMs: HOUR, run: async () => ({ created: (await checkIysSla()).aging.length, skipped: 0 }) },
+  { name: "kvkk-reminders", schedule: "cron(0 7 * * ? *)", intervalMs: 24 * HOUR, run: async () => ({ created: await remindKvkkFilings(), skipped: 0 }) },
+  { name: "channel-health", schedule: "rate(1 hour)", intervalMs: HOUR, run: async () => ({ created: (await healthCheckConnections()).revoked, skipped: 0 }) },
+  { name: "window-warnings", schedule: "rate(5 minutes)", intervalMs: 5 * MIN, run: async () => ({ created: await warnClosingWindows(), skipped: 0 }) },
+  { name: "ads-budget-batch", schedule: "cron(0 * * * ? *)", intervalMs: HOUR, run: async () => ({ created: (await runBudgetBatch()).applied, skipped: 0 }) },
+  { name: "webhook-dedupe-ttl", schedule: "cron(30 3 * * ? *)", intervalMs: 24 * HOUR, run: async () => ({ created: await purgeExpiredDedupe(), skipped: 0 }) },
   { name: "influencer-recommendation", schedule: "cron(0 6 * * ? *)", intervalMs: 24 * HOUR, run: async () => tally(await runInfluencerRecommendationAll()) },
 ];
 
