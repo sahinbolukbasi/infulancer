@@ -7,6 +7,9 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { InfoNote, UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { PageGuide } from "@/components/ui/page-guide";
+import { CreativeForm, TopUpForm } from "@/components/forms/operations-forms";
+import { getConfig } from "@infulancer/core/config/store";
 import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Creative" };
@@ -15,14 +18,57 @@ const usd = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "USD",
 
 export default async function AdminCreativePage() {
   await requireActor("ADMIN");
-  const [models, jobs, accounts] = await Promise.all([
+  const [models, jobs, accounts, brands, assets, flags] = await Promise.all([
     prisma.modelRegistry.findMany({ orderBy: [{ kind: "asc" }, { key: "asc" }] }),
     prisma.creativeJob.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.creditAccount.findMany(),
+    prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.generatedAsset.findMany({ orderBy: { createdAt: "desc" }, take: 12 }),
+    getConfig("features"),
   ]);
+  const brandName = new Map(brands.map((b) => [b.id, b.name]));
+  const usable = models
+    .filter((m) => m.status === "active" && m.licenseStatus === "cleared" && (!m.featureFlag || flags[m.featureFlag]) && m.provider === "fal")
+    .map((m) => ({ key: m.key, label: `${m.key} · ${m.kind}`, unit: m.unit, creditsPerUnit: Number(m.creditsPerUnit), maxUnits: m.maxUnits }));
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Creative" description="Model kaydı, lisans durumu, kredi bakiyeleri ve üretim işleri. Model ID'leri kodda değil bu kayıtta tutulur." />
+      <PageHeader title="Creative" description="Reklam görseli, video ve seslendirme üretimi. Model ID’leri kodda değil aşağıdaki kayıtta tutulur." />
+      <PageGuide
+        what="Marka adına yapay zekâ ile reklam görseli, kısa video ve seslendirme üretilen alan. Üretim kredisi gönderimde bloke edilir, yalnız başarılı çıktıda tahsil edilir. Her çıktıya “AI ile üretildi” bilgisini taşıyan C2PA kimlik bilgisi gömülür."
+        why="Lisansı onaylanmamış modeller (FLUX ailesi dahil) müşteri işinde çalışmaz. Gerçek bir kişinin yüzü/sesiyle üretim yasaktır ve otomatik reddedilir."
+        steps={[
+          { label: "Markaya kredi yükleyin", done: accounts.some((a) => Number(a.balanceCredits) > 0), hint: `${accounts.length} marka hesabı` },
+          { label: "Lisansı onaylı bir modelle üretim yapın", done: jobs.some((j) => j.status === "COMPLETED"), hint: `${usable.length} kullanılabilir model` },
+          { label: "Varlığı indirmeden önce AI açıklama kontrol listesini uygulayın", done: false, hint: "Meta ‘AI Info’ ve TikTok AIGC etiketleri" },
+          { label: "fal.ai bağlantısı (FAL_KEY) — ajans tarafında kurulum", done: false, hint: "Şu an demo mod: çıktı simüle edilir" },
+        ]}
+      />
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card interactive={false} className="flex flex-col gap-3 lg:col-span-2">
+          <CardTitle>Yeni üretim</CardTitle>
+          {usable.length ? <CreativeForm brands={brands} models={usable} /> : <p className="text-sm text-fg-passive">Kullanılabilir model yok.</p>}
+        </Card>
+        <Card interactive={false} className="flex flex-col gap-3">
+          <CardTitle>Kredi yükle</CardTitle>
+          <TopUpForm brands={brands} />
+          <p className="text-[12px] text-fg-passive">1 kredi ≈ 0,05 $ ham maliyet; müşteri fiyatı 3–5 kat (fiyatlandırma ayarı).</p>
+        </Card>
+      </section>
+      {assets.length ? (
+        <Card interactive={false} className="flex flex-col gap-3">
+          <CardTitle>Son üretilen varlıklar</CardTitle>
+          <ul className="flex flex-col divide-y divide-border text-sm">
+            {assets.map((a) => (
+              <li key={a.id} className="flex flex-wrap justify-between gap-2 py-2">
+                <span>
+                  {brandName.get(a.tenantId) ?? a.tenantId} · {a.modelKey}
+                </span>
+                <span className="text-[12px] text-fg-muted">C2PA {a.c2paManifestId.slice(0, 8)}… · AI üretimi</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
       <InfoNote>
         FLUX ailesi ve araştırma kökenli modeller, fal’ın hosted API’sinin BFL ticari lisansını kapsadığı yazılı olarak teyit edilene kadar kapalıdır. Lisansı “cleared” olmayan model müşteri
         işinde çalışmaz. Gerçek kişinin yapay zekâ kopyasıyla üretim (md. 27/12) her zaman engellidir.
@@ -74,7 +120,7 @@ export default async function AdminCreativePage() {
           <ul className="flex flex-col divide-y divide-border text-sm">
             {accounts.map((a) => (
               <li key={a.tenantId} className="flex justify-between py-2">
-                <span>{a.tenantId.slice(-6)}</span>
+                <span>{brandName.get(a.tenantId) ?? a.tenantId.slice(-6)}</span>
                 <span className="tabular-nums">
                   {Number(a.balanceCredits)} kredi · {Number(a.heldCredits)} blokede
                 </span>

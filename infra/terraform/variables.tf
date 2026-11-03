@@ -80,3 +80,14 @@ variable "meta_api_mode" {
   type        = string
   default     = "mock"
 }
+
+variable "social_sync_mode" {
+  description = "off | mock | http. http için IG_BUSINESS_ACCOUNT_ID, IG_GRAPH_TOKEN, YOUTUBE_API_KEY gerekir."
+  type        = string
+  default     = "off"
+
+  validation {
+    condition     = contains(["off", "mock", "http"], var.social_sync_mode)
+    error_message = "social_sync_mode off, mock veya http olmalı."
+  }
+}

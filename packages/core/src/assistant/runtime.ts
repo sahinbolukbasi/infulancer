@@ -19,6 +19,19 @@ export type AgentDecision =
 export type HandoffReason = "dusuk_guven" | "insan_istedi" | "tur_limiti" | "olumsuz_duygu" | "tool_hatasi" | "hassas_konu" | "guardrail" | "mesai_disi";
 
 export const HANDOFF_MESSAGE = "Sizi bir temsilciye aktarıyorum. En kısa sürede size dönüş yapılacak.";
+export const OUT_OF_HOURS_MESSAGE = "Şu an mesai saatlerimiz dışındayız. Mesajınızı aldık; temsilcimiz mesai başlangıcında size dönüş yapacak.";
+
+type BusinessHours = { days?: number[]; start?: string; end?: string };
+
+/** Mesai saati kontrolü (Europe/Istanbul, UTC+3). Tanımsızsa her zaman mesai içi. */
+export function isWithinHours(bh: unknown, at: Date): boolean {
+  const h = (bh ?? null) as BusinessHours | null;
+  if (!h || !h.days || !h.start || !h.end) return true;
+  const local = new Date(at.getTime() + 3 * 3_600_000);
+  const day = local.getUTCDay();
+  const hm = `${String(local.getUTCHours()).padStart(2, "0")}:${String(local.getUTCMinutes()).padStart(2, "0")}`;
+  return h.days.includes(day) && hm >= h.start && hm < h.end;
+}
 
 export const handoffReasonLabels: Record<HandoffReason, string> = {
   dusuk_guven: "Düşük güven",
@@ -98,13 +111,18 @@ export async function decide(tenantId: string, conversationId: string, text: str
 
 /** İnsana aktarma: awaiting_human, AI ücreti yok, atama, kullanıcı bilgilendirme, SLA başlar. */
 export async function handoff(tenantId: string, conversationId: string, reason: HandoffReason, now = new Date()) {
+  const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { agentKey: true } });
+  const cfg = await prisma.agentConfig.findFirst({ where: { tenantId, agentId: conv?.agentKey ?? "brand_faq" } });
+  const outOfHours = cfg ? !isWithinHours(cfg.businessHours, now) : false;
   await prisma.conversation.update({
     where: { id: conversationId },
     data: { status: "awaiting_human", aiChargeable: false, handoffReason: reason, slaStartedAt: now },
   });
   await assignConversation(tenantId, conversationId);
   try {
-    await sendMessage({ tenantId, conversationId, byUserId: null, text: HANDOFF_MESSAGE, now });
+    // Mesai dışında 'queue' ise sessiz kalır; 'auto_reply_then_queue' ise bilgilendirir.
+    if (!outOfHours) await sendMessage({ tenantId, conversationId, byUserId: null, text: HANDOFF_MESSAGE, now });
+    else if (cfg?.outOfHoursBehavior === "auto_reply_then_queue") await sendMessage({ tenantId, conversationId, byUserId: null, text: OUT_OF_HOURS_MESSAGE, now });
   } catch (e) {
     if (!(e instanceof SendBlockedError)) throw e;
   }

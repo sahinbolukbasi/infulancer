@@ -133,7 +133,10 @@ export async function saveCampaign(_prev: ActionState, fd: FormData): Promise<Ac
     revalidateAll();
     return { ok: true, message: "Kampanya kaydedildi." };
   });
-  if (res.ok) redirect(`/admin/kampanyalar/${created.id ?? id}`);
+  // Yeni kampanya kurulum sihirbazına gider (influencer, içerik planı, brief, yayın kontrolü).
+  const returnTo = optStr(fd, "returnTo");
+  if (res.ok && returnTo && /^\/admin\/kampanyalar\/[a-z0-9]+(\/kurulum(\?adim=[a-z]+)?)?$/.test(returnTo)) redirect(returnTo);
+  if (res.ok) redirect(created.id ? `/admin/kampanyalar/${created.id}/kurulum?adim=influencerlar` : `/admin/kampanyalar/${id}`);
   return res;
 }
 
@@ -186,5 +189,28 @@ export async function markBrandPaymentReceived(_prev: ActionState, fd: FormData)
     });
     revalidateAll();
     return { ok: true, message: "Marka ödemesi alındı olarak işaretlendi." };
+  });
+}
+
+/** Sihirbazın son adımı: md. 23/A + kullanım hakkı kapısından geçerse kampanyayı AKTIF yapar. */
+export async function activateCampaign(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const actor = await requireActor("ADMIN");
+  return attempt(async () => {
+    const id = str(fd, "id");
+    const c = await prisma.campaign.findUnique({ where: { id }, select: { status: true } });
+    if (!c) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
+    if (c.status !== "TASLAK") throw new DomainError("GECERSIZ_GECIS", "Yalnız taslak kampanya aktif yapılabilir.");
+    try {
+      await assertCampaignCanGoLive(id);
+    } catch (e) {
+      if (e instanceof CampaignGateError) throw new DomainError("KURAL_IHLALI", e.message);
+      throw e;
+    }
+    await prisma.$transaction(async (tx) => {
+      await tx.campaign.update({ where: { id }, data: { status: "AKTIF" } });
+      await audit.append({ actor: toAuditActor(actor), action: "CAMPAIGN_ACTIVATED", entityType: "Campaign", entityId: id, data: { from: "TASLAK", to: "AKTIF" } });
+    });
+    revalidateAll();
+    return { ok: true, message: "Kampanya yayına alındı." };
   });
 }

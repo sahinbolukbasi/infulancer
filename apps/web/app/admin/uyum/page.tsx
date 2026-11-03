@@ -8,6 +8,8 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { PageGuide } from "@/components/ui/page-guide";
+import { RunJobButton } from "@/components/forms/operations-forms";
 import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Uyum" };
@@ -28,7 +30,26 @@ export default async function AdminCompliancePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Uyum" description="İYS onay kapısı, KVKK yurt dışı aktarım bildirimleri, md. 23/A reklam açıklaması ve politika bayrakları." />
+      <PageHeader
+        title="Uyum"
+        description="İYS onay kapısı, KVKK yurt dışı aktarım bildirimleri, md. 23/A reklam açıklaması ve politika bayrakları."
+        actions={
+          <div className="flex gap-2">
+            <RunJobButton job="iys-register" label="İYS kuyruğunu şimdi gönder" />
+            <RunJobButton job="iys-sla" label="Süre kontrolü" />
+          </div>
+        }
+      />
+      <PageGuide
+        what="Yasal yükümlülüklerin tek ekranı. Sistem bu kuralları sert blok olarak uygular: İYS onayı olmayan kişiye kampanya mesajı gitmez, “Reklam/Tanıtım” etiketi olmayan içerikle kampanya yayına alınmaz, KVKK makbuzu yüklenmeyen marka canlı moda geçemez."
+        why="Bu sayfa bloklananları, süresi yaklaşan kayıtları ve eksik bildirimleri gösterir; cezalar alıcı/içerik başına uygulanır."
+        steps={[
+          { label: "Tüm onay kayıtları 3 iş günü içinde İYS’ye iletildi", done: pending.length === 0, hint: `${pending.length} kayıt bekliyor` },
+          { label: "Tüm markaların KVKK bildirim makbuzu yüklendi", done: settings.length > 0 && settings.every((s) => TRANSFER_TARGETS.every((t) => filings.some((f) => f.tenantId === s.tenantId && f.transferTarget === t.key && f.receiptS3Key))), hint: "Marka panelinde Uyum sayfasından yüklenir" },
+          { label: "md. 23/A uyumsuz içerik yok", done: checks.length === 0, hint: `${checks.length} uyumsuz kare/içerik` },
+          { label: "Engelleyici politika bayrağı yok", done: !flags.some((f) => f.blocking), hint: "Yasaklı dikey beyanı olan markaların gönderimi durur" },
+        ]}
+      />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card interactive={false} className="flex flex-col gap-3">

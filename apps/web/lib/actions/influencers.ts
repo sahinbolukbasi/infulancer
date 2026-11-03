@@ -9,6 +9,8 @@ import { prisma, type Platform } from "@infulancer/core/db";
 import { DomainError } from "@infulancer/core/domain/errors";
 import { platformLabels } from "@infulancer/core/domain/labels";
 import { publish } from "@infulancer/core/events";
+import { setInfluencerCategories } from "@infulancer/core/domain/categories";
+import { readCategorySelection } from "@/lib/categories";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, bool, intOrNull, optStr, parseInput, revalidateAll, str } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
@@ -40,6 +42,41 @@ const demographicsSchema = z.record(z.string(), z.unknown());
 
 type AccountInput = { platform: Platform; handle: string; followers: number; engagementRate: number; demographics: Record<string, unknown> };
 
+/** Formdaki yapılandırılmış kitle alanları (kadın %, yaş grupları, şehir:%) ham JSON'un üzerine yazılır. */
+function mergeStructuredAudience(fd: FormData, p: string, base: Record<string, unknown>, label: string): Record<string, unknown> {
+  const pct = (key: string) => {
+    const raw = str(fd, key).replace(",", ".").replace("%", "").trim();
+    if (raw === "") return undefined;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 0 || n > 100) throw new DomainError("DOGRULAMA", `${label}: kitle yüzdeleri 0–100 arası olmalı.`);
+    return Math.round(n * 100) / 10000;
+  };
+  const out: Record<string, unknown> = { ...base };
+  const w = pct(`${p}w`);
+  if (w != null) out.gender = { kadin: w, erkek: Math.round((1 - w) * 10000) / 10000 };
+  const ages: Record<string, number> = { ...((base.ageGroups as Record<string, number> | undefined) ?? {}) };
+  let anyAge = false;
+  for (const g of ["13-17", "18-24", "25-34", "35-44", "45+"]) {
+    const v = pct(`${p}age_${g}`);
+    if (v != null) {
+      ages[g] = v;
+      anyAge = true;
+    }
+  }
+  if (anyAge) out.ageGroups = ages;
+  const citiesRaw = str(fd, `${p}cities`).trim();
+  if (citiesRaw) {
+    const topCities = citiesRaw.split(",").map((part) => {
+      const [city, share] = part.split(":").map((x) => x.trim());
+      const n = Number((share ?? "").replace(",", "."));
+      if (!city || !Number.isFinite(n) || n < 0 || n > 100) throw new DomainError("DOGRULAMA", `${label}: şehirler "İstanbul:38" biçiminde olmalı.`);
+      return { city, share: Math.round(n * 100) / 10000 };
+    });
+    out.topCities = topCities.slice(0, 10);
+  }
+  return out;
+}
+
 function parseAccounts(fd: FormData): AccountInput[] {
   const out: AccountInput[] = [];
   for (const platform of PLATFORMS) {
@@ -66,6 +103,7 @@ function parseAccounts(fd: FormData): AccountInput[] {
     } catch {
       throw new DomainError("DOGRULAMA", `${label}: demografi alanı geçerli bir JSON nesnesi olmalı (ör. {"kadin": 0.7}).`);
     }
+    demographics = mergeStructuredAudience(fd, p, demographics, label);
     out.push({
       platform,
       handle: handle.startsWith("@") ? handle : `@${handle}`,
@@ -83,11 +121,12 @@ export async function saveInfluencer(_prev: ActionState, fd: FormData): Promise<
   const id = optStr(fd, "id");
   const created: { id?: string } = {};
   const res = await attempt(async () => {
+    const cats = await readCategorySelection(fd);
     const input = parseInput(
       influencerSchema,
       {
         name: str(fd, "name"),
-        category: str(fd, "category").toLocaleLowerCase("tr"),
+        category: cats.legacyName,
         iban: str(fd, "iban").replace(/\s/g, "").toUpperCase(),
         ibanHolder: str(fd, "ibanHolder"),
         taxStatus: str(fd, "taxStatus"),
@@ -104,7 +143,9 @@ export async function saveInfluencer(_prev: ActionState, fd: FormData): Promise<
       if (userPassword.length < 8) throw new DomainError("DOGRULAMA", "Geçici şifre en az 8 karakter olmalı.");
     }
     const passwordHash = !id && userEmail ? await bcrypt.hash(userPassword, 10) : null;
-    const data = { ...input, canIssueInvoice: input.canIssueInvoice === "true" };
+    const city = optStr(fd, "city")?.slice(0, 60) ?? null;
+    const bio = optStr(fd, "bio")?.slice(0, 1000) ?? null;
+    const data = { ...input, canIssueInvoice: input.canIssueInvoice === "true", city, bio };
 
     await prisma.$transaction(async (tx) => {
       let influencerId: string;
@@ -118,6 +159,7 @@ export async function saveInfluencer(_prev: ActionState, fd: FormData): Promise<
         created.id = influencerId;
       }
 
+      await setInfluencerCategories(tx, influencerId, cats.ids, cats.primaryId);
       const existing = await tx.socialAccount.findMany({ where: { influencerId } });
       const now = new Date();
       for (const acc of accounts) {
@@ -172,4 +214,19 @@ export async function saveInfluencer(_prev: ActionState, fd: FormData): Promise<
   });
   if (res.ok && created.id) redirect(`/admin/influencerlar/${created.id}/duzenle`);
   return res;
+}
+
+/** Influencer'ın tüm hesaplarını resmî API'lerden (yoksa demo veri) hemen senkronlar. */
+export async function syncInfluencerAccounts(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  await requireActor("ADMIN");
+  return attempt(async () => {
+    const id = str(fd, "id");
+    const { syncInfluencer } = await import("@infulancer/core/social/sync");
+    const results = await syncInfluencer(id);
+    revalidateAll();
+    const failed = results.filter((r) => !r.ok);
+    if (!results.length) return { ok: true, message: "Senkronlanacak hesap yok." };
+    if (failed.length === results.length) return { error: failed.map((f) => f.message).join(" ") };
+    return { ok: true, message: `${results.length - failed.length}/${results.length} hesap güncellendi.${failed.length ? ` Hata: ${failed.map((f) => f.message).join(" ")}` : ""}` };
+  });
 }

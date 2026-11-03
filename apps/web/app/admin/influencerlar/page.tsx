@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
 import { computeInfluencerStats } from "@infulancer/core/domain/influencer-stats";
+import { categoryTree } from "@infulancer/core/domain/categories";
+import { activeFilterCount, parseFilters, searchInfluencerIds } from "@infulancer/core/domain/influencer-search";
+import { InfluencerFilterBar } from "@/components/influencer/filter-bar";
 import { formatKurus, platformLabels } from "@infulancer/core/domain/labels";
 import { PlatformIcon } from "@/components/platform-icon";
 import { DataTable } from "@/components/ui/data-table";
@@ -15,23 +18,37 @@ import { fmtDate } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Influencerlar" };
 
-export default async function InfluencersPage() {
+export default async function InfluencersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireActor("ADMIN");
   const now = new Date();
-  const [influencers, stats] = await Promise.all([
+  const sp = await searchParams;
+  const filters = parseFilters(sp);
+  const active = activeFilterCount(filters);
+  const [ids, total, tree] = await Promise.all([searchInfluencerIds(filters), prisma.influencer.count(), categoryTree()]);
+  const [influencersRaw, stats] = await Promise.all([
     prisma.influencer.findMany({
+      where: { id: { in: ids } },
       orderBy: { name: "asc" },
       select: {
         id: true,
         name: true,
         category: true,
+        city: true,
+        categories: { orderBy: { primary: "desc" }, select: { primary: true, category: { select: { name: true, parent: { select: { name: true } } } } } },
         riskScore: true,
         user: { select: { email: true } },
         socialAccounts: { orderBy: { followers: "desc" }, select: { platform: true, handle: true, followers: true } },
       },
     }),
-    computeInfluencerStats(undefined, now),
+    computeInfluencerStats(ids, now),
   ]);
+  const maxFollowers = (i: (typeof influencersRaw)[number]) => Math.max(0, ...i.socialAccounts.map((a) => a.followers));
+  const influencers = [...influencersRaw].sort((a, b) => {
+    if (filters.sort === "followers") return maxFollowers(b) - maxFollowers(a);
+    if (filters.sort === "er") return (stats.get(b.id)?.erTrend.at(-1) ?? 0) - (stats.get(a.id)?.erTrend.at(-1) ?? 0);
+    if (filters.sort === "risk") return (a.riskScore ?? 0) - (b.riskScore ?? 0);
+    return a.name.localeCompare(b.name, "tr");
+  });
 
   return (
     <Stagger className="flex flex-col gap-8">
@@ -40,10 +57,11 @@ export default async function InfluencersPage() {
         description="Hesaplar, ER trendi, teslim disiplini, performans, risk ve ödemeler."
         actions={<ButtonLink href="/admin/influencerlar/yeni">Yeni influencer</ButtonLink>}
       />
+      <InfluencerFilterBar categories={tree} sp={sp} count={influencers.length} total={total} active={active} />
       <DataTable
         caption="Influencer takip listesi"
-        emptyText="Henüz influencer yok."
-        initialSort={{ key: "name", dir: "asc" }}
+        emptyText={active ? "Filtrelere uyan influencer yok. Filtreleri gevşetin." : "Henüz influencer yok."}
+        initialSort={filters.sort === "followers" ? { key: "accounts", dir: "desc" } : { key: "name", dir: "asc" }}
         columns={[
           { key: "name", header: "Influencer", sortable: true },
           { key: "accounts", header: "Hesaplar", sortable: true },
@@ -67,8 +85,17 @@ export default async function InfluencersPage() {
                 display: (
                   <Link href={`/admin/influencerlar/${i.id}`} className="flex flex-col text-fg hover:underline">
                     {i.name}
+                    <span className="flex flex-wrap gap-1 pt-1">
+                      {i.categories.slice(0, 3).map((c, idx) => (
+                        <span key={idx} className={`rounded-full border px-2 py-0.5 text-[11px] ${c.primary ? "border-fg-muted text-fg-muted" : "border-border text-fg-passive"}`}>
+                          {c.category.parent ? `${c.category.parent.name} › ` : ""}
+                          {c.category.name}
+                        </span>
+                      ))}
+                    </span>
                     <span className="text-[12px] text-fg-passive">
-                      {i.category} · {i.user?.email ?? "Giriş hesabı yok"}
+                      {i.city ? `${i.city} · ` : ""}
+                      {i.user?.email ?? "Giriş hesabı yok"}
                     </span>
                   </Link>
                 ),

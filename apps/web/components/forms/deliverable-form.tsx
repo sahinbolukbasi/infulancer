@@ -23,7 +23,29 @@ export type DeliverableFormValues = {
   mentions: string[];
   baseLink: string;
   disclosureRequired: boolean;
+  frameCount?: number;
+  frameTexts?: string[];
+  paidPartnershipToggle?: boolean;
+  commercialContentToggle?: boolean;
+  hasAudio?: boolean;
+  spokenDisclosure?: boolean;
+  isLive?: boolean;
+  usageRightsDays?: number | null;
+  usageRightsChannel?: "ORGANIK" | "PAID_DAHIL" | null;
+  usageRightsGeo?: string[];
 };
+
+function Check({ name, label, defaultChecked, hint }: { name: string; label: string; defaultChecked?: boolean; hint?: string }) {
+  return (
+    <label className="flex items-start gap-2 text-sm text-fg-muted">
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="mt-0.5 h-4 w-4 accent-[#fafafa]" />
+      <span>
+        {label}
+        {hint ? <span className="block text-[12px] text-fg-passive">{hint}</span> : null}
+      </span>
+    </label>
+  );
+}
 
 function AgencyTime({ value, tz }: { value: string; tz: string }) {
   const parsed = parseLocalInput(value);
@@ -74,7 +96,7 @@ export function DeliverableForm({
   assignmentId: string;
   tz: string;
   tzLabel: string;
-  defaults: { hashtags: string[]; mentions: string[]; disclosureRequired: boolean };
+  defaults: { hashtags: string[]; mentions: string[]; disclosureRequired: boolean; advertiser?: string };
   deliverable?: DeliverableFormValues;
 }) {
   const [platform, setPlatform] = useState<Platform>(deliverable?.platform ?? "INSTAGRAM");
@@ -158,15 +180,47 @@ export function DeliverableForm({
         <Field label="Hedef bağlantı" hint="UTM parametreleri (kaynak, kampanya, influencer, iş) otomatik eklenir.">
           {(p) => <Input {...p} name="baseLink" type="url" placeholder="https://marka.com/urun" defaultValue={deliverable?.baseLink} />}
         </Field>
-        <label className="flex items-center gap-2 text-sm text-fg-muted">
-          <input
-            type="checkbox"
-            name="disclosureRequired"
-            defaultChecked={deliverable?.disclosureRequired ?? defaults.disclosureRequired}
-            className="h-4 w-4 accent-[#fafafa]"
-          />
-          Reklam ibaresi zorunlu ({platformRules[platform].disclosureLabel})
-        </label>
+        {contentType === "STORY" ? (
+          <fieldset className="flex flex-col gap-4 rounded-[8px] border border-border p-4">
+            <legend className="px-1 text-sm text-fg">Story kareleri</legend>
+            <p className="text-[13px] text-fg-muted">
+              md. 23/A story serisinde her kareyi ayrı denetler: her karede ilk unsur olarak “Reklam” veya “Tanıtım” ve reklam verenin adı görünmeli.
+            </p>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[160px_1fr]">
+              <Field label="Kare sayısı">
+                {(p) => <Input {...p} name="frameCount" type="number" min={1} max={30} defaultValue={deliverable?.frameCount ?? 3} />}
+              </Field>
+              <Field label="Kare metinleri (her satır bir kare)" hint={`Örn: Reklam | ${defaults.advertiser ?? "Marka"} — ...`}>
+                {(p) => <Textarea {...p} name="frameTexts" rows={4} defaultValue={(deliverable?.frameTexts ?? []).join("\n")} />}
+              </Field>
+            </div>
+          </fieldset>
+        ) : null}
+        <fieldset className="flex flex-col gap-3 rounded-[8px] border border-border p-4">
+          <legend className="px-1 text-sm text-fg">Reklam açıklaması (md. 23/A)</legend>
+          <Check name="disclosureRequired" label={`Reklam ibaresi zorunlu (${platformRules[platform].disclosureLabel})`} defaultChecked={deliverable?.disclosureRequired ?? defaults.disclosureRequired} />
+          {platform === "INSTAGRAM" ? <Check name="paidPartnershipToggle" label="Instagram “Ücretli ortaklık” etiketi açılacak" defaultChecked={deliverable?.paidPartnershipToggle ?? true} /> : null}
+          {platform === "TIKTOK" ? <Check name="commercialContentToggle" label="TikTok ticari içerik açıklaması açılacak" defaultChecked={deliverable?.commercialContentToggle ?? true} hint="Eksikse 24 saatte düzeltilmezse video For You akışından çıkarılabilir." /> : null}
+          <Check name="hasAudio" label="Sesli anlatım var" defaultChecked={deliverable?.hasAudio} />
+          <Check name="spokenDisclosure" label="Reklamdan önce sözlü açılış yapılacak (“… hakkında reklam/tanıtım içerir”)" defaultChecked={deliverable?.spokenDisclosure} />
+          {contentType === "LIVE" ? <input type="hidden" name="isLive" value="on" /> : null}
+        </fieldset>
+        <fieldset className="flex flex-col gap-3 rounded-[8px] border border-border p-4">
+          <legend className="px-1 text-sm text-fg">Kullanım hakkı</legend>
+          <p className="text-[13px] text-fg-muted">Süre, mecra ve coğrafya tanımlanmadan kampanya yayına alınamaz (faturayı ve fiyatı değiştirir).</p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <Field label="Süre (gün)">{(p) => <Input {...p} name="usageRightsDays" type="number" min={0} max={3650} defaultValue={deliverable?.usageRightsDays ?? 365} />}</Field>
+            <Field label="Mecra">
+              {(p) => (
+                <Select {...p} name="usageRightsChannel" defaultValue={deliverable?.usageRightsChannel ?? "ORGANIK"}>
+                  <option value="ORGANIK">Yalnız organik</option>
+                  <option value="PAID_DAHIL">Reklam (paid) dahil</option>
+                </Select>
+              )}
+            </Field>
+            <Field label="Coğrafya (ülke kodları)">{(p) => <Input {...p} name="usageRightsGeo" defaultValue={(deliverable?.usageRightsGeo?.length ? deliverable.usageRightsGeo : ["TR"]).join(" ")} />}</Field>
+          </div>
+        </fieldset>
       </ActionForm>
       <PlatformRulePanel platform={platform} contentType={contentType} />
     </div>

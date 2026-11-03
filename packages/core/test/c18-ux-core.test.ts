@@ -92,3 +92,48 @@ describe("UX çekirdeği: kategori, arama, senkron, agent merkezi", () => {
     await setJobEnabled("target-projection", true);
   });
 });
+
+describe("kampanya kurulum sihirbazı", () => {
+  it("adımlar veriden hesaplanır; story kare metni ve kullanım hakkı eksikse yayın kapalı", async () => {
+    const { campaignSetup } = await import("../src/domain/campaign-setup");
+    const { makeTenant } = await import("./helpers");
+    const T = await makeTenant("Sihirbaz Marka");
+    const c = await prisma.campaign.create({ data: { brandId: T.tenantId, name: "Sihirbaz", slug: `sihirbaz-${Date.now()}`, budgetKurus: 1, brandTotalFeeKurus: 1, startsAt: new Date(), endsAt: new Date(Date.now() + 864e5), targets: [{ kpi: "reach", target: 1000, weight: 1, windowDays: 7 }] } });
+    let s = (await campaignSetup(c.id))!;
+    expect(s.steps.find((x) => x.key === "influencerlar")!.done).toBe(false);
+    expect(s.readyToActivate).toBe(false);
+    const i = await prisma.influencer.create({ data: { name: "Story Kişi", category: "moda", iban: "TR1", ibanHolder: "S", taxStatus: "FATURA", canIssueInvoice: true } });
+    const a = await prisma.assignment.create({ data: { campaignId: c.id, influencerId: i.id, feeKurus: 1, commissionKurus: 0, contractStatus: "KABUL" } });
+    const d = await prisma.deliverable.create({ data: { assignmentId: a.id, platform: "INSTAGRAM", contentType: "STORY", plannedAt: new Date(), approvalDeadline: new Date(), disclosureRequired: true, frameCount: 2, frameTexts: ["Reklam | Sihirbaz Marka"], paidPartnershipToggle: true } });
+    await prisma.campaignBrief.create({ data: { campaignId: c.id, version: 1, text: "b", dos: [], donts: [], hashtags: [], mentions: [], requiredPhrases: [], bannedPhrases: [], disclosureRequired: true, createdById: T.user.id } });
+    s = (await campaignSetup(c.id))!;
+    const icerik = s.steps.find((x) => x.key === "icerik")!;
+    expect(icerik.done).toBe(false);
+    expect(icerik.issues.join(" ")).toMatch(/kullanım hakkı|kare metinleri/);
+    expect(s.readyToActivate).toBe(false);
+    await prisma.deliverable.update({ where: { id: d.id }, data: { frameTexts: ["Reklam | Sihirbaz Marka", "Reklam | Sihirbaz Marka — kod BAHAR"], usageRightsDays: 90, usageRightsChannel: "ORGANIK", usageRightsGeo: ["TR"] } });
+    s = (await campaignSetup(c.id))!;
+    expect(s.steps.filter((x) => x.key !== "yayin").every((x) => x.done)).toBe(true);
+    expect(s.readyToActivate).toBe(true);
+  });
+});
+
+describe("senkron güvenliği", () => {
+  it("SOCIAL_SYNC_MODE=off iken elle girilen değerler değişmez", async () => {
+    const prev = process.env.SOCIAL_SYNC_MODE;
+    process.env.SOCIAL_SYNC_MODE = "off";
+    try {
+      const i = await inf("Elle Giriş", "moda", [{ platform: "INSTAGRAM", handle: "elle.giris", followers: 12345, er: 0.04 }]);
+      const r = await syncInfluencer(i.id);
+      expect(r[0]!.ok).toBe(false);
+      expect(r[0]!.message).toMatch(/kapalı/);
+      const acc = await prisma.socialAccount.findFirstOrThrow({ where: { influencerId: i.id } });
+      expect(acc.followers).toBe(12345);
+      expect(acc.lastSyncedAt).toBeNull();
+      const { syncStaleAccounts } = await import("../src/social/sync");
+      expect(await syncStaleAccounts()).toEqual({ checked: 0, ok: 0 });
+    } finally {
+      process.env.SOCIAL_SYNC_MODE = prev;
+    }
+  });
+});

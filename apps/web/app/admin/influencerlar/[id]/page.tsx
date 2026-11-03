@@ -17,10 +17,13 @@ import { BalanceCards } from "@/components/finance/balance-cards";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Button, ButtonLink } from "@/components/ui/form";
+import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { SyncAccountsButton } from "@/components/forms/agent-job-forms";
+import { categoryLabel } from "@infulancer/core/domain/categories";
+import { syncSourceLabels } from "@infulancer/core/social/sync";
 import { compact, num, pct, pct1 } from "@/lib/format";
 import { campaignTone, contractTone, contractUiLabels } from "@/lib/status-tone";
 import { fmtDate } from "@/lib/time";
@@ -53,6 +56,7 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
     where: { id },
     include: {
       user: { select: { email: true } },
+      categories: { orderBy: { primary: "desc" }, include: { category: { include: { parent: { select: { name: true } } } } } },
       socialAccounts: { orderBy: { followers: "desc" }, include: { snapshots: { orderBy: { takenAt: "asc" } } } },
       assignments: {
         orderBy: { createdAt: "desc" },
@@ -109,13 +113,25 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
     <div className="flex flex-col gap-8">
       <PageHeader
         title={inf.name}
-        description={`${inf.category} · ${taxStatusLabels[inf.taxStatus]}${inf.canIssueInvoice ? "" : " · fatura kesemiyor"} · ${inf.user?.email ?? "giriş hesabı yok"}`}
+        description={`${inf.city ? `${inf.city} · ` : ""}${taxStatusLabels[inf.taxStatus]}${inf.canIssueInvoice ? "" : " · fatura kesemiyor"} · ${inf.user?.email ?? "giriş hesabı yok"}`}
         actions={
-          <ButtonLink href={`/admin/influencerlar/${inf.id}/duzenle`} variant="secondary">
-            Düzenle
-          </ButtonLink>
+          <div className="flex gap-2">
+            <SyncAccountsButton influencerId={inf.id} />
+            <ButtonLink href={`/admin/influencerlar/${inf.id}/duzenle`}>Düzenle</ButtonLink>
+          </div>
         }
       />
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2" aria-label="Kategoriler">
+          {inf.categories.map((c) => (
+            <span key={c.categoryId} className={`rounded-full border px-3 py-1 text-[13px] ${c.primary ? "border-fg text-fg" : "border-border text-fg-muted"}`}>
+              {c.primary ? "★ " : ""}
+              {categoryLabel(c.category)}
+            </span>
+          ))}
+        </div>
+        {inf.bio ? <p className="max-w-3xl text-sm text-fg-muted">{inf.bio}</p> : null}
+      </div>
 
       <section aria-label="Hesaplar" className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {inf.socialAccounts.map((a) => (
@@ -138,9 +154,24 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
               </div>
             </dl>
             <p className="text-[13px] text-fg-muted">{demographicsSummary(a.demographics)}</p>
-            <Button variant="secondary" size="sm" disabled aria-disabled title="Faz 5: platform API bağlantısı">
-              Hesabı bağla (yakında)
-            </Button>
+            {a.postsCount != null || a.avgLikes != null || a.avgViews != null ? (
+              <p className="text-[12px] text-fg-muted">
+                {a.postsCount != null ? `${compact.format(a.postsCount)} gönderi` : ""}
+                {a.avgLikes != null ? ` · ort. ${compact.format(a.avgLikes)} beğeni` : ""}
+                {a.avgComments != null ? ` · ${compact.format(a.avgComments)} yorum` : ""}
+                {a.avgViews != null ? ` · ort. ${compact.format(a.avgViews)} izlenme` : ""}
+              </p>
+            ) : null}
+            <p className="text-[12px] text-fg-passive">
+              Kaynak: {syncSourceLabels[a.syncSource] ?? a.syncSource}
+              {a.lastSyncedAt ? ` · son senkron ${fmtDate(a.lastSyncedAt)}` : " · henüz senkronlanmadı"}
+            </p>
+            {a.syncError ? <p className="text-[12px] text-critical">{a.syncError}</p> : null}
+            {a.profileUrl ? (
+              <a href={a.profileUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] text-fg-muted underline-offset-4 hover:underline">
+                Profili aç <span className="sr-only">(yeni sekmede açılır)</span>
+              </a>
+            ) : null}
           </Card>
         ))}
         {inf.socialAccounts.length === 0 ? <p className="text-sm text-fg-passive">Kayıtlı hesap yok.</p> : null}

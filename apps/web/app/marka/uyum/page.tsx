@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { PageGuide } from "@/components/ui/page-guide";
 import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Uyum" };
@@ -23,6 +24,16 @@ export default async function BrandCompliancePage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Uyum" description="KVKK yurt dışı aktarım bildirimi, İYS onayları ve canlı moda geçiş." />
+      <PageGuide
+        what="Mesajlaşmayı yasal olarak başlatabilmeniz için gereken adımlar. Bu adımlar tamamlanmadan hesabınız deneme (sandbox) modunda kalır."
+        why="KVKK bildirimi yapılmaması 90.308–1.806.377 TL, İYS onayı olmadan ticari ileti alıcı başına 2.859–14.309 TL cezaya konu olabilir."
+        steps={[
+          { label: "Veri işleyen standart sözleşmesini imzalayın", done: status.filings.length > 0 },
+          { label: "Kurul’a bildirim yapıp iki makbuzu yükleyin (AWS ve Meta)", done: status.complete, hint: "İmzadan sonra 5 iş günü içinde" },
+          { label: "Canlı moda geçin", done: settings?.mode === "production" },
+          { label: "Pazarlama mesajı göndereceğiniz kişilerin İYS onaylarını kaydedin", done: consents.some((c) => c.state === "ONAY"), hint: "Onaysız kişiye kampanya mesajı sistem tarafından engellenir" },
+        ]}
+      />
 
       <Card interactive={false} className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">

@@ -3,6 +3,8 @@
 import { ActionForm } from "@/components/forms/action-form";
 import { Field, Input } from "@/components/ui/form";
 import { createBrandUser, saveBrand } from "@/lib/actions/brands";
+import type { CategoryNode } from "@infulancer/core/domain/categories";
+import { CategoryPicker } from "@/components/forms/category-picker";
 
 export type BrandFormValues = {
   id: string;
@@ -16,18 +18,19 @@ export type BrandFormValues = {
   contractStartsAt: string | null;
   category: string;
   competitorBrandIds: string[];
+  categoryIds?: string[];
+  primaryCategoryId?: string | null;
 };
 
 /** Marka oluşturma/düzenleme formu. */
-export function BrandForm({ brand, otherBrands }: { brand?: BrandFormValues; otherBrands: { id: string; name: string; category: string }[] }) {
+export function BrandForm({ brand, otherBrands, categories }: { brand?: BrandFormValues; otherBrands: { id: string; name: string; category: string }[]; categories: CategoryNode[] }) {
   return (
     <ActionForm action={saveBrand} submitLabel={brand ? "Değişiklikleri kaydet" : "Markayı oluştur"} aria-label="Marka bilgileri">
       {brand ? <input type="hidden" name="id" value={brand.id} /> : null}
+      <CategoryPicker tree={categories} selected={brand?.categoryIds ?? []} primaryId={brand?.primaryCategoryId} />
+      <p className="-mt-2 text-[12px] text-fg-passive">Ana kategori rakip/münhasırlık tespitinde kullanılır.</p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Marka adı">{(p) => <Input {...p} name="name" required defaultValue={brand?.name} />}</Field>
-        <Field label="Kategori" hint="Rakip tespiti için kullanılır (ör. kozmetik).">
-          {(p) => <Input {...p} name="category" required defaultValue={brand?.category} />}
-        </Field>
         <Field label="Vergi dairesi">{(p) => <Input {...p} name="taxOffice" required defaultValue={brand?.taxOffice} />}</Field>
         <Field label="Vergi numarası">
           {(p) => <Input {...p} name="taxNumber" required inputMode="numeric" defaultValue={brand?.taxNumber} />}

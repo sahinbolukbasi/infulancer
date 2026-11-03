@@ -126,6 +126,8 @@ locals {
     { name = "FAL_MODE", value = "mock" },
     { name = "C2PA_MODE", value = "mock" },
     { name = "WEBHOOK_REQUIRE_SIGNATURE", value = "true" },
+    # Sosyal hesap senkronu: API anahtarları Secrets Manager'a eklenene kadar kapalı (elle girilen veri korunur).
+    { name = "SOCIAL_SYNC_MODE", value = var.social_sync_mode },
   ]
   container_secrets = [
     for k in ["DATABASE_URL", "AUDIT_DATABASE_URL", "AUTH_SECRET", "SEED_PASSWORD", "FAL_WEBHOOK_SECRET", "META_VERIFY_TOKEN"] :

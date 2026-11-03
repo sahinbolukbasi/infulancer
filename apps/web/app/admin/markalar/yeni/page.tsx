@@ -4,6 +4,7 @@ import { BrandForm } from "@/components/forms/brand-forms";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { requireActor } from "@/lib/auth-guard";
+import { categoryTree } from "@infulancer/core/domain/categories";
 
 export const metadata: Metadata = { title: "Yeni marka" };
 
@@ -14,7 +15,7 @@ export default async function NewBrandPage() {
     <div className="flex flex-col gap-8">
       <PageHeader title="Yeni marka" />
       <Card interactive={false}>
-        <BrandForm otherBrands={brands} />
+        <BrandForm otherBrands={brands} categories={await categoryTree()} />
       </Card>
     </div>
   );

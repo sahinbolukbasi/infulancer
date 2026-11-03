@@ -9,21 +9,42 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { InfoNote, UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { PageGuide } from "@/components/ui/page-guide";
+import { BudgetRequestForm, RunJobButton } from "@/components/forms/operations-forms";
 import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Reklam" };
 
 export default async function AdminAdsPage() {
   await requireActor("ADMIN");
-  const [limits, quota, changes, codes] = await Promise.all([
+  const [limits, quota, changes, codes, brands] = await Promise.all([
     getConfig("meta.ads.writeLimits"),
     getConfig("meta.ads.quota"),
     prisma.adBudgetChange.findMany({ orderBy: { requestedAt: "desc" }, take: 40 }),
     prisma.partnershipAdCode.findMany({ orderBy: { createdAt: "desc" }, take: 40 }),
+    prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
+  const queued = changes.filter((c) => c.status === "queued").length;
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Reklam" description="Meta Marketing API yazma limitleri, saatlik bütçe optimizasyonu, Partnership Ads kodları ve TikTok yayın kısıtları." />
+      <PageHeader
+        title="Reklam"
+        description="Meta Marketing API yazma limitleri, saatlik bütçe optimizasyonu, Partnership Ads kodları ve TikTok yayın kısıtları."
+        actions={<RunJobButton job="ads-budget-batch" label="Bekleyenleri şimdi uygula" />}
+      />
+      <PageGuide
+        what="Influencer içeriklerini reklama dönüştürme ve reklam bütçelerini yönetme alanı. Bütçe değişikliklerini buradan istersiniz; sistem Meta’nın yazma limitlerine (saatte 4 bütçe değişikliği, aynı nesneye 30 saniyede bir düzenleme) uyarak uygular."
+        why="Limit aşılırsa Meta hesabı 1 saat bloklar. Bu yüzden fazla istekler reddedilmez, sıradaki uygun saate ötelenir ve aşağıdaki kuyrukta görünür."
+        steps={[
+          { label: "Meta Marketing API bağlantısı (Full Access) — ajans tarafında kurulum", done: false, hint: "Şu an demo mod: istekler kaydedilir, Meta’ya gönderilmez" },
+          { label: "Bütçe değişikliği isteyin", done: changes.length > 0, hint: `${changes.length} istek · ${queued} ötelenmiş` },
+          { label: "Partnership Ads için creator kendi Instagram hesabıyla kod üretir", done: codes.length > 0, hint: "Kod creator hesabına bağlıdır; marka kendi başına üretemez" },
+        ]}
+      />
+      <Card interactive={false} className="flex flex-col gap-3">
+        <CardTitle>Bütçe değişikliği iste</CardTitle>
+        <BudgetRequestForm brands={brands} />
+      </Card>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card interactive={false} className="flex flex-col gap-3">

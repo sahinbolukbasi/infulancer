@@ -22,7 +22,7 @@ export type CampaignFormValues = {
 };
 
 /** Kampanya formu + hedef (KPI) editörü. ER hedefi oran olarak girilir (ör. 0,045). */
-export function CampaignForm({ campaign, brands }: { campaign?: CampaignFormValues; brands: { id: string; name: string }[] }) {
+export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { returnTo?: string; defaultBrandId?: string; campaign?: CampaignFormValues; brands: { id: string; name: string }[] }) {
   const [rows, setRows] = useState<TargetRow[]>(
     campaign?.targets.map((t) => ({ kpi: t.kpi, target: String(t.target), weight: String(t.weight), windowDays: String(t.windowDays) })) ?? [
       { kpi: "reach", target: "", weight: "1", windowDays: "30" },
@@ -32,13 +32,14 @@ export function CampaignForm({ campaign, brands }: { campaign?: CampaignFormValu
   const unused = KPI_KEYS.filter((k) => !rows.some((r) => r.kpi === k));
 
   return (
-    <ActionForm action={saveCampaign} submitLabel={campaign ? "Değişiklikleri kaydet" : "Kampanyayı oluştur"} aria-label="Kampanya bilgileri">
+    <ActionForm action={saveCampaign} submitLabel={campaign ? "Kaydet" : "Oluştur ve kuruluma geç"} aria-label="Kampanya bilgileri">
       {campaign ? <input type="hidden" name="id" value={campaign.id} /> : null}
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       <input type="hidden" name="targets" value={JSON.stringify(rows)} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Marka">
           {(p) => (
-            <Select {...p} name="brandId" required defaultValue={campaign?.brandId ?? ""}>
+            <Select {...p} name="brandId" required defaultValue={campaign?.brandId ?? defaultBrandId ?? ""}>
               <option value="" disabled>
                 Marka seçin
               </option>

@@ -7,7 +7,7 @@ import { Button, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { resolveAgentRun } from "@/lib/actions/agent-runs";
 import { updateUsageRights } from "@/lib/actions/assets";
 import { decideContract } from "@/lib/actions/assignments";
-import { closeCampaign, markBrandPaymentReceived } from "@/lib/actions/campaigns";
+import { activateCampaign, closeCampaign, markBrandPaymentReceived } from "@/lib/actions/campaigns";
 import { changeDeliverableStatus } from "@/lib/actions/deliverables";
 import { submitBrandData } from "@/lib/actions/metrics";
 
@@ -182,6 +182,16 @@ export function BrandPaymentForm({ campaignId }: { campaignId: string }) {
       <Field label="Ödeme tarihi" hint="Boşsa bugün.">
         {(p) => <Input {...p} name="receivedAt" type="date" className="h-8" />}
       </Field>
+    </ActionForm>
+  );
+}
+
+/** Kurulum sihirbazının son adımı: kontrollerden geçerse kampanyayı yayına alır. */
+export function ActivateCampaignButton({ campaignId }: { campaignId: string }) {
+  return (
+    <ActionForm action={activateCampaign} aria-label="Kampanyayı yayına al">
+      <input type="hidden" name="id" value={campaignId} />
+      <Button type="submit">Kampanyayı yayına al</Button>
     </ActionForm>
   );
 }

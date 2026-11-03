@@ -11,7 +11,8 @@ import { vault } from "../channels/vault";
  * - YouTube: Data API v3 channels/search — herkese açık kanal istatistikleri (API anahtarı).
  * - TikTok: Display API — influencer'ın kendi OAuth bağlantısı (Login Kit) gerekir.
  * - Kitle demografisi hiçbir public API'de yok → influencer'ın yüklediği ekran görüntüsünden (metrik akışı).
- * Kimlik bilgisi yoksa SOCIAL_SYNC_MODE=mock: deterministik sahte veri (geliştirme/demo).
+ * SOCIAL_SYNC_MODE: http (gerçek API'ler) | mock (yalnız geliştirme/test: deterministik sahte veri) |
+ * off (varsayılan: hiçbir veri değiştirilmez; elle girilen değerler korunur).
  */
 export type ProfileStats = {
   externalId: string | null;
@@ -153,9 +154,22 @@ export const httpSocial: SocialProvider = {
   },
 };
 
+const notConfigured: SocialProvider = {
+  async fetch() {
+    throw new SyncError("Otomatik senkron kapalı: API anahtarları tanımlanmadı (SOCIAL_SYNC_MODE=http). Elle girilen değerler korunuyor.", "NOT_CONFIGURED");
+  },
+};
+
+export function syncMode(): "http" | "mock" | "off" {
+  const m = envStr("SOCIAL_SYNC_MODE", "off");
+  return m === "http" || m === "mock" ? m : "off";
+}
+
 let override: SocialProvider | undefined;
 export function socialProvider(): SocialProvider {
-  return override ?? (envStr("SOCIAL_SYNC_MODE", "mock") === "http" ? httpSocial : mockSocial);
+  if (override) return override;
+  const m = syncMode();
+  return m === "http" ? httpSocial : m === "mock" ? mockSocial : notConfigured;
 }
 export function setSocialProvider(p: SocialProvider | undefined) {
   override = p;
@@ -198,7 +212,10 @@ export async function syncSocialAccount(accountId: string, now = new Date()): Pr
     return { accountId, ok: true, message: `Güncellendi: ${s.followers.toLocaleString("tr-TR")} takipçi.`, followersBefore: acc.followers, followersAfter: s.followers };
   } catch (e) {
     const msg = e instanceof SyncError ? e.message : `Senkron hatası: ${(e as Error).message}`.slice(0, 300);
-    await prisma.socialAccount.update({ where: { id: acc.id }, data: { syncError: msg, lastSyncedAt: now } });
+    // Yapılandırma eksikse hesap verisine dokunulmaz (son senkron zamanı da değişmez).
+    if (!(e instanceof SyncError && e.code === "NOT_CONFIGURED")) {
+      await prisma.socialAccount.update({ where: { id: acc.id }, data: { syncError: msg, lastSyncedAt: now } });
+    }
     return { accountId, ok: false, message: msg };
   }
 }
@@ -212,6 +229,7 @@ export async function syncInfluencer(influencerId: string) {
 
 /** Zamanlanmış job: 12 saatten eski hesaplar (en fazla `limit` hesap; API kotası için). */
 export async function syncStaleAccounts(limit = 50, now = new Date()) {
+  if (!override && syncMode() === "off") return { checked: 0, ok: 0 };
   const stale = await prisma.socialAccount.findMany({
     where: { OR: [{ lastSyncedAt: null }, { lastSyncedAt: { lt: new Date(now.getTime() - 12 * 3_600_000) } }] },
     orderBy: { lastSyncedAt: { sort: "asc", nulls: "first" } },

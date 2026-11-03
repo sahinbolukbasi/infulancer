@@ -181,6 +181,16 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
                     mentions: d.mentions,
                     baseLink: d.link ? stripUtm(d.link) : "",
                     disclosureRequired: d.disclosureRequired,
+                    frameCount: d.frameCount,
+                    frameTexts: d.frameTexts,
+                    paidPartnershipToggle: d.paidPartnershipToggle,
+                    commercialContentToggle: d.commercialContentToggle,
+                    hasAudio: d.hasAudio,
+                    spokenDisclosure: d.spokenDisclosure,
+                    isLive: d.isLive,
+                    usageRightsDays: d.usageRightsDays,
+                    usageRightsChannel: d.usageRightsChannel,
+                    usageRightsGeo: d.usageRightsGeo,
                   }}
                 />
               </div>

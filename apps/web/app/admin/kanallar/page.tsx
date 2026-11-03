@@ -11,6 +11,8 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { InfoNote, UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { PageGuide } from "@/components/ui/page-guide";
+import { RunJobButton } from "@/components/forms/operations-forms";
 import { fmtDate, fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Kanallar" };
@@ -26,11 +28,77 @@ export default async function AdminChannelsPage() {
     prisma.brand.findMany({ select: { id: true, name: true } }),
   ]);
   const brandName = new Map(brands.map((b) => [b.id, b.name]));
+  const [assistants, settings] = await Promise.all([
+    prisma.agentConfig.findMany({ where: { enabled: true }, select: { tenantId: true } }),
+    prisma.tenantSettings.findMany({ select: { tenantId: true, mode: true } }),
+  ]);
+  const readiness = brands.map((b) => {
+    const n = numbers.find((x) => x.tenantId === b.id);
+    const conns = connections.filter((c) => c.tenantId === b.id);
+    return {
+      brand: b,
+      whatsapp: !!n,
+      payment: n?.paymentMethod === "payment_method_confirmed",
+      template: templates.some((t) => t.tenantId === b.id && t.status === "ACTIVE"),
+      instagram: conns.some((c) => c.provider === "INSTAGRAM" && c.status === "ACTIVE"),
+      assistant: assistants.some((a) => a.tenantId === b.id),
+      live: settings.find((x) => x.tenantId === b.id)?.mode === "production",
+    };
+  });
+  const ready = (k: keyof (typeof readiness)[number]) => readiness.filter((r) => r[k]).length;
   const quotas = await Promise.all(numbers.map(async (n) => ({ n, q: await freeTierStatus(n.phoneNumberId) })));
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Kanallar" description={`WhatsApp (Embedded Signup ${EMBEDDED_SIGNUP_VERSION}), Instagram ve Messenger bağlantıları, template sağlığı ve mesaj kotası.`} />
+      <PageHeader
+        title="Kanallar"
+        description={`WhatsApp (Embedded Signup ${EMBEDDED_SIGNUP_VERSION}), Instagram ve Messenger bağlantıları, template sağlığı ve mesaj kotası.`}
+        actions={<RunJobButton job="channel-health" label="Bağlantıları şimdi kontrol et" />}
+      />
+      <PageGuide
+        what="Markaların müşterileriyle WhatsApp ve Instagram üzerinden konuştuğu kanalların kontrol paneli. Her markanın kendi numarası ve bağlantısı olur; mesajlar markanın Gelen kutusu’na düşer, sohbet asistanı ilk cevabı verir."
+        why="Pencere (24 saat) kapandıktan sonra yalnız Meta onaylı template ile yazılabilir; template kalitesi düşerse gönderim otomatik durur. Bu sayfa hangi markanın neyi eksik olduğunu gösterir."
+        steps={[
+          { label: "Marka WhatsApp numarasını bağlar", done: ready("whatsapp") === brands.length && brands.length > 0, hint: `${ready("whatsapp")}/${brands.length} marka · Marka panelinde Kanallar sayfasından` },
+          { label: "Marka WhatsApp Manager’da ödeme yöntemini ekler", done: ready("payment") === brands.length && brands.length > 0, hint: `${ready("payment")}/${brands.length} marka · olmadan mesaj gönderilemez` },
+          { label: "En az bir template Meta onayından geçer", done: ready("template") === brands.length && brands.length > 0, hint: `${ready("template")}/${brands.length} marka` },
+          { label: "Sohbet asistanı açılır ve bilgi tabanı doldurulur", done: ready("assistant") === brands.length && brands.length > 0, hint: `${ready("assistant")}/${brands.length} marka · Agent merkezi → Sohbet asistanları` },
+          { label: "KVKK bildirimi tamamlanıp marka canlı moda geçer", done: ready("live") === brands.length && brands.length > 0, hint: `${ready("live")}/${brands.length} marka · Uyum sayfası` },
+        ]}
+      />
+      <Card interactive={false} className="flex flex-col gap-3">
+        <CardTitle>Marka hazırlık durumu</CardTitle>
+        <table className="w-full text-sm">
+          <caption className="sr-only">Marka bazında kanal hazırlığı</caption>
+          <thead>
+            <tr className="border-b border-border text-left text-fg-muted">
+              <th className="py-2 font-normal">Marka</th>
+              <th className="py-2 font-normal">WhatsApp</th>
+              <th className="py-2 font-normal">Ödeme yöntemi</th>
+              <th className="py-2 font-normal">Onaylı template</th>
+              <th className="py-2 font-normal">Instagram</th>
+              <th className="py-2 font-normal">Asistan</th>
+              <th className="py-2 font-normal">Canlı</th>
+            </tr>
+          </thead>
+          <tbody>
+            {readiness.map((r) => (
+              <tr key={r.brand.id} className="border-b border-border">
+                <td className="py-2">
+                  <a href={`/admin/markalar/${r.brand.id}`} className="hover:underline">
+                    {r.brand.name}
+                  </a>
+                </td>
+                {(["whatsapp", "payment", "template", "instagram", "assistant", "live"] as const).map((k) => (
+                  <td key={k} className="py-2">
+                    <StatusDot tone={r[k] ? "active" : "passive"}>{r[k] ? "Var" : "Yok"}</StatusDot>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2" aria-label="WhatsApp numaraları">
         {quotas.map(({ n, q }) => (

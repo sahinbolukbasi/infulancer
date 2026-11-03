@@ -31,6 +31,16 @@ const deliverableSchema = z.object({
   mentions: z.array(z.string().regex(/^@[\w.]+$/u, { error: "Bahsetmeler @ ile başlamalı." })).max(30),
   baseLink: z.url({ protocol: /^https?$/, error: "Geçerli bir https:// bağlantısı girin." }).max(1000).nullable(),
   disclosureRequired: z.boolean(),
+  frameCount: z.number().int().min(1, { error: "Kare sayısı en az 1." }).max(30),
+  frameTexts: z.array(z.string().max(500)).max(30),
+  paidPartnershipToggle: z.boolean(),
+  commercialContentToggle: z.boolean(),
+  hasAudio: z.boolean(),
+  spokenDisclosure: z.boolean(),
+  isLive: z.boolean(),
+  usageRightsDays: z.number().int().min(0).max(3650).nullable(),
+  usageRightsChannel: z.enum(["ORGANIK", "PAID_DAHIL"]).nullable(),
+  usageRightsGeo: z.array(z.string().regex(/^[A-Z]{2}$/, { error: "Coğrafya ülke kodu olmalı (TR, DE…)." })).max(30),
 });
 
 /** Deliverable oluşturur/günceller. Saatler influencer kitlesinin saat diliminde girilir, UTC saklanır. */
@@ -51,6 +61,16 @@ export async function saveDeliverable(_prev: ActionState, fd: FormData): Promise
         mentions: tags(str(fd, "mentions")).map((m) => (m.startsWith("@") ? m : `@${m}`)),
         baseLink: optStr(fd, "baseLink"),
         disclosureRequired: bool(fd, "disclosureRequired"),
+        frameCount: Number(str(fd, "frameCount") || "1"),
+        frameTexts: str(fd, "frameTexts").split(/\r?\n/).map((l) => l.trim()).filter(Boolean),
+        paidPartnershipToggle: bool(fd, "paidPartnershipToggle"),
+        commercialContentToggle: bool(fd, "commercialContentToggle"),
+        hasAudio: bool(fd, "hasAudio"),
+        spokenDisclosure: bool(fd, "spokenDisclosure"),
+        isLive: bool(fd, "isLive"),
+        usageRightsDays: str(fd, "usageRightsDays") === "" ? null : Number(str(fd, "usageRightsDays")),
+        usageRightsChannel: optStr(fd, "usageRightsChannel"),
+        usageRightsGeo: str(fd, "usageRightsGeo").toUpperCase().split(/[\s,]+/).filter(Boolean),
       },
       {
         platform: "Platform",
@@ -98,6 +118,17 @@ export async function saveDeliverable(_prev: ActionState, fd: FormData): Promise
       hashtags: input.hashtags,
       mentions: input.mentions,
       disclosureRequired: input.disclosureRequired,
+      // Story serisinde md. 23/A kontrolü kare başınadır; kare metinleri kare sayısıyla hizalanır.
+      frameCount: input.contentType === "STORY" ? Math.max(input.frameCount, input.frameTexts.length) : 1,
+      frameTexts: input.contentType === "STORY" ? input.frameTexts : [],
+      paidPartnershipToggle: input.paidPartnershipToggle,
+      commercialContentToggle: input.commercialContentToggle,
+      hasAudio: input.hasAudio,
+      spokenDisclosure: input.spokenDisclosure,
+      isLive: input.isLive || input.contentType === "LIVE",
+      usageRightsDays: input.usageRightsDays,
+      usageRightsChannel: input.usageRightsChannel,
+      usageRightsGeo: input.usageRightsGeo,
     };
     const utm = (deliverableId: string) =>
       input.baseLink

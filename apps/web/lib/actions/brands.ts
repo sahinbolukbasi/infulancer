@@ -9,6 +9,8 @@ import { prisma } from "@infulancer/core/db";
 import { DomainError } from "@infulancer/core/domain/errors";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, optStr, parseInput, revalidateAll, str } from "@/lib/action-utils";
+import { readCategorySelection } from "@/lib/categories";
+import { setBrandCategories } from "@infulancer/core/domain/categories";
 import { requireActor } from "@/lib/auth-guard";
 import { AGENCY_TZ, isDay, zonedToUtc } from "@/lib/time";
 
@@ -44,6 +46,7 @@ export async function saveBrand(_prev: ActionState, fd: FormData): Promise<Actio
   const id = optStr(fd, "id");
   const created: { id?: string } = {};
   const res = await attempt(async () => {
+    const cats = await readCategorySelection(fd);
     const input = parseInput(
       brandSchema,
       {
@@ -55,7 +58,7 @@ export async function saveBrand(_prev: ActionState, fd: FormData): Promise<Actio
         contactPhone: str(fd, "contactPhone"),
         contractRef: optStr(fd, "contractRef"),
         contractStartsAt: optStr(fd, "contractStartsAt"),
-        category: str(fd, "category").toLocaleLowerCase("tr"),
+        category: cats.legacyName,
         competitorBrandIds: fd.getAll("competitorBrandIds").map(String).filter((v) => v && v !== id),
       },
       brandLabels,
@@ -73,9 +76,11 @@ export async function saveBrand(_prev: ActionState, fd: FormData): Promise<Actio
         const exists = await tx.brand.findUnique({ where: { id }, select: { id: true } });
         if (!exists) throw new DomainError("BULUNAMADI", "Marka bulunamadı.");
         await tx.brand.update({ where: { id }, data });
+        await setBrandCategories(tx, id, cats.ids, cats.primaryId);
         await audit.append({ actor: toAuditActor(actor), action: "BRAND_UPDATED", entityType: "Brand", entityId: id, data: input });
       } else {
         const brand = await tx.brand.create({ data });
+        await setBrandCategories(tx, brand.id, cats.ids, cats.primaryId);
         created.id = brand.id;
         await audit.append({ actor: toAuditActor(actor), action: "BRAND_CREATED", entityType: "Brand", entityId: brand.id, data: input });
       }

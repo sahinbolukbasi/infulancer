@@ -12,6 +12,8 @@ import {
   platformLabels,
 } from "@infulancer/core/domain/labels";
 import { AgentRunList } from "@/components/agent/agent-run-list";
+import { SetupSteps } from "@/components/campaign/setup-steps";
+import { campaignSetup } from "@infulancer/core/domain/campaign-setup";
 import { ApproveSummaryButton, RecommendButton } from "@/components/forms/agent-job-forms";
 import { BriefPanel } from "@/components/brief-panel";
 import { KpiBreakdown } from "@/components/campaign/kpi-breakdown";
@@ -82,6 +84,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   const score = computeCampaignScore(campaign, toScoreDeliverables(deliverables), now);
   const brief = campaign.briefs[0];
   const deliverableIds = campaign.assignments.flatMap((a) => a.deliverables.map((d) => d.id));
+  const setup = await campaignSetup(campaign.id);
 
   const [runs, influencers] = await Promise.all([
     prisma.agentRun.findMany({
@@ -278,6 +281,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
                         hashtags: brief?.hashtags ?? [],
                         mentions: brief?.mentions ?? [],
                         disclosureRequired: brief?.disclosureRequired ?? true,
+                        advertiser: campaign.brand.name,
                       }}
                     />
                   </div>
@@ -411,6 +415,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
           </>
         }
       />
+      {setup ? <SetupSteps campaignId={campaign.id} steps={setup.steps} compact /> : null}
       <Tabs
         label="Kampanya bölümleri"
         tabs={[

@@ -1,28 +1,35 @@
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { platformLabels } from "@infulancer/core/domain/labels";
+import { syncSourceLabels } from "@infulancer/core/social/sync";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/form";
+import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
+import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
 import { compact, pct1 } from "@/lib/format";
+import { fmtDate } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Hesaplar" };
+export const dynamic = "force-dynamic";
 
-export default async function InfluencerAccountsPage() {
+const notices: Record<string, string> = {
+  baglandi: "TikTok hesabın bağlandı; istatistiklerin güncellendi.",
+  hata: "TikTok bağlantısı tamamlanamadı. Lütfen tekrar dene.",
+  yapilandirilmadi: "TikTok bağlantısı henüz ajans tarafından etkinleştirilmedi.",
+};
+
+export default async function InfluencerAccountsPage({ searchParams }: { searchParams: Promise<{ tiktok?: string }> }) {
   const actor = await requireActor("INFLUENCER");
-  const accounts = await prisma.socialAccount.findMany({
-    where: { influencerId: actor.influencerId! },
-    orderBy: { platform: "asc" },
-  });
+  const { tiktok } = await searchParams;
+  const accounts = await prisma.socialAccount.findMany({ where: { influencerId: actor.influencerId! }, orderBy: { platform: "asc" } });
+  const tt = accounts.find((a) => a.platform === "TIKTOK");
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Hesaplar"
-        description="Sosyal medya hesapların ve ajansın kayıtlı istatistikleri. Otomatik bağlantı (API) yakında."
-      />
+      <PageHeader title="Hesaplar" description="Sosyal medya hesapların ve güncel istatistiklerin. Instagram ve YouTube verileri ajans tarafından otomatik güncellenir." />
+      {tiktok && notices[tiktok] ? <InfoNote>{notices[tiktok]}</InfoNote> : null}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Sosyal medya hesapları">
         {accounts.map((a) => (
           <Card key={a.id} interactive={false} className="flex flex-col gap-4">
@@ -41,13 +48,25 @@ export default async function InfluencerAccountsPage() {
                 <dd className="text-[24px] font-semibold tabular-nums">{pct1.format(Number(a.engagementRate))}</dd>
               </div>
             </dl>
-            <Button variant="secondary" size="sm" disabled aria-disabled title="Faz 5: platform API bağlantısı">
-              Hesabı bağla (yakında)
-            </Button>
+            <p className="text-[12px] text-fg-passive">
+              {syncSourceLabels[a.syncSource] ?? a.syncSource}
+              {a.lastSyncedAt ? ` · son güncelleme ${fmtDate(a.lastSyncedAt)}` : ""}
+            </p>
           </Card>
         ))}
         {accounts.length === 0 ? <p className="text-sm text-fg-passive">Kayıtlı hesap yok. Ajansınla iletişime geç.</p> : null}
       </section>
+      <Card interactive={false} className="flex flex-col gap-3">
+        <CardTitle>TikTok hesabını bağla</CardTitle>
+        <p className="text-sm text-fg-muted">
+          TikTok istatistikleri yalnız senin onayınla, TikTok’un resmî giriş ekranı üzerinden alınabilir. Şifren bizimle paylaşılmaz; bağlantıyı istediğin zaman TikTok ayarlarından
+          kaldırabilirsin.
+        </p>
+        <ButtonLink href="/api/tiktok/oauth/start" variant={tt?.tokenRef ? "secondary" : "primary"}>
+          {tt?.tokenRef ? "Bağlantıyı yenile" : "TikTok ile bağlan"}
+        </ButtonLink>
+        <p className="text-[12px] text-fg-passive">Kitle demografisi (yaş, cinsiyet, şehir) hiçbir platformun herkese açık API’sinde yok; istatistik ekran görüntüsünü iş sayfasından yükleyebilirsin.</p>
+      </Card>
     </div>
   );
 }

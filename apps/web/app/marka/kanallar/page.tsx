@@ -3,25 +3,25 @@ import { prisma } from "@infulancer/core/db";
 import { ONBOARDING_STEPS } from "@infulancer/core/channels/onboarding";
 import { qualityLabel, statusLabel } from "@infulancer/core/messaging/templates";
 import { planCampaign } from "@infulancer/core/messaging/tiers";
-import { ConfirmPaymentButton, EnableAgentButton, KnowledgeForm, TemplateForm, WhatsAppSignupForm } from "@/components/inbox/inbox-forms";
+import Link from "next/link";
+import { ConfirmPaymentButton, TemplateForm, WhatsAppSignupForm } from "@/components/inbox/inbox-forms";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { PageGuide } from "@/components/ui/page-guide";
 
-export const metadata: Metadata = { title: "Kanallar ve agent'lar" };
+export const metadata: Metadata = { title: "Kanallar" };
 export const dynamic = "force-dynamic";
 
 export default async function BrandChannelsPage() {
   const actor = await requireActor("BRAND");
   const t = actor.brandId!;
-  const [num, templates, catalog, configs, sources, candidates] = await Promise.all([
+  const [num, templates, configs, candidates] = await Promise.all([
     prisma.whatsAppNumber.findUnique({ where: { tenantId: t } }),
     prisma.messageTemplate.findMany({ where: { tenantId: t }, orderBy: { name: "asc" } }),
-    prisma.agentTemplate.findMany({ orderBy: { key: "asc" } }),
     prisma.agentConfig.findMany({ where: { tenantId: t } }),
-    prisma.knowledgeSource.findMany({ where: { tenantId: t, type: { not: "message" } }, orderBy: { createdAt: "desc" }, take: 20 }),
     prisma.influencerCandidate.findMany({ where: { tenantId: t }, orderBy: { createdAt: "desc" }, take: 20 }),
   ]);
   const stepIdx = num ? ONBOARDING_STEPS.findIndex((s) => s.key === (num.paymentMethod === "payment_method_confirmed" ? "done" : num.onboardingStep)) : 0;
@@ -29,7 +29,18 @@ export default async function BrandChannelsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Kanallar ve agent'lar" description="WhatsApp numaranız, template'ler, hazır AI agent'lar ve bilgi tabanı." />
+      <PageHeader title="Kanallar" description="WhatsApp numaranızın kurulumu, mesaj template’leri ve DM’den gelen creator başvuruları." />
+      <PageGuide
+        what="Müşterilerinizle WhatsApp ve Instagram üzerinden konuşmanızı sağlayan kurulum. Kurulum bitince gelen mesajlar Gelen kutusu’na düşer ve asistanınız ilk cevabı verir."
+        why="Müşteri size yazdıktan sonraki 24 saat içinde serbest mesaj yazabilirsiniz; sonrasında yalnız Meta onaylı template gönderilebilir (ücretli). Kampanya duyuruları için İYS onayı gerekir."
+        steps={[
+          { label: "WhatsApp numaranızı bağlayın", done: !!num },
+          { label: "WhatsApp Manager’da ödeme yönteminizi ekleyin", done: num?.paymentMethod === "payment_method_confirmed", hint: "Mesaj ücretlerini Meta doğrudan sizden tahsil eder" },
+          { label: "En az bir template oluşturup Meta onayından geçirin", done: templates.some((x) => x.status === "ACTIVE"), hint: "İnceleme 24 saate kadar sürebilir" },
+          { label: "Sohbet asistanınızı açın ve bilgi tabanını doldurun", done: configs.some((c) => c.enabled), hint: "Asistanlar sayfası" },
+          { label: "Uyum sayfasından KVKK bildirimini tamamlayıp canlıya geçin", done: false, hint: "Uyum sayfası" },
+        ]}
+      />
 
       <Card interactive={false} className="flex flex-col gap-4">
         <CardTitle>WhatsApp kurulumu</CardTitle>
@@ -76,41 +87,17 @@ export default async function BrandChannelsPage() {
           <TemplateForm />
         </Card>
         <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Hazır agent’lar</CardTitle>
-          <ul className="flex flex-col divide-y divide-border">
-            {catalog.map((a) => {
-              const on = configs.find((c) => c.agentId === a.key && c.enabled);
-              return (
-                <li key={a.key} className="flex items-start justify-between gap-3 py-3">
-                  <span className="flex flex-col gap-1">
-                    <span className="text-sm">{a.name}</span>
-                    <span className="text-[13px] text-fg-muted">{a.description}</span>
-                  </span>
-                  {on ? <StatusDot>Etkin</StatusDot> : <EnableAgentButton agentKey={a.key} />}
-                </li>
-              );
-            })}
-          </ul>
-          <p className="text-[13px] text-fg-muted">
-            Agent güveni düşükse, müşteri temsilci isterse, şikâyet/hassas konu varsa veya araç çağrısı başarısız olursa konuşma otomatik olarak bir temsilciye aktarılır; bu durumda AI
-            ücreti alınmaz.
+          <CardTitle>Sohbet asistanları</CardTitle>
+          <p className="text-sm text-fg-muted">
+            {configs.filter((c) => c.enabled).length} asistan açık. Asistanların ayarları, aktarma kuralları ve bilgi tabanı artık “Asistanlar” sayfasında.
           </p>
+          <Link href="/marka/asistanlar" className="text-sm underline-offset-4 hover:underline">
+            Asistanları yönet →
+          </Link>
         </Card>
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Bilgi tabanı</CardTitle>
-          <ul className="flex flex-col text-sm text-fg-muted">
-            {sources.map((s) => (
-              <li key={s.id}>
-                {s.uri} · {s.status}
-              </li>
-            ))}
-          </ul>
-          <KnowledgeForm />
-          <p className="text-[13px] text-fg-muted">Bilgi tabanınız yalnız sizin konuşmalarınızda kullanılır; başka markalarla paylaşılmaz ve model eğitiminde kullanılmaz.</p>
-        </Card>
         <Card interactive={false} className="flex flex-col gap-3">
           <CardTitle>DM’den gelen creator başvuruları</CardTitle>
           {candidates.length === 0 ? (

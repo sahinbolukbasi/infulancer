@@ -2,6 +2,7 @@
 import { ActionForm } from "@/components/forms/action-form";
 import { Button } from "@/components/ui/form";
 import { approveCampaignSummary, recommendCandidates } from "@/lib/actions/agent-jobs";
+import { syncInfluencerAccounts } from "@/lib/actions/influencers";
 
 export function RecommendButton({ campaignId }: { campaignId: string }) {
   return (
@@ -20,6 +21,17 @@ export function ApproveSummaryButton({ runId }: { runId: string }) {
       <input type="hidden" name="id" value={runId} />
       <Button type="submit" size="sm">
         Rapora aktar
+      </Button>
+    </ActionForm>
+  );
+}
+
+export function SyncAccountsButton({ influencerId }: { influencerId: string }) {
+  return (
+    <ActionForm action={syncInfluencerAccounts} aria-label="Hesapları senkronla">
+      <input type="hidden" name="id" value={influencerId} />
+      <Button type="submit" variant="secondary" size="sm">
+        Şimdi senkronla
       </Button>
     </ActionForm>
   );

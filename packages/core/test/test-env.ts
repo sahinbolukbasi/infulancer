@@ -22,6 +22,7 @@ export function testEnv(): Record<string, string> {
     META_API_MODE: "mock",
     IYS_MODE: "mock",
     FAL_MODE: "mock",
+    SOCIAL_SYNC_MODE: "mock",
     C2PA_MODE: "mock",
     OBJECT_STORE: "memory",
     VAULT_MODE: "local",

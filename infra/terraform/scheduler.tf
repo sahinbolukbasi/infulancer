@@ -18,6 +18,7 @@ locals {
     "window-warnings"           = "rate(5 minutes)"
     "ads-budget-batch"          = "cron(0 * * * ? *)"
     "webhook-dedupe-ttl"        = "cron(30 3 * * ? *)"
+    "social-sync"               = "rate(6 hours)"
   } : {}
 }
 
