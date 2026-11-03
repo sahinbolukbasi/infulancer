@@ -11,6 +11,13 @@ locals {
     "target-projection"         = "cron(0 5 * * ? *)"
     "influencer-recommendation" = "cron(0 6 * * ? *)"
     "fake-engagement"           = "cron(0 3 1 * ? *)"
+    "iys-register"              = "rate(1 hour)"
+    "iys-sla"                   = "rate(1 hour)"
+    "kvkk-reminders"            = "cron(0 7 * * ? *)"
+    "channel-health"            = "rate(1 hour)"
+    "window-warnings"           = "rate(5 minutes)"
+    "ads-budget-batch"          = "cron(0 * * * ? *)"
+    "webhook-dedupe-ttl"        = "cron(30 3 * * ? *)"
   } : {}
 }
 

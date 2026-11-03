@@ -5,6 +5,16 @@ resource "random_password" "auth_secret" {
   special = false
 }
 
+resource "random_password" "fal_webhook" {
+  length  = 40
+  special = false
+}
+
+resource "random_password" "meta_verify" {
+  length  = 32
+  special = false
+}
+
 resource "random_password" "seed" {
   length  = 16
   special = false
@@ -27,5 +37,7 @@ resource "aws_secretsmanager_secret_version" "app" {
     AUDIT_DATABASE_URL = "${local.db_base}/infulancer_audit?sslmode=no-verify"
     AUTH_SECRET        = random_password.auth_secret.result
     SEED_PASSWORD      = random_password.seed.result
+    FAL_WEBHOOK_SECRET = random_password.fal_webhook.result
+    META_VERIFY_TOKEN  = random_password.meta_verify.result
   })
 }

@@ -78,6 +78,13 @@ resource "aws_iam_role_policy" "task" {
       { Effect = "Allow", Action = ["s3:ListBucket"], Resource = [aws_s3_bucket.assets.arn] },
       { Effect = "Allow", Action = ["sqs:SendMessage"], Resource = [aws_sqs_queue.agent_events.arn] },
       {
+        # Tenant kanal token'ları (channel_connections.token_ref yalnız ARN tutar)
+        Effect   = "Allow"
+        Action   = ["secretsmanager:CreateSecret", "secretsmanager:PutSecretValue", "secretsmanager:GetSecretValue", "secretsmanager:DeleteSecret", "secretsmanager:TagResource"]
+        Resource = ["arn:aws:secretsmanager:${var.region}:${local.account_id}:secret:${local.name}/tenants/*"]
+      },
+      { Effect = "Allow", Action = ["bedrock:ApplyGuardrail"], Resource = ["*"] },
+      {
         Effect   = "Allow"
         Action   = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream", "bedrock:Converse"]
         Resource = ["arn:aws:bedrock:*::foundation-model/*", "arn:aws:bedrock:*:${local.account_id}:inference-profile/*"]
@@ -110,9 +117,18 @@ locals {
     { name = "AGENCY_IBAN", value = "TR000000000000000000000000" },
     { name = "AGENCY_BIC", value = "NOTPROVIDED" },
     { name = "SEED_ON_START", value = tostring(var.seed_on_start) },
+    # Ek modül: tenant token kasası Secrets Manager'da; dış API'ler kimlik bilgisi girilene kadar mock.
+    { name = "VAULT_MODE", value = "aws" },
+    { name = "VAULT_SECRET_PREFIX", value = "${local.name}/tenants" },
+    { name = "AWS_REGION", value = var.region },
+    { name = "META_API_MODE", value = var.meta_api_mode },
+    { name = "IYS_MODE", value = "mock" },
+    { name = "FAL_MODE", value = "mock" },
+    { name = "C2PA_MODE", value = "mock" },
+    { name = "WEBHOOK_REQUIRE_SIGNATURE", value = "true" },
   ]
   container_secrets = [
-    for k in ["DATABASE_URL", "AUDIT_DATABASE_URL", "AUTH_SECRET", "SEED_PASSWORD"] :
+    for k in ["DATABASE_URL", "AUDIT_DATABASE_URL", "AUTH_SECRET", "SEED_PASSWORD", "FAL_WEBHOOK_SECRET", "META_VERIFY_TOKEN"] :
     { name = k, valueFrom = "${aws_secretsmanager_secret.app.arn}:${k}::" }
   ]
   image = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"

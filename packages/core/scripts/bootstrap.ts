@@ -1,7 +1,8 @@
 /**
  * Konteyner başlangıç yardımcıları (idempotent).
  *   tsx scripts/bootstrap.ts ensure-audit-db   → audit veritabanı yoksa oluşturur
- *   tsx scripts/bootstrap.ts seed-if-empty     → hiç kullanıcı yoksa seed çalıştırır
+ *   tsx scripts/bootstrap.ts seed-if-empty     → hiç kullanıcı yoksa seed çalıştırır;
+ *                                               ek modül verisi yoksa yalnız onu yükler
  */
 import { spawnSync } from "node:child_process";
 import path from "node:path";
@@ -42,6 +43,19 @@ async function seedIfEmpty() {
     await client.end();
   }
   if (users > 0) {
+    const c2 = new pg.Client({ connectionString: requireEnv("DATABASE_URL") });
+    await c2.connect();
+    let cfg = 0;
+    try {
+      cfg = (await c2.query("select count(*)::int as n from config_values")).rows[0]?.n ?? 0;
+    } finally {
+      await c2.end();
+    }
+    if (cfg === 0) {
+      const r = spawnSync("npx", ["tsx", path.join(here, "seed-addon-run.ts")], { stdio: "inherit", cwd: path.resolve(here, "..") });
+      if (r.status !== 0) throw new Error("seed-addon başarısız");
+      return;
+    }
     console.log(`bootstrap: ${users} kullanıcı var, seed atlandı`);
     return;
   }

@@ -74,3 +74,9 @@ variable "enable_agent_schedules" {
   type        = bool
   default     = true
 }
+
+variable "meta_api_mode" {
+  description = "mock | http. http için META_APP_ID/META_APP_SECRET Secrets Manager'a eklenmeli ve App Review tamamlanmış olmalı."
+  type        = string
+  default     = "mock"
+}

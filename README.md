@@ -94,13 +94,53 @@ yeniden uygulayın.
 ## Güvenlik notları
 
 - Sırlar yalnız Secrets Manager'da; repoda gerçek anahtar yoktur. `.env`, `terraform.tfvars`, `*.tfstate` gitignore'dadır.
-- Girişsiz erişilebilen yollar yalnız `/giris` ve `/api/auth/*`. Diğer tüm sayfa/API'ler oturum ve rol kontrolünden geçer.
+- Girişsiz erişilebilen yollar: `/giris`, `/api/auth/*`, `/gizlilik`, `/kullanim-kosullari`, `/fiyatlandirma` ve webhook uçları
+  `/api/webhooks/meta` (X-Hub-Signature-256 imzası, `META_APP_SECRET` tanımlı değilse tüm istekler reddedilir) ve `/api/webhooks/fal`
+  (paylaşılan gizli başlık). Diğer tüm sayfa/API'ler oturum ve rol kontrolünden geçer. Prod'da webhook için API Gateway mTLS önerilir.
 - **Henüz yok:** giriş denemesi sınırı (rate limit), MFA, özel alan adı/WAF. Canlı müşteri verisinden önce eklenmeli.
 - ALB yalnız CloudFront IP aralığından erişilebilir; RDS internete kapalıdır.
 - Dosyalar özel S3 bucket'ında; erişim kısa ömürlü presigned URL ile (varsayılan 15 dk).
 - Audit log ayrı veritabanında, append-only (UPDATE/DELETE tetikleyiciyle engellenir) ve SHA-256 hash zincirli.
 
-## Ertelenenler
+## Ek modül: Kanallar, Agent'lar, Reklam ve Creative
+
+Mevcut platformun üzerine eklenir; tenant = marka (Brand). Ayrıntılı gereksinimler: `.agents/tasks/addon-channels/spec.md` (yerel).
+
+| Alan | Kod | Durum |
+|---|---|---|
+| WhatsApp Embedded Signup v4, Instagram/Messenger bağlantısı, token kasası (Secrets Manager), saatlik sağlık kontrolü | `packages/core/src/channels` | Çalışan kod, Meta çağrıları mock (`META_API_MODE=http` ile gerçek) |
+| Webhook alımı (imza, S3 ham kayıt, her koşulda 200, 7 günlük dedupe, last-write-wins) | `channels/webhook.ts`, `processor.ts`, `/api/webhooks/meta` | Çalışan kod |
+| Pencereler (24 sa / FEP 7 gün / HUMAN_AGENT), template yaşam döngüsü + kalite koruması, kademe planlayıcı, adaptif throttling, maliyet defteri | `src/messaging` | Çalışan kod |
+| Shared inbox, insana aktarma, unsend hard-delete (`DELETE /api/internal/messages/{id}/purge`) | `messaging/inbox.ts`, `purge.ts`, `/marka/gelen-kutusu` | Çalışan kod |
+| Hazır agent kataloğu, pgvector RAG (RLS + WHERE), Guardrails, creator ön eleme | `src/assistant` | Çalışan kod, LLM/embedding mock (Bedrock hazır) |
+| İYS kapısı (RET terminal, 3 iş günü SLA, 422 bölme), KVKK standart sözleşme + makbuz kapısı, md. 23/A kontrolü + kampanya yayın kapısı, politika bayrakları | `src/compliance` | Çalışan kod, İYS entegratörü mock |
+| Vergi profili + 20/B IBAN kilidi (DB trigger) | `domain/tax-profile.ts` | Çalışan kod |
+| Reklam: saatlik bütçe motoru (30 sn / saatte 4 / 100 QPS), kota/skor modeli, Partnership Ads durum modeli | `src/ads` | Kurallar çalışan kod; Marketing API çağrıları iskelet |
+| Creative: model kaydı + lisans kapısı + deprecation yönlendirme, kredi hold/charge, fal kuyruğu, C2PA izi, md. 27/12 engeli | `src/creative` | Kurallar çalışan kod; fal/c2patool mock |
+| TikTok: pre-flight, audit öncesi kısıtlar, DM yok notu | `src/tiktok` | İskelet |
+
+Testler (yerel Postgres + pgvector gerekir, `…_test` veritabanlarını kullanır):
+
+```bash
+npm run test          # 17 kabul kriterinin her biri için en az bir test
+```
+
+Docker yerine Homebrew ile: `brew install postgresql@17 pgvector`, sonra `.env`'deki kullanıcıyla `infulancer`, `infulancer_audit`,
+`infulancer_test`, `infulancer_test_audit` veritabanlarını oluşturun.
+
+Canlıya almadan önce sizin tarafınızda kalanlar (kod değil): Meta Business Verification ve App Review, Meta app (WhatsApp use case),
+fal'dan FLUX lisansı için yazılı teyit, İYS entegratör hesabı, Ticaret Bakanlığı'ndan İYS/WhatsApp kapsamı görüşü, mali müşavir görüşü
+(fatura kesemeyen creator), Meta'nın kendi Türkiye tarife kartı, X-Hub-Signature-256 ve fal webhook imza şemasının teyidi.
+
+Ertelenenler: TikTok outbound DM (API yok), TikTok One / Creator Marketplace API (davet kapılı), audit öncesi TikTok public branded content,
+Messenger 24 saat dışı re-engagement (tag'ler kaldırıldı), AgentCore Memory, kendi İYS entegratörlüğü, BSP olup mesaj satmak,
+TikTok izlenme süresi/demografi (public API'de yok), YouTube/X etiket mekanikleri (doğrulanmadı). Embedded Signup penceresinin (Meta JS SDK)
+kendisi, App Review için Meta app kimliği gerektirdiğinden henüz bağlanmadı; panelde manuel giriş formu var.
+
+Not: tenant kanal token'ları Terraform dışında, `infulancer-prod/tenants/*` adıyla Secrets Manager'da oluşturulur; `terraform destroy`
+bunları silmez.
+
+## Ertelenenler (çekirdek platform)
 
 - **Faz 5 — platform API bağlantıları** (Instagram Graph, TikTok Display, YouTube Data): arayüz ve iskelet
   hazır (`packages/core/src/connectors`), "Hesabı bağla (yakında)" butonu pasif. Gerçek uygulama App Review,

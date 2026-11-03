@@ -2,7 +2,8 @@ name: infulancer
 
 services:
   postgres:
-    image: postgres:16.4-alpine
+    # pgvector eklentili Postgres 16 (RAG bilgi tabanı). RDS Postgres 16 pgvector'ü yerleşik destekler.
+    image: pgvector/pgvector:0.8.0-pg16
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-infulancer}
