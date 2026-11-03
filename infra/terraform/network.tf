@@ -82,7 +82,7 @@ resource "aws_security_group" "app" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "ALB'den uygulama portu"
+    description     = "Uygulama portu (ALB)"
     from_port       = 3000
     to_port         = 3000
     protocol        = "tcp"
