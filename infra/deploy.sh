@@ -12,9 +12,17 @@ TAG="$(git -C "$ROOT" rev-parse --short HEAD)"
 VARS=(-var "aws_profile=$PROFILE" -var "region=$REGION" -var "image_tag=$TAG")
 export AWS_PROFILE="$PROFILE" AWS_REGION="$REGION"
 
-echo "==> 1/4 Altyapı (web görevi 0 ile)"
+echo "==> 1/4 Altyapı"
 $TF init -input=false >/dev/null
-$TF apply -input=false -auto-approve "${VARS[@]}" -var app_desired_count=0
+# Kesintisiz: servis zaten çalışıyorsa altyapı güncellemesi mevcut imajla yapılır, yeni imaj derlendikten
+# sonra rolling update ile geçilir. İlk kurulumda web görevi 0 ile başlar (henüz imaj yok).
+CUR_IMAGE="$(aws ecs describe-services --cluster infulancer-prod --services infulancer-prod-web --query 'services[0].taskDefinition' --output text 2>/dev/null | xargs -I{} aws ecs describe-task-definition --task-definition {} --query 'taskDefinition.containerDefinitions[0].image' --output text 2>/dev/null || true)"
+if [[ "$CUR_IMAGE" == *:* && "$CUR_IMAGE" != "None" ]]; then
+  CUR_TAG="${CUR_IMAGE##*:}"
+  $TF apply -input=false -auto-approve -var "aws_profile=$PROFILE" -var "region=$REGION" -var "image_tag=$CUR_TAG" -var app_desired_count=1
+else
+  $TF apply -input=false -auto-approve "${VARS[@]}" -var app_desired_count=0
+fi
 
 BUILD_BUCKET="$(aws s3api list-buckets --query "Buckets[?starts_with(Name, 'infulancer-prod-build-')].Name | [0]" --output text)"
 PROJECT="infulancer-prod-image"
