@@ -24,6 +24,45 @@
   --animate-draw: draw 900ms cubic-bezier(0.4, 0, 0.2, 1) both;
   --animate-modal-in: modal-in 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
   --animate-fill: fill 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-reel-progress: reel-progress 6s linear infinite;
+  --animate-reel-pan: reel-pan 12s ease-in-out infinite alternate;
+  --animate-float: float 5s ease-in-out infinite;
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes reel-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @keyframes reel-pan {
+    from {
+      background-position: 0% 0%;
+      transform: scale(1.05);
+    }
+    to {
+      background-position: 100% 100%;
+      transform: scale(1.15);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
 
   @keyframes fill {
     from {

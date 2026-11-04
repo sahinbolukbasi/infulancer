@@ -5,6 +5,8 @@ import { requiredRoleForPath, roleHome } from "./lib/roles";
 
 const { auth } = NextAuth(authConfig);
 const PUBLIC_PATHS = new Set(["/gizlilik", "/kullanim-kosullari", "/fiyatlandirma"]);
+/** Tanıtım sayfası: ziyaretçiye açık; girişli kullanıcıyı sayfa kendi rol ana sayfasına yönlendirir. */
+const LANDING = "/";
 
 /**
  * Oturum ve rol öneki kontrolü. Herkese açık: /giris, /api/auth/*, yasal sayfalar (/gizlilik,
@@ -17,6 +19,7 @@ export default auth((req) => {
   const user = req.auth?.user;
 
   if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/webhooks/")) return NextResponse.next();
+  if (pathname === LANDING && !user?.role) return NextResponse.next();
   const pending = !!user?.role && user.status && user.status !== "ACTIVE";
   if (pathname === "/onay-bekliyor") return user?.role ? NextResponse.next() : NextResponse.redirect(new URL("/giris", req.nextUrl));
   if (pathname === "/kayit") return user?.role ? NextResponse.redirect(new URL(pending ? "/onay-bekliyor" : roleHome[user.role], req.nextUrl)) : NextResponse.next();
@@ -47,5 +50,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|ico|webp)$).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|ico|webp|mp4|webm)$).*)"],
 };
