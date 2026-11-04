@@ -29,7 +29,7 @@ export function CategoryEditForm({
         </Field>
         <Field label="Sıra">{(p) => <Input {...p} name="sort" type="number" min={0} max={9999} defaultValue={category?.sort ?? 500} />}</Field>
         <label className="flex items-end gap-2 pb-2 text-sm text-fg-muted">
-          <input type="checkbox" name="active" defaultChecked={category?.active ?? true} className="h-4 w-4 accent-[#fafafa]" />
+          <input type="checkbox" name="active" defaultChecked={category?.active ?? true} className="h-4 w-4 accent-[var(--color-fg)]" />
           Aktif
         </label>
       </div>

@@ -150,7 +150,7 @@ export function Spotlight({ children, className }: { children: ReactNode; classN
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover/spot:opacity-100"
-        style={{ background: "radial-gradient(600px circle at var(--sx, 50%) var(--sy, 50%), rgba(167,139,250,0.14), transparent 40%)" }}
+        style={{ background: "radial-gradient(600px circle at var(--sx, 50%) var(--sy, 50%), rgba(157,77,255,0.16), transparent 40%)" }}
       />
       {children}
     </div>

@@ -114,7 +114,7 @@ function SelectionTable({
         <thead className="bg-surface">
           <tr className="border-b border-border text-left text-label text-fg-muted">
             <th scope="col" className="w-10 px-4 py-3">
-              <input type="checkbox" checked={all} onChange={toggleAll} aria-label="Tümünü seç" className="accent-[#FAFAFA]" />
+              <input type="checkbox" checked={all} onChange={toggleAll} aria-label="Tümünü seç" className="accent-[var(--color-fg)]" />
             </th>
             <th scope="col" className="px-4 py-3 font-medium">Influencer</th>
             <th scope="col" className="px-4 py-3 text-right font-medium">Tutar</th>
@@ -134,7 +134,7 @@ function SelectionTable({
                   checked={selected.has(r.id)}
                   onChange={() => toggle(r.id)}
                   aria-label={`${r.influencer} ${fmt(r.amountKurus)} seç`}
-                  className="accent-[#FAFAFA]"
+                  className="accent-[var(--color-fg)]"
                 />
               </td>
               <td className="px-4 py-3">

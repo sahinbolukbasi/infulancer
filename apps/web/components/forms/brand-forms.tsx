@@ -58,7 +58,7 @@ export function BrandForm({ brand, otherBrands, categories }: { brand?: BrandFor
                   name="competitorBrandIds"
                   value={b.id}
                   defaultChecked={brand?.competitorBrandIds.includes(b.id)}
-                  className="h-4 w-4 accent-[#fafafa]"
+                  className="h-4 w-4 accent-[var(--color-fg)]"
                 />
                 {b.name} <span className="text-fg-passive">· {b.category}</span>
               </label>

@@ -161,7 +161,7 @@ export function LandingEditor({ initial, tones, creatorTones }: { initial: Landi
                     </Select>
                   </L>
                   <label className="flex items-center gap-2 text-sm text-fg-muted md:col-span-2">
-                    <input type="checkbox" checked={v.sponsored} onChange={(e) => setVideo(i, { sponsored: e.target.checked })} className="h-4 w-4 accent-[#fafafa]" />
+                    <input type="checkbox" checked={v.sponsored} onChange={(e) => setVideo(i, { sponsored: e.target.checked })} className="h-4 w-4 accent-[var(--color-fg)]" />
                     Reklam / işbirliği içeriği (&quot;Reklam&quot; etiketi göster)
                   </label>
                 </div>
@@ -240,11 +240,11 @@ export function LandingEditor({ initial, tones, creatorTones }: { initial: Landi
               </div>
               <div className="flex flex-wrap gap-6 text-sm text-fg-muted">
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={r.sample} onChange={(e) => setRef(i, { sample: e.target.checked })} className="h-4 w-4 accent-[#fafafa]" />
+                  <input type="checkbox" checked={r.sample} onChange={(e) => setRef(i, { sample: e.target.checked })} className="h-4 w-4 accent-[var(--color-fg)]" />
                   Örnek çalışma (gerçek müşteri değil)
                 </label>
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={r.visible} onChange={(e) => setRef(i, { visible: e.target.checked })} className="h-4 w-4 accent-[#fafafa]" />
+                  <input type="checkbox" checked={r.visible} onChange={(e) => setRef(i, { visible: e.target.checked })} className="h-4 w-4 accent-[var(--color-fg)]" />
                   Sitede göster
                 </label>
               </div>

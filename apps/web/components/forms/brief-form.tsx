@@ -42,7 +42,7 @@ export function BriefForm({ campaignId, latest, nextVersion }: { campaignId: str
         </Field>
       </div>
       <label className="flex items-center gap-2 text-sm text-fg-muted">
-        <input type="checkbox" name="disclosureRequired" defaultChecked={latest?.disclosureRequired ?? true} className="h-4 w-4 accent-[#fafafa]" />
+        <input type="checkbox" name="disclosureRequired" defaultChecked={latest?.disclosureRequired ?? true} className="h-4 w-4 accent-[var(--color-fg)]" />
         Reklam/işbirliği ibaresi zorunlu
       </label>
     </ActionForm>

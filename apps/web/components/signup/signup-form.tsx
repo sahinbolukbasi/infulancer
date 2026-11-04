@@ -41,7 +41,7 @@ export function SignupForm({ code, kind, categories }: { code: string; kind: "IN
         {(p) => <Textarea {...p} name="about" rows={3} maxLength={1000} />}
       </Field>
       <label className="flex items-start gap-2 text-[13px] text-fg-muted">
-        <input type="checkbox" name="acceptTerms" required className="mt-0.5 h-4 w-4 accent-[#fafafa]" />
+        <input type="checkbox" name="acceptTerms" required className="mt-0.5 h-4 w-4 accent-[var(--color-fg)]" />
         <span>
           <Link href="/kullanim-kosullari" target="_blank" className="underline underline-offset-4">
             Kullanım koşullarını

@@ -3,7 +3,7 @@ import { useActionState, useState } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { Field, Input } from "@/components/ui/form";
 import { loginAction, type LoginState } from "./actions";
-const inputCls = "h-12 rounded-xl border-white/10 bg-black/30 text-[15px] focus:border-fuchsia-300/60";
+const inputCls = "h-12 rounded-xl border-line bg-glass-strong text-[15px] focus:border-neon-pink/60";
 export function LoginForm({ next }: { next: string | null }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(loginAction, { error: null, email: "" });
   const [show, setShow] = useState(false);
@@ -42,7 +42,7 @@ export function LoginForm({ next }: { next: string | null }) {
               onClick={() => setShow((v) => !v)}
               aria-label={show ? "Şifreyi gizle" : "Şifreyi göster"}
               aria-pressed={show}
-              className="absolute top-1/2 right-2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-fg-muted hover:bg-white/10 hover:text-fg"
+              className="absolute top-1/2 right-2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-hover hover:text-fg"
             >
               {show ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
             </button>
@@ -55,9 +55,9 @@ export function LoginForm({ next }: { next: string | null }) {
       <button
         type="submit"
         disabled={pending}
-        className="group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl text-[15px] font-medium text-black transition-transform duration-300 hover:scale-[1.01] disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+        className="group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl text-[15px] font-medium text-black transition-transform duration-300 hover:scale-[1.01] disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neon-pink"
       >
-        <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,#f0abfc,#a78bfa,#60a5fa,#34d399,#f0abfc)] bg-[length:300%_100%] animate-gradient-x" />
+        <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] bg-[length:300%_100%] animate-gradient-x" />
         <span className="relative">{pending ? "Giriş yapılıyor…" : "Giriş yap →"}</span>
       </button>
     </form>

@@ -86,10 +86,10 @@ export function ReviewApplicationForm({ id, isBrand, brands }: { id: string; isB
       <input type="hidden" name="decision" value={mode} />
       <div className="flex gap-4 text-sm">
         <label className="flex items-center gap-2">
-          <input type="radio" checked={mode === "approve"} onChange={() => setMode("approve")} className="accent-[#fafafa]" /> Onayla
+          <input type="radio" checked={mode === "approve"} onChange={() => setMode("approve")} className="accent-[var(--color-fg)]" /> Onayla
         </label>
         <label className="flex items-center gap-2">
-          <input type="radio" checked={mode === "reject"} onChange={() => setMode("reject")} className="accent-[#fafafa]" /> Reddet
+          <input type="radio" checked={mode === "reject"} onChange={() => setMode("reject")} className="accent-[var(--color-fg)]" /> Reddet
         </label>
       </div>
       {mode === "approve" && isBrand ? (

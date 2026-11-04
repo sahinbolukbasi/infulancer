@@ -52,7 +52,7 @@ export function AssistantForm({ values, tenantId }: { values: AssistantValues; t
       <input type="hidden" name="agentId" value={values.agentId} />
       {tenantId ? <input type="hidden" name="tenantId" value={tenantId} /> : null}
       <label className="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" name="enabled" defaultChecked={values.enabled} className="h-4 w-4 accent-[#fafafa]" />
+        <input type="checkbox" name="enabled" defaultChecked={values.enabled} className="h-4 w-4 accent-[var(--color-fg)]" />
         Asistan açık (kapalıysa gelen mesajlar doğrudan temsilciye düşer)
       </label>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -79,7 +79,7 @@ export function AssistantForm({ values, tenantId }: { values: AssistantValues; t
         <div className="flex flex-wrap items-center gap-3">
           {DAYS.map((d, i) => (
             <label key={d} className="flex items-center gap-1 text-[13px] text-fg-muted">
-              <input type="checkbox" name="days" value={i} defaultChecked={values.days.includes(i)} className="h-4 w-4 accent-[#fafafa]" />
+              <input type="checkbox" name="days" value={i} defaultChecked={values.days.includes(i)} className="h-4 w-4 accent-[var(--color-fg)]" />
               {d}
             </label>
           ))}

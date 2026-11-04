@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CountUp, Reveal, RevealRoot, RotatingWord, Spotlight, Tilt } from "@/components/landing/motion";
+import { CountUp, Reveal, RevealRoot, Spotlight, Tilt } from "@/components/landing/motion";
 import { ReelCard } from "@/components/landing/reel-card";
 import { ScrollDemo } from "@/components/landing/scroll-demo";
+import { AudienceHero } from "@/components/landing/audience-hero";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { LANDING_FEATURES, type LandingReference, type LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
 
@@ -14,12 +16,12 @@ function GlowButton({ href, children, className }: { href: string; children: Rea
     <Link
       href={href}
       className={cn(
-        "group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-full px-7 text-[15px] font-medium text-black transition-transform duration-300 hover:scale-[1.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white",
+        "group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-full px-7 text-[15px] font-medium text-fg transition-transform duration-300 hover:scale-[1.03] hover:text-black neon-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neon-pink",
         className,
       )}
     >
-      <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,#f0abfc,#a78bfa,#60a5fa,#34d399,#f0abfc)] bg-[length:300%_100%] animate-gradient-x" />
-      <span aria-hidden className="absolute inset-[2px] rounded-full bg-white/90 transition-opacity duration-300 group-hover:opacity-0" />
+      <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] bg-[length:300%_100%] animate-gradient-x" />
+      <span aria-hidden className="absolute inset-[2px] rounded-full bg-canvas/90 transition-opacity duration-300 group-hover:opacity-0" />
       <span className="relative">{children}</span>
     </Link>
   );
@@ -29,7 +31,7 @@ function GhostButton({ href, children }: { href: string; children: ReactNode }) 
   return (
     <a
       href={href}
-      className="inline-flex h-12 items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 text-[15px] text-fg backdrop-blur transition-standard hover:border-white/40 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+      className="inline-flex h-12 items-center justify-center rounded-full border border-line-strong bg-glass px-7 text-[15px] text-fg backdrop-blur transition-standard hover:border-line-strong hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neon-pink"
     >
       {children}
     </a>
@@ -41,7 +43,7 @@ function FloatChip({ className, dot, children, delay = 0 }: { className?: string
   return (
     <div
       aria-hidden
-      className={cn("absolute z-20 flex items-center gap-2 rounded-2xl border border-white/10 bg-black/60 px-3 py-2 text-[12px] text-white backdrop-blur-md animate-pop", className)}
+      className={cn("absolute z-20 flex items-center gap-2 rounded-2xl border border-line bg-glass-strong px-3 py-2 text-[12px] text-fg backdrop-blur-md animate-pop", className)}
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className="relative flex h-2 w-2">
@@ -56,7 +58,7 @@ function FloatChip({ className, dot, children, delay = 0 }: { className?: string
 function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: ReactNode; text?: string }) {
   return (
     <Reveal className="mb-12 flex flex-col items-center gap-4 text-center">
-      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] tracking-wide text-fg-muted uppercase">{eyebrow}</span>
+      <span className="rounded-full border border-line bg-glass px-3 py-1 text-[12px] tracking-wide text-fg-muted uppercase">{eyebrow}</span>
       <h2 className="max-w-3xl text-[34px] leading-tight font-semibold tracking-tight sm:text-[48px]">{title}</h2>
       {text ? <p className="max-w-2xl text-fg-muted">{text}</p> : null}
     </Reveal>
@@ -97,7 +99,7 @@ function FeatureVisual({ i }: { i: number }) {
   if (i === 3)
     return (
       <div aria-hidden className="flex h-24 flex-col justify-center gap-2 text-[12px]">
-        <span className="w-fit rounded-2xl rounded-bl-sm bg-white/10 px-3 py-1.5">Kampanya kodu nedir?</span>
+        <span className="w-fit rounded-2xl rounded-bl-sm bg-surface-hover px-3 py-1.5">Kampanya kodu nedir?</span>
         <span className="ml-auto w-fit rounded-2xl rounded-br-sm bg-violet-500/30 px-3 py-1.5">
           Yazıyor<span className="animate-blink">…</span>
         </span>
@@ -107,7 +109,7 @@ function FeatureVisual({ i }: { i: number }) {
     return (
       <div aria-hidden className="flex h-24 flex-col justify-center gap-2">
         {[80, 55, 92].map((w, k) => (
-          <span key={k} className="h-2 overflow-hidden rounded-full bg-white/10">
+          <span key={k} className="h-2 overflow-hidden rounded-full bg-surface-hover">
             <span className="block h-full origin-left rounded-full bg-gradient-to-r from-amber-400 to-rose-400 animate-fill" style={{ width: `${w}%`, animationDelay: `${k * 200}ms` }} />
           </span>
         ))}
@@ -138,6 +140,51 @@ const INTEGRATIONS: { name: string; kind: string; text: string; tone: string; so
   { name: "Meta ortaklık reklamları", kind: "Reklam", text: "Üreticinin içeriğini onun adıyla ortaklık reklamı olarak yayınlayın.", tone: "from-blue-600 to-violet-400", soon: true },
   { name: "TikTok Spark Ads", kind: "Reklam", text: "Üreticinin videosunu kendi hesabından Spark Ads ile öne çıkarın.", tone: "from-fuchsia-600 to-cyan-400", soon: true },
 ];
+const SEGMENTS = [
+  {
+    badgeText: "Ajanslar",
+    title: "Operasyonu ölçeklendirin",
+    text: "Onlarca markayı ve yüzlerce içerik üreticisini aynı ekipte, aynı kurallarla yönetin.",
+    items: ["Marka profili: geçmiş kampanyalar, tahsilat, brüt fark", "Çoklu atama, sözleşme ve münhasırlık", "Kullanıcı, rol ve davet yönetimi"],
+    href: "/giris",
+    cta: "Ajans paneli",
+    badge: "bg-neon-pink",
+    dot: "bg-neon-pink",
+    blob: "bg-neon-pink",
+    glow: "hover:neon-glow",
+  },
+  {
+    badgeText: "Markalar",
+    title: "Kontrol sizde kalsın",
+    text: "Hangi içeriğin ne zaman yayınlanacağını görün, onaylayın ve sonuçları raporlayın.",
+    items: ["Taslak onayı, revizyon, yayın takvimi", "Kampanya skoru ve PDF rapor", "Gelen kutusu, asistanlar, İYS ve KVKK"],
+    href: "/giris",
+    cta: "Marka paneli",
+    badge: "bg-neon-cyan",
+    dot: "bg-neon-cyan",
+    blob: "bg-neon-cyan",
+    glow: "hover:neon-glow-cyan",
+  },
+  {
+    badgeText: "İçerik üreticileri",
+    title: "İşine odaklan",
+    text: "Teklifler, brief'ler, teslim tarihleri ve ödemeler tek yerde; takipçi verilerin otomatik güncellenir.",
+    items: ["Teklif kabul/red ve brief", "Hakediş ve çekim talebi", "Davet kodu ile başka üreticileri davet"],
+    href: "/kayit",
+    cta: "Davet koduyla katıl",
+    badge: "bg-neon-lime",
+    dot: "bg-neon-lime",
+    blob: "bg-neon-lime",
+    glow: "hover:neon-glow-cyan",
+  },
+];
+const FAQ = [
+  { q: "Kimler üye olabilir?", a: "Üyelik davetle açılır. Ajans marka ve içerik üreticisi davet eder; içerik üreticileri de sınırlı sayıda başka üreticiyi davet edebilir. Her başvuru ajans onayından sonra etkinleşir." },
+  { q: "Takipçi ve etkileşim verileri nereden geliyor?", a: "Instagram, TikTok ve YouTube'un resmî API'lerinden. Kazıma (scraping) yapılmaz; hesap bağlanmadıysa elle girilen değerler korunur." },
+  { q: "Reklam açıklaması ve yasal uyum nasıl sağlanıyor?", a: "Yayın öncesi içerikte #reklam/#işbirliği etiketi, story kareleri ve platform açıklama ayarları kontrol edilir. WhatsApp iletileri için İYS onayı, yurt dışı aktarım için KVKK kayıtları tutulur." },
+  { q: "İçerik üreticisine ödeme nasıl yapılıyor?", a: "Yayınlanan ve onaylanan işler hakediş oluşturur. İçerik üreticisi çekim talebi açar; ajans onaylayıp ödeme listesine alır. Vergi profiline göre kesintiler hesaplanır." },
+  { q: "Verilerim güvende mi?", a: "Veriler AWS Frankfurt bölgesinde şifreli tutulur; erişim anahtarları Secrets Manager'dadır. Denetim kaydı değiştirilemez ve her işlem kimin yaptığıyla saklanır." },
+];
 const FEATURE_TONES = [
   "from-violet-500/20",
   "from-sky-500/20",
@@ -164,7 +211,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
   ];
   const creators = [...data.creators, ...data.creators];
   return (
-    <RevealRoot className="min-h-screen overflow-x-clip bg-[#06060a] text-fg">
+    <RevealRoot className="min-h-screen overflow-x-clip bg-canvas text-fg">
       {/* İlk boyamadan önce: kaydırma animasyonları JS varken etkin (JS yoksa içerik görünür kalır). */}
       <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js-reveal')" }} />
       <a href="#icerik" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded focus:bg-fg focus:px-3 focus:py-2 focus:text-bg">
@@ -173,15 +220,15 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
       {/* Üst menü */}
       <header className="fixed inset-x-0 top-4 z-50 px-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/40 py-2 pr-2 pl-5 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-line bg-glass-strong py-2 pr-2 pl-5 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
-            <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#f0abfc,#a78bfa,#60a5fa,#34d399,#f0abfc)] animate-spin-slow" />
+            <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] animate-spin-slow" />
             Infulancer
           </Link>
           <nav aria-label="Tanıtım" className="hidden gap-7 text-sm text-fg-muted md:flex">
             {[
+              ["#kimler-icin", "Kimler için"],
               ["#ureticiler", "Üreticiler"],
-              ["#icerikler", "İçerikler"],
               ["#nasil", "Nasıl çalışır"],
               ["#entegrasyonlar", "Entegrasyonlar"],
               ["#referanslar", "Referanslar"],
@@ -194,9 +241,12 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
               Fiyatlandırma
             </Link>
           </nav>
-          <Link href="/giris" className="inline-flex h-9 items-center rounded-full bg-white px-4 text-sm font-medium text-black transition-transform hover:scale-105">
-            Giriş yap
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link href="/giris" className="inline-flex h-9 items-center rounded-full bg-fg px-4 text-sm font-medium text-bg transition-transform hover:scale-105">
+              Giriş yap
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -211,43 +261,9 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
           </div>
           <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 pt-36 pb-24 lg:grid-cols-[1.1fr_1fr] lg:pt-44">
             <div className="flex flex-col gap-7">
-              <Reveal>
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] text-fg-muted backdrop-blur">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 animate-ping-slow" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                  </span>
-                  Influencer ve UGC kampanyaları için
-                </span>
-              </Reveal>
-              <Reveal delay={80}>
-                <h1 className="text-[46px] leading-[1.02] font-semibold tracking-[-0.03em] sm:text-[68px]">
-                  İçerik üreticileriyle
-                  <br />
-                  ölçülebilir <RotatingWord words={["erişim.", "etkileşim.", "satış.", "güven."]} />
-                </h1>
-              </Reveal>
-              <Reveal delay={160}>
-                <p className="max-w-xl text-lg leading-relaxed text-fg-muted">
-                  Brief&apos;ten yayına, ölçümden ödemeye kadar tüm kampanyanızı tek panelden yönetin. Markalar sonuçları canlı izler, içerik üreticileri işlerini ve
-                  ödemelerini takip eder.
-                </p>
-              </Reveal>
-              <Reveal delay={240} className="flex flex-col gap-4">
-                <div className="flex flex-wrap gap-3">
-                  <GlowButton href="/giris">Panele giriş yap →</GlowButton>
-                  <GhostButton href="#nasil">Demoyu kaydırarak izle</GhostButton>
-                </div>
-                <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-fg-muted">
-                  {["Resmî Instagram, TikTok, YouTube API", "KVKK ve İYS uyumlu", "md. 23/A reklam kontrolü"].map((t) => (
-                    <li key={t} className="flex items-center gap-1.5">
-                      <span className="text-emerald-300">✓</span> {t}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
+              <AudienceHero />
               <Reveal delay={320}>
-                <dl className="mt-2 grid grid-cols-2 gap-6 border-t border-white/10 pt-6 sm:grid-cols-4">
+                <dl className="mt-2 grid grid-cols-2 gap-6 border-t border-line pt-6 sm:grid-cols-4">
                   {statItems.map((s) => (
                     <div key={s.label} className="flex flex-col gap-1">
                       <dt className="text-[12px] text-fg-passive">{s.label}</dt>
@@ -261,7 +277,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
             </div>
 
             <Reveal delay={200} className="relative mx-auto h-[560px] w-full max-w-[460px]">
-              <div aria-hidden className="absolute inset-10 rounded-full bg-[conic-gradient(from_0deg,#f0abfc33,#60a5fa33,#34d39933,#f0abfc33)] blur-2xl animate-spin-slow" />
+              <div aria-hidden className="absolute inset-10 rounded-full bg-[conic-gradient(from_0deg,#ff2bd633,#00e5ff33,#a3ff1233,#ff2bd633)] blur-2xl animate-spin-slow" />
               <div className="absolute top-16 left-0 z-10 w-[46%] -rotate-6">
                 <Tilt>
                   <ReelCard video={vid(0)} />
@@ -269,7 +285,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
               </div>
               <div className="absolute top-0 left-1/2 z-20 w-[50%] -translate-x-1/2">
                 <Tilt>
-                  <ReelCard video={vid(1)} delay={1200} className="ring-1 ring-white/20" />
+                  <ReelCard video={vid(1)} delay={1200} className="ring-1 ring-line-strong" />
                 </Tilt>
               </div>
               <div className="absolute top-20 right-0 z-10 w-[46%] rotate-6">
@@ -291,11 +307,11 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         </Spotlight>
 
         {/* Kayan içerik üreticileri */}
-        <section aria-label="Platformdaki içerik üreticileri" className="relative border-y border-white/10 py-8 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
+        <section aria-label="Platformdaki içerik üreticileri" className="relative border-y border-line py-8 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
           {[false, true].map((rev) => (
             <div key={String(rev)} className={cn("flex w-max gap-4", rev ? "mt-4 animate-marquee-reverse" : "animate-marquee")} aria-hidden={rev || undefined}>
               {creators.map((c, k) => (
-                <div key={`${c.handle}-${k}`} className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] py-2 pr-5 pl-2" aria-hidden={k >= data.creators.length || undefined}>
+                <div key={`${c.handle}-${k}`} className="flex items-center gap-3 rounded-full border border-line bg-glass py-2 pr-5 pl-2" aria-hidden={k >= data.creators.length || undefined}>
                   <span className={cn("h-9 w-9 rounded-full bg-gradient-to-br", c.tone)} />
                   <span className="flex flex-col leading-tight">
                     <span className="text-sm text-fg">{c.handle}</span>
@@ -309,6 +325,36 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
           ))}
         </section>
 
+        {/* Kimler için: ajans / marka / içerik üreticisi */}
+        <section id="kimler-icin" className="mx-auto max-w-6xl px-6 pt-28">
+          <SectionTitle eyebrow="Kimler için" title="Üç taraf, tek platform" text="Her rol yalnız kendi ihtiyacını görür; veriler aynı kaynaktan gelir." />
+          <ul className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {SEGMENTS.map((g, i) => (
+              <Reveal as="li" key={g.title} delay={i * 120}>
+                <Tilt max={6} className="h-full">
+                  <div className={cn("group relative flex h-full flex-col gap-5 overflow-hidden rounded-3xl border border-line bg-glass p-7 transition-all duration-300 hover:border-transparent", g.glow)}>
+                    <div aria-hidden className={cn("absolute -top-24 -right-24 h-56 w-56 rounded-full opacity-40 blur-3xl transition-opacity duration-500 group-hover:opacity-80", g.blob)} />
+                    <span className={cn("relative w-fit rounded-full px-3 py-1 text-[12px] font-semibold text-black", g.badge)}>{g.badgeText}</span>
+                    <h3 className="relative text-[26px] leading-tight font-semibold tracking-tight">{g.title}</h3>
+                    <p className="relative text-sm leading-relaxed text-fg-muted">{g.text}</p>
+                    <ul className="relative flex flex-col gap-2 text-[14px]">
+                      {g.items.map((it) => (
+                        <li key={it} className="flex items-start gap-2">
+                          <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", g.dot)} />
+                          {it}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link href={g.href} className="relative mt-auto inline-flex w-fit items-center gap-1 text-sm font-medium text-fg underline-offset-4 hover:underline">
+                      {g.cta} →
+                    </Link>
+                  </div>
+                </Tilt>
+              </Reveal>
+            ))}
+          </ul>
+        </section>
+
         {/* İçerik üreticileri */}
         <section id="ureticiler" className="mx-auto max-w-6xl px-6 pt-28">
           <SectionTitle eyebrow="Platformdaki içerik üreticileri" title="Markana uygun profili keşfet" text="Takipçi, etkileşim, şehir ve kategoriye göre karşılaştır; birlikte çalıştığı markaları gör." />
@@ -316,19 +362,19 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
             {data.creators.slice(0, 8).map((c, i) => (
               <Reveal as="li" key={`${c.handle}-${i}`} delay={(i % 4) * 90}>
                 <Tilt max={8} className="h-full">
-                  <div className="group flex h-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5 transition-colors duration-300 hover:border-white/25">
+                  <div className="group flex h-full flex-col gap-4 rounded-3xl border border-line bg-glass p-5 transition-colors duration-300 hover:border-line-strong">
                     <div className="flex items-center gap-3">
                       <span className="relative">
-                        <span aria-hidden className={cn("block h-12 w-12 rounded-full bg-gradient-to-br ring-2 ring-white/10", c.tone)} />
-                        <span aria-hidden className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full border-2 border-[#06060a] bg-emerald-400" />
+                        <span aria-hidden className={cn("block h-12 w-12 rounded-full bg-gradient-to-br ring-2 ring-line-strong", c.tone)} />
+                        <span aria-hidden className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full border-2 border-canvas bg-emerald-400" />
                       </span>
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">{c.handle}</span>
                         <span className="text-[12px] text-fg-passive">{[c.city, c.platform].filter(Boolean).join(" · ")}</span>
                       </span>
                     </div>
-                    <span className="w-fit rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-fg-muted">{c.niche}</span>
-                    <dl className="mt-auto grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+                    <span className="w-fit rounded-full border border-line px-2.5 py-0.5 text-[11px] text-fg-muted">{c.niche}</span>
+                    <dl className="mt-auto grid grid-cols-2 gap-2 border-t border-line pt-3">
                       <div>
                         <dt className="text-[11px] text-fg-passive">Takipçi</dt>
                         <dd className="text-lg font-semibold tabular-nums">{c.followers}</dd>
@@ -383,12 +429,12 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {INTEGRATIONS.map((it, i) => (
               <Reveal as="li" key={it.name} delay={(i % 4) * 80}>
-                <div className="group flex h-full flex-col gap-3 rounded-3xl border border-white/10 bg-white/[0.02] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.05]">
+                <div className="group flex h-full flex-col gap-3 rounded-3xl border border-line bg-glass p-5 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:bg-glass">
                   <div className="flex items-center justify-between gap-2">
                     <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-semibold text-white", it.tone)} aria-hidden>
                       {it.name.slice(0, 2)}
                     </span>
-                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide", it.soon ? "border border-amber-300/40 text-amber-200" : "bg-white/10 text-fg-muted")}>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide", it.soon ? "border border-amber-300/40 text-amber-200" : "bg-surface-hover text-fg-muted")}>
                       {it.soon ? "Erken erişim" : it.kind}
                     </span>
                   </div>
@@ -409,7 +455,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                 <Tilt max={4} className="h-full">
                   <div
                     className={cn(
-                      "group relative flex h-full flex-col gap-4 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br to-transparent p-6 transition-colors duration-300 hover:border-white/25",
+                      "group relative flex h-full flex-col gap-4 overflow-hidden rounded-3xl border border-line bg-gradient-to-br to-transparent p-6 transition-colors duration-300 hover:border-line-strong",
                       FEATURE_TONES[i],
                     )}
                   >
@@ -431,15 +477,15 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         {/* Referanslar */}
         {data.references.length > 0 ? (
         <section id="referanslar" className="relative py-28">
-          <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom,rgba(217,70,239,0.12),transparent_60%)]" />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom,rgba(255,43,214,0.16),transparent_60%)]" />
           <div className="mx-auto max-w-6xl px-6">
             <SectionTitle eyebrow="Referanslar" title="Markalar sonuçla konuşuyor" />
             <ul className="grid grid-cols-1 gap-5 lg:grid-cols-3">
               {data.references.map((r, i) => (
                 <Reveal as="li" key={`${r.brand}-${i}`} delay={i * 140}>
                   <Tilt max={6} className="h-full">
-                    <figure className="relative flex h-full flex-col gap-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur">
-                      <span aria-hidden className="absolute -top-6 right-4 text-[120px] leading-none text-white/5">
+                    <figure className="relative flex h-full flex-col gap-5 overflow-hidden rounded-3xl border border-line bg-glass p-7 backdrop-blur">
+                      <span aria-hidden className="absolute -top-6 right-4 text-[120px] leading-none text-fg/5">
                         “
                       </span>
                       <div className="flex items-center justify-between gap-3">
@@ -455,11 +501,11 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                             <span className="text-[12px] text-fg-passive">{r.sector}</span>
                           </div>
                         </div>
-                        {r.sample ? <span className="rounded-full border border-white/15 px-2 py-0.5 text-[11px] text-fg-muted">Örnek çalışma</span> : null}
+                        {r.sample ? <span className="rounded-full border border-line-strong px-2 py-0.5 text-[11px] text-fg-muted">Örnek çalışma</span> : null}
                       </div>
                       <blockquote className="relative text-[16px] leading-relaxed">{r.quote}</blockquote>
                       <figcaption className="text-[13px] text-fg-muted">— {r.person}</figcaption>
-                      <dl className="mt-auto grid grid-cols-3 gap-3 border-t border-white/10 pt-5">
+                      <dl className="mt-auto grid grid-cols-3 gap-3 border-t border-line pt-5">
                         {r.results.map((x) => (
                           <div key={x.label} className="flex flex-col gap-1">
                             <dt className="text-[11px] text-fg-passive">{x.label}</dt>
@@ -480,18 +526,18 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         <section className="mx-auto max-w-5xl px-6 py-28">
           <SectionTitle eyebrow="Neden Infulancer" title="Kampanyanın her adımı tek yerde" />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Reveal className="rounded-3xl border border-white/10 bg-white/[0.02] p-7">
+            <Reveal className="rounded-3xl border border-line bg-glass p-7">
               <h3 className="mb-4 text-sm tracking-wide text-fg-passive uppercase">Platform olmadan</h3>
               <ul className="flex flex-col gap-3 text-fg-muted">
                 {["Hashtag'lerde tek tek profil aramak", "Excel tabloları ve e-posta zincirleri", "Ekran görüntüsüyle toplanan sonuçlar", "Elle hesaplanan hakediş ve ödemeler"].map((t) => (
                   <li key={t} className="flex items-start gap-3">
-                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/5 text-[11px] text-fg-passive">✕</span>
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-glass text-[11px] text-fg-passive">✕</span>
                     {t}
                   </li>
                 ))}
               </ul>
             </Reveal>
-            <Reveal delay={120} className="relative overflow-hidden rounded-3xl border border-fuchsia-300/30 bg-gradient-to-br from-fuchsia-500/15 via-indigo-500/10 to-transparent p-7">
+            <Reveal delay={120} className="relative overflow-hidden rounded-3xl border border-neon-pink/30 bg-gradient-to-br from-fuchsia-500/15 via-indigo-500/10 to-transparent p-7">
               <h3 className="mb-4 text-sm tracking-wide text-fuchsia-200 uppercase">Infulancer ile</h3>
               <ul className="flex flex-col gap-3">
                 {["Filtreyle doğru profil, tek tıkla teklif", "Brief, onay ve takvim tek panelde", "Metrikler resmî API'lerden otomatik", "Hakediş, ödeme listesi ve marka raporu hazır"].map((t, i) => (
@@ -507,24 +553,44 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
           </div>
         </section>
 
+        {/* SSS */}
+        <section id="sss" className="mx-auto max-w-3xl px-6 py-28">
+          <SectionTitle eyebrow="Sık sorulan sorular" title="Merak edilenler" />
+          <div className="flex flex-col gap-3">
+            {FAQ.map((f, i) => (
+              <Reveal key={f.q} delay={i * 60}>
+                <details className="group rounded-2xl border border-line bg-glass px-5 py-4 transition-colors open:border-neon-violet/50 hover:border-line-strong">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
+                    {f.q}
+                    <span aria-hidden className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line text-fg-muted transition-transform duration-300 group-open:rotate-45 group-open:border-neon-pink group-open:text-neon-pink">
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed text-fg-muted">{f.a}</p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="mx-auto max-w-6xl px-6 pt-10 pb-32">
           <Reveal>
-            <div className="relative isolate overflow-hidden rounded-[32px] border border-white/10 px-8 py-16 text-center sm:px-16">
+            <div className="relative isolate overflow-hidden rounded-[32px] border border-line px-8 py-16 text-center sm:px-16">
               <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,#86198f,#4338ca,#0e7490,#047857,#86198f)] bg-[length:300%_300%] opacity-60 animate-gradient-x" />
               <div aria-hidden className="bg-grid absolute inset-0 -z-10 opacity-40" />
               <h2 className="mx-auto max-w-2xl text-[34px] leading-tight font-semibold tracking-tight sm:text-[48px]">Bir sonraki kampanyanız burada başlıyor.</h2>
-              <p className="mx-auto mt-4 max-w-xl text-white/80">Üyelik davetle açılır. Davet kodunuz varsa kayıt olun, hesabınız varsa giriş yapın.</p>
+              <p className="mx-auto mt-4 max-w-xl text-fg-muted">Üyelik davetle açılır. Davet kodunuz varsa kayıt olun, hesabınız varsa giriş yapın.</p>
               <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 text-left md:grid-cols-2">
-                <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-black/30 p-6 backdrop-blur">
-                  <span className="text-[12px] tracking-wide text-white/60 uppercase">Markalar ve ajanslar</span>
+                <div className="flex flex-col gap-3 rounded-2xl border border-line-strong bg-glass-strong p-6 backdrop-blur">
+                  <span className="text-[12px] tracking-wide text-fg-passive uppercase">Markalar ve ajanslar</span>
                   <p className="text-lg font-medium">Kampanyanızı panelden yönetin</p>
                   <GlowButton href="/giris" className="mt-auto w-full">
                     Giriş yap
                   </GlowButton>
                 </div>
-                <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-black/30 p-6 backdrop-blur">
-                  <span className="text-[12px] tracking-wide text-white/60 uppercase">İçerik üreticileri</span>
+                <div className="flex flex-col gap-3 rounded-2xl border border-line-strong bg-glass-strong p-6 backdrop-blur">
+                  <span className="text-[12px] tracking-wide text-fg-passive uppercase">İçerik üreticileri</span>
                   <p className="text-lg font-medium">Davet kodunla katıl, işlerini ve ödemelerini takip et</p>
                   <GhostButton href="/kayit">Davet koduyla kayıt ol</GhostButton>
                 </div>
@@ -534,7 +600,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         </section>
       </main>
 
-      <footer className="border-t border-white/10">
+      <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-[13px] text-fg-passive">
           <span>© {new Date().getFullYear()} Infulancer</span>
           <nav aria-label="Yasal" className="flex gap-6">

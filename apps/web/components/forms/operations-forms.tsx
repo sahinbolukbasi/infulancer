@@ -77,7 +77,7 @@ export function CreativeForm({ brands, models }: { brands: Brand[]; models: Mode
         {(p) => <Textarea {...p} name="prompt" rows={3} required minLength={10} placeholder="Pastel stüdyo arka planında bahar ruj serisi, üstte '%20 indirim' rozeti" />}
       </Field>
       <label className="flex items-center gap-2 text-[13px] text-fg-muted">
-        <input type="checkbox" name="portrait" className="h-4 w-4 accent-[#fafafa]" />
+        <input type="checkbox" name="portrait" className="h-4 w-4 accent-[var(--color-fg)]" />
         Referans görsel tanınabilir bir kişinin portresi
       </label>
       <p className="text-sm text-fg">Tahmini maliyet: {cost} kredi (başarısız üretimde ücret alınmaz)</p>

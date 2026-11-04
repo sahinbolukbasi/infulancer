@@ -6,6 +6,7 @@ import { getSessionUser, requireActor } from "@/lib/auth-guard";
 import { AccountMenu } from "./account-menu";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Sidebar } from "./sidebar";
 
 /**
@@ -47,6 +48,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
             </form>
           ) : null}
           <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
             <NotificationBell userId={actor.userId} />
             <AccountMenu name={user?.name ?? ""} email={user?.email ?? ""} roleLabel={roleLabels[role]} />
           </div>

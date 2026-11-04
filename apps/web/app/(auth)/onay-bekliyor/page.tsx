@@ -28,14 +28,14 @@ export default async function PendingPage() {
         <>
           <div aria-hidden className="relative flex h-14 w-14 items-center justify-center">
             <span className="absolute inset-0 rounded-full bg-fuchsia-400/30 animate-ping-slow" />
-            <span className="absolute inset-0 rounded-full border-2 border-dashed border-fuchsia-300/70 animate-spin-slow" />
-            <span className="h-3 w-3 rounded-full bg-fuchsia-300" />
+            <span className="absolute inset-0 rounded-full border-2 border-dashed border-neon-pink/70 animate-spin-slow" />
+            <span className="h-3 w-3 rounded-full bg-neon-pink" />
           </div>
           <p className="text-fg-muted">
             Başvurunuz alındı{app ? ` (${fmtDateTime(app.createdAt)})` : ""}. Ajans ekibimiz bilgilerinizi inceledikten sonra hesabınızı etkinleştirecek; onaylandığında size bildirim
             gelecek. Genellikle 1–2 iş günü içinde dönüş yapılır.
           </p>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-2xl border border-white/10 bg-black/20 p-5 text-sm">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-2xl border border-line bg-glass-strong p-5 text-sm">
             <dt className="text-fg-passive">Ad soyad</dt>
             <dd>{user.name}</dd>
             <dt className="text-fg-passive">E-posta</dt>
@@ -55,13 +55,13 @@ export default async function PendingPage() {
         </>
       ) : (
         <>
-          {app?.reviewNote ? <p className="rounded-2xl border border-white/10 bg-black/20 p-5 text-sm text-fg-muted">Not: {app.reviewNote}</p> : null}
+          {app?.reviewNote ? <p className="rounded-2xl border border-line bg-glass-strong p-5 text-sm text-fg-muted">Not: {app.reviewNote}</p> : null}
           <p className="text-fg-muted">Sorunuz için ajansınızla iletişime geçebilirsiniz.</p>
         </>
       )}
       {user.status !== "ACTIVE" ? (
         <form action={signOutAction}>
-          <button type="submit" className={`${button} border border-white/15 text-fg-muted hover:text-fg`}>
+          <button type="submit" className={`${button} border border-line-strong text-fg-muted hover:text-fg`}>
             Çıkış yap
           </button>
         </form>

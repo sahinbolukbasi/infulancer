@@ -38,7 +38,7 @@ export type DeliverableFormValues = {
 function Check({ name, label, defaultChecked, hint }: { name: string; label: string; defaultChecked?: boolean; hint?: string }) {
   return (
     <label className="flex items-start gap-2 text-sm text-fg-muted">
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="mt-0.5 h-4 w-4 accent-[#fafafa]" />
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="mt-0.5 h-4 w-4 accent-[var(--color-fg)]" />
       <span>
         {label}
         {hint ? <span className="block text-[12px] text-fg-passive">{hint}</span> : null}

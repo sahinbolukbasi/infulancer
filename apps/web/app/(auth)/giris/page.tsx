@@ -45,7 +45,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         ) : null}
         <LoginForm next={nextPath} />
         {showDevHint ? (
-          <section aria-labelledby="demo-hesaplar" className="flex flex-col gap-3 rounded-2xl border border-dashed border-white/15 p-4">
+          <section aria-labelledby="demo-hesaplar" className="flex flex-col gap-3 rounded-2xl border border-dashed border-line-strong p-4">
             <h2 id="demo-hesaplar" className="text-label text-fg-passive">
               Geliştirme hesapları · şifre Demo1234!
             </h2>

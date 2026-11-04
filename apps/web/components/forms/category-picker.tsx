@@ -65,12 +65,12 @@ export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree
         {visible.map((r) => (
           <div key={r.id} className="flex flex-col gap-1">
             <label className="flex items-center gap-2 text-sm text-fg">
-              <input type="checkbox" checked={ids.includes(r.id)} onChange={() => toggle(r.id)} className="h-4 w-4 accent-[#fafafa]" />
+              <input type="checkbox" checked={ids.includes(r.id)} onChange={() => toggle(r.id)} className="h-4 w-4 accent-[var(--color-fg)]" />
               {r.name}
             </label>
             {r.children.map((c) => (
               <label key={c.id} className="ml-6 flex items-center gap-2 text-[13px] text-fg-muted">
-                <input type="checkbox" checked={ids.includes(c.id)} onChange={() => toggle(c.id)} className="h-4 w-4 accent-[#fafafa]" />
+                <input type="checkbox" checked={ids.includes(c.id)} onChange={() => toggle(c.id)} className="h-4 w-4 accent-[var(--color-fg)]" />
                 {c.name}
               </label>
             ))}

@@ -26,7 +26,7 @@ const STEPS = [
 ];
 
 function Mock({ step }: { step: number }) {
-  const box = "rounded-2xl border border-white/10 bg-black/40 p-4";
+  const box = "rounded-2xl border border-line bg-glass-strong p-4";
   if (step === 0)
     return (
       <div className="flex flex-col gap-3">
@@ -39,7 +39,7 @@ function Mock({ step }: { step: number }) {
               ["Süre", "21 gün"],
               ["Hedef", "Erişim %60"],
             ].map(([k, v]) => (
-              <div key={k} className="rounded-xl bg-white/5 p-2">
+              <div key={k} className="rounded-xl bg-glass p-2">
                 <p className="text-fg-passive">{k}</p>
                 <p className="tabular-nums">{v}</p>
               </div>
@@ -65,8 +65,8 @@ function Mock({ step }: { step: number }) {
           ["@hareket.et", "Spor", "540B", "%7,5", false],
           ["@gezgin.not", "Seyahat", "320B", "%5,9", false],
         ].map(([h, n, f, e, on], i) => (
-          <div key={String(h)} className={cn(box, "flex items-center gap-3 py-3 animate-enter", on && "border-fuchsia-300/50")} style={{ animationDelay: `${i * 120}ms` }}>
-            <span className={cn("inline-flex h-5 w-5 items-center justify-center rounded-md border text-[11px]", on ? "border-white bg-white text-black" : "border-white/20")}>{on ? "✓" : ""}</span>
+          <div key={String(h)} className={cn(box, "flex items-center gap-3 py-3 animate-enter", on && "border-neon-pink/50")} style={{ animationDelay: `${i * 120}ms` }}>
+            <span className={cn("inline-flex h-5 w-5 items-center justify-center rounded-md border text-[11px]", on ? "border-fg bg-fg text-bg" : "border-line-strong")}>{on ? "✓" : ""}</span>
             <span className="h-8 w-8 rounded-full bg-gradient-to-br from-fuchsia-400 to-indigo-500" />
             <span className="flex flex-1 flex-col leading-tight">
               <span className="text-sm">{h}</span>
@@ -77,7 +77,7 @@ function Mock({ step }: { step: number }) {
             </span>
           </div>
         ))}
-        <div className="mt-1 rounded-xl bg-white px-4 py-2 text-center text-[13px] font-medium text-black">2 influencer ekle ve teklif gönder</div>
+        <div className="mt-1 rounded-xl bg-fg px-4 py-2 text-center text-[13px] font-medium text-bg">2 influencer ekle ve teklif gönder</div>
       </div>
     );
   if (step === 2)
@@ -94,13 +94,13 @@ function Mock({ step }: { step: number }) {
             ["Mention", "Uygun", "text-emerald-300"],
             ["Kare 2 etiket", "Eksik", "text-amber-300"],
           ].map(([k, v, c], i) => (
-            <p key={k} className="flex justify-between rounded-xl bg-white/5 px-3 py-2 animate-enter" style={{ animationDelay: `${i * 150}ms` }}>
+            <p key={k} className="flex justify-between rounded-xl bg-glass px-3 py-2 animate-enter" style={{ animationDelay: `${i * 150}ms` }}>
               {k} <span className={c}>{v}</span>
             </p>
           ))}
           <div className="flex gap-2">
-            <span className="flex-1 rounded-xl border border-white/15 px-3 py-2 text-center">Revizyon iste</span>
-            <span className="flex-1 rounded-xl bg-white px-3 py-2 text-center font-medium text-black">Onayla</span>
+            <span className="flex-1 rounded-xl border border-line-strong px-3 py-2 text-center">Revizyon iste</span>
+            <span className="flex-1 rounded-xl bg-fg px-3 py-2 text-center font-medium text-bg">Onayla</span>
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@ function Mock({ step }: { step: number }) {
           <span key={i} className="w-full origin-bottom rounded-t-md bg-gradient-to-t from-violet-500/40 to-fuchsia-400 animate-bar" style={{ height: `${h}%`, animationDelay: `${i * 90}ms` }} />
         ))}
       </div>
-      <p className="flex justify-between rounded-xl bg-white/5 px-3 py-2 text-[13px]">
+      <p className="flex justify-between rounded-xl bg-glass px-3 py-2 text-[13px]">
         Ödeme listesi hazır <span className="tabular-nums text-emerald-300">12 influencer · 318.000 TL</span>
       </p>
     </div>
@@ -155,13 +155,13 @@ export function ScrollDemo() {
               refs.current[i] = el;
             }}
             data-step={i}
-            className={cn("flex min-h-[48vh] flex-col justify-center gap-3 border-l-2 py-10 pl-6 transition-colors duration-500 lg:min-h-[60vh]", i === active ? "border-fuchsia-300" : "border-white/10")}
+            className={cn("flex min-h-[48vh] flex-col justify-center gap-3 border-l-2 py-10 pl-6 transition-colors duration-500 lg:min-h-[60vh]", i === active ? "border-neon-pink" : "border-line")}
           >
-            <span className={cn("text-[12px] tracking-wide uppercase transition-colors", i === active ? "text-fuchsia-300" : "text-fg-passive")}>{s.tag}</span>
+            <span className={cn("text-[12px] tracking-wide uppercase transition-colors", i === active ? "text-neon-pink" : "text-fg-passive")}>{s.tag}</span>
             <h3 className={cn("text-[28px] leading-tight font-semibold tracking-tight transition-colors", i === active ? "text-fg" : "text-fg-passive")}>{s.title}</h3>
             <p className={cn("max-w-md transition-colors", i === active ? "text-fg-muted" : "text-fg-passive")}>{s.text}</p>
             {/* Mobilde ekran adımın altında */}
-            <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5 lg:hidden" aria-hidden>
+            <div className="mt-4 rounded-3xl border border-line bg-glass p-5 lg:hidden" aria-hidden>
               <Mock step={i} />
             </div>
           </li>
@@ -169,14 +169,14 @@ export function ScrollDemo() {
       </ol>
       <div className="hidden lg:block">
         <div className="sticky top-28">
-          <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0b0b12] p-2">
+          <div className="relative overflow-hidden rounded-[28px] border border-line bg-surface p-2">
             <div className="flex items-center gap-1.5 px-3 py-2" aria-hidden>
-              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
+              <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
+              <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
               <span className="ml-3 text-[11px] text-fg-passive">panel.infulancer · {STEPS[active]!.tag}</span>
             </div>
-            <div className="h-1 overflow-hidden rounded-full bg-white/5" aria-hidden>
+            <div className="h-1 overflow-hidden rounded-full bg-glass" aria-hidden>
               <div className="h-full bg-gradient-to-r from-fuchsia-400 to-sky-400 transition-all duration-700" style={{ width: `${((active + 1) / STEPS.length) * 100}%` }} />
             </div>
             <div key={active} className="min-h-[380px] p-5 animate-enter" aria-live="polite">

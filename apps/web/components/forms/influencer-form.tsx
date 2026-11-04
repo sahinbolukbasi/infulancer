@@ -77,7 +77,7 @@ function AccountFields({ platform, label, initial }: { platform: Platform; label
             name={`${p}enabled`}
             checked={enabled}
             onChange={(e) => setEnabled(e.target.checked)}
-            className="h-4 w-4 accent-[#fafafa]"
+            className="h-4 w-4 accent-[var(--color-fg)]"
           />
           <PlatformIcon platform={platform} size={16} />
           {label}
@@ -154,7 +154,7 @@ export function InfluencerForm({ influencer, timeZones, categories }: { influenc
                 value={o.v}
                 required
                 defaultChecked={influencer ? String(influencer.canIssueInvoice) === o.v : false}
-                className="h-4 w-4 accent-[#fafafa]"
+                className="h-4 w-4 accent-[var(--color-fg)]"
               />
               {o.l}
             </label>
