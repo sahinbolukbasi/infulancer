@@ -50,7 +50,11 @@ export function SignupForm({ code, kind, categories }: { code: string; kind: "IN
           <Link href="/gizlilik" target="_blank" className="underline underline-offset-4">
             gizlilik politikasını
           </Link>{" "}
-          okudum, kabul ediyorum.
+          okudum, kabul ediyorum.{" "}
+          <Link href="/kvkk" target="_blank" className="underline underline-offset-4">
+            KVKK Aydınlatma Metni
+          </Link>
+          &apos;ni okudum.
         </span>
       </label>
     </ActionForm>

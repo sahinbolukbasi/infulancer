@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useCallback, useRef, useState } from "react";
 import { ChevronDownIcon, LogoutIcon, UserIcon } from "@/components/icons";
@@ -34,6 +35,15 @@ export function AccountMenu({ name, email, roleLabel }: { name: string; email: s
             <span className="mt-1 text-label text-fg-passive">{roleLabel}</span>
           </div>
           <div className="my-1 h-px bg-border" />
+          <Link
+            href="/profil"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2 text-left text-sm text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
+          >
+            <UserIcon size={16} />
+            Profilim
+          </Link>
           <form action={signOutAction}>
             <button
               type="submit"

@@ -12,6 +12,7 @@ export const COPILOT_ACTIONS: Record<CopilotRole, CopilotAction[]> = {
   ADMIN: [
     { id: "new-campaign", label: "Yeni kampanya (tam form)", href: "/admin/kampanyalar/yeni" },
     { id: "campaigns", label: "Kampanyalar", href: "/admin/kampanyalar" },
+    { id: "offers", label: "Teklifler", href: "/admin/teklifler" },
     { id: "active-campaigns", label: "Aktif kampanyalar", href: "/admin/kampanyalar?durum=AKTIF" },
     { id: "draft-campaigns", label: "Taslak kampanyalar", href: "/admin/kampanyalar?durum=TASLAK" },
     { id: "influencers", label: "Influencerlar", href: "/admin/influencerlar" },
@@ -32,14 +33,17 @@ export const COPILOT_ACTIONS: Record<CopilotRole, CopilotAction[]> = {
   ],
   BRAND: [
     { id: "campaigns", label: "Kampanyalarım", href: "/marka" },
+    { id: "discover", label: "Influencer bul", href: "/marka/kesfet" },
+    { id: "offers", label: "Tekliflerim", href: "/marka/teklifler" },
     { id: "inbox", label: "Gelen kutusu", href: "/marka/gelen-kutusu" },
-    { id: "assistants", label: "Sohbet asistanları", href: "/marka/asistanlar" },
+    { id: "assistants", label: "Sohbet asistanları", href: "/marka/kanallar?sekme=asistan" },
     { id: "channels", label: "Kanallar", href: "/marka/kanallar" },
     { id: "compliance", label: "Uyum", href: "/marka/uyum" },
     { id: "docs", label: "Dokümantasyon", href: "/docs" },
   ],
   INFLUENCER: [
     { id: "jobs", label: "İşlerim", href: "/influencer" },
+    { id: "offers", label: "Teklifler ve fiyat listem", href: "/influencer/teklifler" },
     { id: "payouts", label: "Ödemeler", href: "/influencer/odemeler" },
     { id: "accounts", label: "Sosyal hesaplarım", href: "/influencer/hesaplar" },
     { id: "invite", label: "Davet et", href: "/influencer/davet" },
@@ -51,8 +55,8 @@ export const COPILOT_ACTIONS: Record<CopilotRole, CopilotAction[]> = {
 /** Hızlı sorular (sohbet çipleri) */
 export const COPILOT_SUGGESTIONS: Record<CopilotRole, string[]> = {
   ADMIN: ["Bugün ne yapmalıyım?", "Yeni kampanya başlat", "Kampanyaya influencer ekle", "Onay bekleyen taslaklar", "Ödemeler ne durumda?", "Yeni marka nasıl eklenir?"],
-  BRAND: ["Bugün ne yapmalıyım?", "Yeni kampanya talep et", "Onayımı bekleyen içerikler", "Kampanya sonuçları", "Gelen kutusu", "Reklam etiketi kuralları"],
-  INFLUENCER: ["Bugün ne yapmalıyım?", "Yeni tekliflerim", "Ödememi nasıl alırım?", "Hesabımı nasıl bağlarım?", "Metrik nasıl girilir?", "Arkadaşımı davet et"],
+  BRAND: ["Bugün ne yapmalıyım?", "Teklif gönder", "Yeni kampanya talep et", "Onayımı bekleyen içerikler", "Kampanya sonuçları", "Gelen kutusu", "Reklam etiketi kuralları"],
+  INFLUENCER: ["Bugün ne yapmalıyım?", "Fiyat listemi gir", "Yeni tekliflerim", "Ödememi nasıl alırım?", "Hesabımı nasıl bağlarım?", "Metrik nasıl girilir?", "Arkadaşımı davet et"],
 };
 
 const norm = (s: string) =>
@@ -68,6 +72,15 @@ const has = (m: string, words: string[]) => words.some((w) => m.includes(norm(w)
 type Rule = { intent: string; when: string[]; reply: Partial<Record<CopilotRole, Omit<CopilotReply, "intent">>> };
 
 const RULES: Rule[] = [
+  {
+    intent: "offers",
+    when: ["teklif gonder", "teklif", "fiyat listesi", "fiyatim", "ucret", "influencer sec"],
+    reply: {
+      ADMIN: { reply: "Markaların gönderdiği teklifler Teklifler sayfasında. Kabul edilenleri tek tıkla kampanyaya ekleyin.", actions: ["offers", "campaigns"] },
+      BRAND: { reply: "Influencer bul sayfasında içerik üreticilerini filtreleyip seçin, içerikleri belirleyin ve tek tıkla teklif gönderin. Yanıtlar Tekliflerim'e düşer.", actions: ["discover", "offers"] },
+      INFLUENCER: { reply: "Teklifler sayfasında gelen teklifleri kabul veya reddedebilir, Fiyat listem sekmesinde içerik ücretlerinizi girebilirsiniz.", actions: ["offers"] },
+    },
+  },
   {
     intent: "campaign-start",
     when: ["kampanya baslat", "kampanya olustur", "yeni kampanya", "kampanya ac", "kampanya talep", "kampanya kur"],

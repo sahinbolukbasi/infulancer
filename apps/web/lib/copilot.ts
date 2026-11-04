@@ -33,6 +33,8 @@ export async function nextSteps(actor: Actor): Promise<NextStep[]> {
     if (late) steps.push({ title: `${late} geciken yayın`, detail: "Planlanan tarihi geçmiş işler; influencer'la iletişime geçin veya yeniden planlayın.", href: "/admin/takvim", tone: "critical" });
     if (findings) steps.push({ title: `${findings} açık agent uyarısı`, detail: "Uyum, çakışma veya metrik tutarsızlığı bulguları.", href: "/admin/agent", tone: "critical" });
     if (drafts) steps.push({ title: `${drafts} taslak onay bekliyor`, detail: "Yüklenen içerikleri inceleyin, onaylayın veya revizyon isteyin.", href: "/admin", tone: "warn" });
+    const accepted = await prisma.offer.count({ where: { status: "KABUL" } });
+    if (accepted) steps.push({ title: `${accepted} kabul edilen teklif`, detail: "Kampanyaya ekleyin.", href: "/admin/teklifler", tone: "warn" });
     if (apps) steps.push({ title: `${apps} üyelik başvurusu`, detail: "Davetle gelen başvuruları onaylayın veya reddedin.", href: "/admin/davetler", tone: "warn" });
     if (payoutReq._count && !actor.staffRole) steps.push({ title: `${payoutReq._count} çekim talebi · ${formatKurus(payoutReq._sum.amountKurus ?? 0)}`, detail: "Onaylayıp ödeme listesine alın.", href: "/admin/finans", tone: "warn" });
     for (const c of setupDrafts.filter((c) => c._count.assignments === 0 || c._count.briefs === 0).slice(0, 3)) {
@@ -52,6 +54,8 @@ export async function nextSteps(actor: Actor): Promise<NextStep[]> {
       prisma.conversation.count({ where: { tenantId: brandId, status: { not: "closed" } } }),
       prisma.tenantSettings.findUnique({ where: { tenantId: brandId }, select: { mode: true } }),
     ]);
+    const answered = await prisma.offer.count({ where: { brandId, status: { in: ["KABUL", "RED"] }, respondedAt: { gte: new Date(now.getTime() - 7 * DAY) } } });
+    if (answered) steps.push({ title: `${answered} teklif yanıtlandı`, detail: "Son 7 günde gelen kabul/red yanıtları.", href: "/marka/teklifler", tone: "info" });
     if (toReview) steps.push({ title: `${toReview} içerik onayınızı bekliyor`, detail: "Yayın öncesi taslakları onaylayın veya revizyon notu yazın.", href: "/marka", tone: "warn" });
     if (openConv) steps.push({ title: `${openConv} açık konuşma`, detail: "WhatsApp / Instagram DM gelen kutunuzda yanıt bekleyenler.", href: "/marka/gelen-kutusu", tone: "info" });
     for (const c of active) {
@@ -73,6 +77,12 @@ export async function nextSteps(actor: Actor): Promise<NextStep[]> {
       prisma.socialAccount.findMany({ where: { influencerId }, select: { syncSource: true, syncError: true } }),
       prisma.ledgerEntry.groupBy({ by: ["direction"], where: { influencerId, account: "INFLUENCER_PAYABLE", OR: [{ availableAt: null }, { availableAt: { lte: now } }] }, _sum: { amountKurus: true } }),
     ]);
+    const [brandOffers, rates] = await Promise.all([
+      prisma.offer.count({ where: { influencerId, status: "GONDERILDI", expiresAt: { gt: now } } }),
+      prisma.rateCard.count({ where: { influencerId, active: true } }),
+    ]);
+    if (brandOffers) steps.push({ title: `${brandOffers} marka teklifi yanıt bekliyor`, detail: "7 gün içinde kabul veya reddedin.", href: "/influencer/teklifler", tone: "warn" });
+    if (!rates) steps.push({ title: "Fiyat listenizi girin", detail: "Markalar sizi fiyatınızla bulup teklif gönderebilsin.", href: "/influencer/teklifler?sekme=fiyat", tone: "info" });
     if (offers) steps.push({ title: `${offers} yeni teklif`, detail: "Kabul veya red seçin; süresi geçen teklif başka üreticiye gidebilir.", href: "/influencer", tone: "warn" });
     if (revisions) steps.push({ title: `${revisions} iş revizyon bekliyor`, detail: "Notu okuyup yeni taslağı yükleyin.", href: "/influencer", tone: "critical" });
     for (const d of upcoming) steps.push({ title: `Yaklaşan yayın: ${d.assignment.campaign.name}`, detail: `${d.plannedAt.toLocaleString("tr-TR", { timeZone: "Europe/Istanbul", dateStyle: "medium", timeStyle: "short" })}`, href: `/influencer/isler/${d.id}`, tone: "info" });

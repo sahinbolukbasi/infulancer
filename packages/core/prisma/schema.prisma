@@ -1393,3 +1393,44 @@ model TrackerAgent {
   @@index([enabled])
   @@map("tracker_agents")
 }
+
+// ═════════════ Fiyat listesi ve teklifler (marka → içerik üreticisi) ═════════════
+model RateCard {
+  id           String      @id @default(cuid())
+  influencerId String
+  platform     Platform
+  contentType  ContentType
+  priceKurus   Int
+  note         String?
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  @@unique([influencerId, platform, contentType])
+  @@index([influencerId])
+  @@map("rate_cards")
+}
+
+model Offer {
+  id           String    @id @default(cuid())
+  brandId      String
+  influencerId String
+  createdById  String
+  campaignId   String?
+  title        String
+  message      String
+  /// [{platform, contentType, qty, priceKurus}]
+  items        Json
+  totalKurus   Int
+  publishBy    DateTime?
+  /// GONDERILDI | KABUL | RED | GERI_CEKILDI | SURESI_DOLDU | KAMPANYAYA_EKLENDI
+  status       String    @default("GONDERILDI")
+  responseNote String?
+  respondedAt  DateTime?
+  expiresAt    DateTime
+  assignmentId String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  @@index([influencerId, status])
+  @@index([brandId, status])
+  @@map("offers")
+}

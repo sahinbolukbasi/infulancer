@@ -149,6 +149,15 @@ export async function list(filter: {
   }));
 }
 
+/** Bir kullanıcının yaptığı işlemler (Profilim → İşlemlerim), en yeni önce. */
+export async function listByActor(actorId: string, limit = 50): Promise<AuditRecord[]> {
+  const res = await pool().query<AuditRow>(
+    `SELECT id, at, actor_id, actor_role, action, entity_type, entity_id, data, prev_hash, hash
+       FROM audit_log WHERE actor_id = $1 ORDER BY id DESC LIMIT $2`,
+    [actorId, Math.min(limit, 200)],
+  );
+  return res.rows.map((r) => ({ id: String(r.id), at: r.at, actorId: r.actor_id, actorRole: r.actor_role, action: r.action, entityType: r.entity_type, entityId: r.entity_id, data: r.data, prevHash: r.prev_hash, hash: r.hash }));
+}
 /** Birden çok varlığın kayıtları tek sorguda (ör. marka + kampanyaları + atamaları), en yeni önce. */
 export async function listMany(filter: { entities: { entityType: string; entityIds: string[] }[]; limit?: number }): Promise<AuditRecord[]> {
   const groups = filter.entities.filter((e) => e.entityIds.length > 0);
@@ -186,4 +195,4 @@ export async function closeAuditPool(): Promise<void> {
   globalForAudit.__infulancerAuditPool = undefined;
 }
 
-export const audit = { append, list, listMany };
+export const audit = { append, list, listMany, listByActor };

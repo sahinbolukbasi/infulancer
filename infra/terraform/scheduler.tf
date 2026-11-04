@@ -20,6 +20,7 @@ locals {
     "webhook-dedupe-ttl"        = "cron(30 3 * * ? *)"
     "social-sync"               = "rate(6 hours)"
     "trackers"                  = "rate(1 hour)"
+    "offer-expiry"              = "rate(1 hour)"
   } : {}
 }
 

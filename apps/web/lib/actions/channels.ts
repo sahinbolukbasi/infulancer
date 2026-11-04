@@ -4,7 +4,7 @@ import { prisma } from "@infulancer/core/db";
 import { activateAgent, type AgentKey } from "@infulancer/core/assistant/catalog";
 import { ingestText } from "@infulancer/core/assistant/rag";
 import { reopenConversation } from "@infulancer/core/assistant/runtime";
-import { completeWhatsAppSignup, confirmPaymentMethod, OnboardingError } from "@infulancer/core/channels/onboarding";
+import { completeWhatsAppSignup, confirmPaymentMethod, connectInstagram, OnboardingError } from "@infulancer/core/channels/onboarding";
 import { recordConsent, ConsentError } from "@infulancer/core/compliance/iys";
 import { KvkkGateError, setTenantMode, signStandardContract, uploadFilingReceipt, type TransferTarget } from "@infulancer/core/compliance/kvkk";
 import { declareVerticals } from "@infulancer/core/compliance/policy";
@@ -69,6 +69,27 @@ export async function signupWhatsApp(_p: ActionState, fd: FormData): Promise<Act
   });
 }
 
+/** Instagram DM bağlantısı (Meta ile giriş penceresinden dönen kod + sayfa/hesap kimlikleri). */
+export async function connectInstagramAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const { tenantId } = await brandActor();
+  return attempt(async () => {
+    const input = parseInput(
+      z.object({
+        code: z.string().min(1).max(500),
+        pageId: z.string().regex(/^\d{5,30}$/, { error: "Sayfa ID sayısal olmalı." }),
+        igUserId: z.string().regex(/^\d{5,30}$/, { error: "Instagram hesap ID sayısal olmalı." }),
+        accountType: z.enum(["BUSINESS", "CREATOR", "PERSONAL"]),
+      }),
+      { code: str(fd, "code"), pageId: str(fd, "pageId"), igUserId: str(fd, "igUserId"), accountType: str(fd, "accountType") },
+      { code: "Bağlantı kodu", pageId: "Facebook Sayfa ID", igUserId: "Instagram hesap ID" },
+    );
+    const existing = await prisma.channelConnection.findFirst({ where: { tenantId, provider: "INSTAGRAM", status: "ACTIVE" }, select: { id: true } });
+    if (existing) throw new DomainError("DOGRULAMA", "Instagram hesabı zaten bağlı.");
+    await connectInstagram({ tenantId, ...input }).catch(wrap);
+    revalidateAll();
+    return { ok: true, message: "Instagram bağlandı. DM'ler Gelen kutusu'na düşecek." };
+  });
+}
 export async function confirmPayment(): Promise<ActionState> {
   const { tenantId } = await brandActor();
   return attempt(async () => {

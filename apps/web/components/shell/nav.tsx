@@ -27,6 +27,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   ADMIN: [
     { href: "/admin", label: "Genel bakış", icon: HomeIcon, exact: true },
     { href: "/admin/kampanyalar", label: "Kampanyalar", icon: MegaphoneIcon },
+    { href: "/admin/teklifler", label: "Teklifler", icon: WalletIcon },
     { href: "/admin/takvim", label: "Takvim", icon: CalendarIcon },
     { href: "/admin/influencerlar", label: "Influencerlar", icon: UsersIcon },
     { href: "/admin/markalar", label: "Markalar", icon: BuildingIcon },
@@ -47,17 +48,21 @@ export const navByRole: Record<Role, NavItem[]> = {
   AGENCY: [],
   BRAND: [
     { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
+    { href: "/marka/kesfet", label: "Influencer bul", icon: UsersIcon },
+    { href: "/marka/teklifler", label: "Teklifler", icon: WalletIcon },
     { href: "/marka/gelen-kutusu", label: "Gelen kutusu", icon: BellIcon },
-    { href: "/marka/asistanlar", label: "Asistanlar", icon: SparkleIcon },
-    { href: "/marka/kanallar", label: "Kanallar", icon: LinkIcon },
+    { href: "/marka/kanallar", label: "Kanallar ve asistan", icon: LinkIcon },
     { href: "/marka/uyum", label: "Uyum", icon: AlertIcon },
+    { href: "/profil", label: "Profilim", icon: UserIcon },
     { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
   ],
   INFLUENCER: [
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
+    { href: "/influencer/teklifler", label: "Teklifler", icon: MegaphoneIcon },
     { href: "/influencer/odemeler", label: "Ödemeler", icon: WalletIcon },
     { href: "/influencer/hesaplar", label: "Hesaplar", icon: LinkIcon },
     { href: "/influencer/davet", label: "Davet et", icon: UserIcon },
+    { href: "/profil", label: "Profilim", icon: UserIcon },
     { href: "/docs", label: "Rehber", icon: FileIcon },
   ],
 };

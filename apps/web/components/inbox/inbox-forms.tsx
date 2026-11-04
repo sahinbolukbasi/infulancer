@@ -11,6 +11,7 @@ import {
   sendInboxMessage,
   signupWhatsApp,
   updateConversation,
+  connectInstagramAction,
 } from "@/lib/actions/channels";
 
 /** Pencere kapalıyken serbest metin devre dışıdır; yalnız onaylı template seçilir. */
@@ -69,6 +70,27 @@ export function ConversationActions({ conversationId, status }: { conversationId
   );
 }
 
+export function InstagramConnectForm() {
+  return (
+    <ActionForm action={connectInstagramAction} submitLabel="Instagram'ı bağla" aria-label="Instagram bağla">
+      <p className="text-[13px] text-fg-muted">Meta ile giriş penceresinden dönen kodu ve hesap bilgilerini girin. Hesap Business veya Creator olmalı, bir Facebook Sayfasına bağlı olmalı.</p>
+      <Field label="Bağlantı kodu">{(p) => <Input {...p} name="code" required maxLength={500} />}</Field>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Field label="Facebook Sayfa ID">{(p) => <Input {...p} name="pageId" inputMode="numeric" required />}</Field>
+        <Field label="Instagram hesap ID">{(p) => <Input {...p} name="igUserId" inputMode="numeric" required />}</Field>
+        <Field label="Hesap türü">
+          {(p) => (
+            <Select {...p} name="accountType" defaultValue="BUSINESS">
+              <option value="BUSINESS">Business</option>
+              <option value="CREATOR">Creator</option>
+              <option value="PERSONAL">Kişisel</option>
+            </Select>
+          )}
+        </Field>
+      </div>
+    </ActionForm>
+  );
+}
 export function WhatsAppSignupForm() {
   return (
     <ActionForm action={signupWhatsApp} submitLabel="Numarayı bağla" aria-label="WhatsApp bağla">

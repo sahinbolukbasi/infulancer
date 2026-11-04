@@ -40,7 +40,7 @@ const assignmentSchema = z.object({
 type AssignmentInput = z.infer<typeof assignmentSchema>;
 type Actor = Awaited<ReturnType<typeof requireActor>>;
 /** Tek atama: kapalı kampanya, mükerrer atama, kupon ve marka çakışması kuralları burada; audit + bildirim aynı işlemde. */
-async function insertAssignment(actor: Actor, input: AssignmentInput): Promise<string> {
+async function insertAssignment(actor: Actor, input: AssignmentInput, opts: { accepted?: boolean } = {}): Promise<string> {
   return prisma.$transaction(async (tx) => {
     const campaign = await tx.campaign.findUnique({ where: { id: input.campaignId }, select: { name: true, status: true } });
     if (!campaign) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
@@ -75,6 +75,7 @@ async function insertAssignment(actor: Actor, input: AssignmentInput): Promise<s
         exclusivityCategory: input.exclusivityCategory,
         couponCode: input.couponCode,
         conflictOverrideReason: overrideReason,
+        ...(opts.accepted ? { contractStatus: "KABUL" as const } : {}),
       },
     });
     await audit.append({
@@ -91,11 +92,9 @@ async function insertAssignment(actor: Actor, input: AssignmentInput): Promise<s
         conflictOverrideReason: overrideReason,
       },
     });
-    await notifyInfluencer(tx, input.influencerId, {
-      title: "Yeni iş teklifi",
-      body: `"${campaign.name}" kampanyası için teklif aldınız. Kabul veya red seçin.`,
-      href: "/influencer",
-    });
+    await notifyInfluencer(tx, input.influencerId, opts.accepted
+      ? { title: "İş birliği kampanyaya eklendi", body: `Kabul ettiğiniz teklif "${campaign.name}" kampanyasına eklendi. Brief ve tarihler İşlerim'de.`, href: "/influencer" }
+      : { title: "Yeni iş teklifi", body: `"${campaign.name}" kampanyası için teklif aldınız. Kabul veya red seçin.`, href: "/influencer" });
     return a.id;
   });
 }
@@ -262,4 +261,37 @@ export async function createAssignmentsBulk(input: {
   }
   if (created.length) revalidateAll();
   return { ok: created.length > 0, created, failed, error: created.length ? undefined : "Hiçbir influencer eklenemedi." };
+}
+
+/**
+ * Kabul edilen teklifi kampanyaya atamaya çevirir (ajans). Bedel = teklif toplamı; marka çakışması
+ * ve kupon/münhasırlık kuralları tekli atamayla aynıdır. Teklif "Kampanyaya eklendi" olur.
+ */
+export async function assignFromOfferAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const actor = await requireActor("ADMIN");
+  return attempt(async () => {
+    const offerId = str(fd, "offerId");
+    const campaignId = str(fd, "campaignId");
+    const commissionPct = Number(str(fd, "commissionPct").replace(",", ".") || "0");
+    const offer = await prisma.offer.findUnique({ where: { id: offerId } });
+    if (!offer) throw new DomainError("BULUNAMADI", "Teklif bulunamadı.");
+    if (offer.status !== "KABUL") throw new DomainError("GECERSIZ_GECIS", "Yalnız kabul edilen teklif kampanyaya eklenebilir.");
+    const camp = await prisma.campaign.findUnique({ where: { id: campaignId }, select: { brandId: true } });
+    if (!camp || camp.brandId !== offer.brandId) throw new DomainError("DOGRULAMA", "Teklifi veren markanın kampanyasını seçin.");
+    if (!Number.isFinite(commissionPct) || commissionPct < 0 || commissionPct > 100) throw new DomainError("DOGRULAMA", "Komisyon 0–100 arası olmalı.");
+    const assignmentId = await insertAssignment(actor, {
+      campaignId,
+      influencerId: offer.influencerId,
+      feeKurus: offer.totalKurus,
+      commissionKurus: Math.round((offer.totalKurus * commissionPct) / 100),
+      exclusivityDays: 0,
+      exclusivityCategory: null,
+      couponCode: null,
+      overrideReason: null,
+    }, { accepted: true });
+    await prisma.offer.update({ where: { id: offer.id }, data: { status: "KAMPANYAYA_EKLENDI", campaignId, assignmentId } });
+    await audit.append({ actor: toAuditActor(actor), action: "OFFER_CONVERTED", entityType: "Offer", entityId: offer.id, data: { campaignId, assignmentId } });
+    revalidateAll();
+    return { ok: true, message: "Kampanyaya eklendi; içerik planlamaya geçebilirsiniz." };
+  });
 }

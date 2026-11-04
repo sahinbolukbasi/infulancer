@@ -4,13 +4,13 @@ import { authConfig } from "./auth.config";
 import { isAdminOnlyPath, requiredRoleForPath, roleHome } from "./lib/roles";
 
 const { auth } = NextAuth(authConfig);
-const PUBLIC_PATHS = new Set(["/gizlilik", "/kullanim-kosullari", "/fiyatlandirma"]);
+const PUBLIC_PATHS = new Set(["/gizlilik", "/kullanim-kosullari", "/kvkk", "/cerez-politikasi"]);
 /** Tanıtım sayfası: ziyaretçiye açık; girişli kullanıcıyı sayfa kendi rol ana sayfasına yönlendirir. */
 const LANDING = "/";
 
 /**
  * Oturum ve rol öneki kontrolü. Herkese açık: /giris, /api/auth/*, yasal sayfalar (/gizlilik,
- * /kullanim-kosullari — App Review için girişsiz erişilebilir olmalı), /fiyatlandirma ve imzayla
+ * /kullanim-kosullari — App Review için girişsiz erişilebilir olmalı), /kvkk, /cerez-politikasi ve imzayla
  * doğrulanan webhook uçları (/api/webhooks/*).
  * Her sayfa/aksiyon ayrıca lib/auth-guard ile rolü yeniden doğrular (derinlemesine savunma).
  */

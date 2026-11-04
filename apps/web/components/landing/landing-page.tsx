@@ -238,9 +238,6 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                 {l}
               </a>
             ))}
-            <Link href="/fiyatlandirma" className="transition-standard hover:text-fg">
-              Fiyatlandırma
-            </Link>
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -615,14 +612,17 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-[13px] text-fg-passive">
           <span>© {new Date().getFullYear()} Infulancer</span>
           <nav aria-label="Yasal" className="flex gap-6">
-            <Link href="/fiyatlandirma" className="hover:text-fg">
-              Fiyatlandırma
-            </Link>
             <Link href="/gizlilik" className="hover:text-fg">
               Gizlilik
             </Link>
             <Link href="/kullanim-kosullari" className="hover:text-fg">
               Kullanım koşulları
+            </Link>
+            <Link href="/kvkk" className="hover:text-fg">
+              KVKK
+            </Link>
+            <Link href="/cerez-politikasi" className="hover:text-fg">
+              Çerezler
             </Link>
             <Link href="/giris" className="hover:text-fg">
               Giriş
