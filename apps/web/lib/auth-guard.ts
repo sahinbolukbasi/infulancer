@@ -4,6 +4,7 @@ import type { Actor } from "@infulancer/core/access/actor";
 import type { Role } from "@infulancer/core/enums";
 import { auth } from "@/auth";
 import { prisma } from "@infulancer/core/db";
+import { DomainError } from "@infulancer/core/domain/errors";
 import { roleHome } from "./roles";
 
 /** Oturumdaki kullanıcıyı core Actor'a çevirir; oturum yoksa null. */
@@ -11,9 +12,11 @@ export const getActor = cache(async (): Promise<Actor | null> => {
   const session = await auth();
   const user = session?.user;
   if (!user?.id || !user.role) return null;
+  // Ajans çalışanı (AGENCY) operasyon ekranlarında ADMIN yetkisiyle çalışır; asıl rol staffRole'da.
   return {
     userId: user.id,
-    role: user.role,
+    role: user.role === "AGENCY" ? "ADMIN" : user.role,
+    staffRole: user.role === "AGENCY" ? "AGENCY" : undefined,
     brandId: user.brandId ?? null,
     influencerId: user.influencerId ?? null,
   };
@@ -45,6 +48,16 @@ export async function requireActor(...roles: Role[]): Promise<Actor> {
   return actor;
 }
 
+/** Yalnız platform yöneticisi (ADMIN): kullanıcılar, yetkiler, finans, tanıtım içeriği. Ajans çalışanı panel ana sayfasına döner. */
+export async function requireAdmin(): Promise<Actor> {
+  const actor = await requireActor("ADMIN");
+  if (actor.staffRole) redirect("/admin?yetki=yok");
+  return actor;
+}
+/** Server Action'larda: ajans çalışanını reddeder. */
+export function assertPlatformAdmin(actor: Actor): void {
+  if (actor.staffRole) throw new DomainError("YETKISIZ", "Bu işlem yalnız platform yöneticisine açık.");
+}
 /** Route Handler'lar için: yetkisizse 401/403 Response döner. */
 export async function requireApiActor(
   ...roles: Role[]

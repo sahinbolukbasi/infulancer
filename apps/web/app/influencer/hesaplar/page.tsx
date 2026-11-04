@@ -8,6 +8,8 @@ import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
+import { Avatar } from "@/components/ui/avatar";
+import { OwnAccountForm, SyncOwnButton } from "@/components/forms/own-account-forms";
 import { compact, pct1 } from "@/lib/format";
 import { fmtDate } from "@/lib/time";
 
@@ -28,14 +30,24 @@ export default async function InfluencerAccountsPage({ searchParams }: { searchP
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Hesaplar" description="Sosyal medya hesapların ve güncel istatistiklerin. Instagram ve YouTube verileri ajans tarafından otomatik güncellenir." />
+      <PageHeader title="Hesaplar" description="Kullanıcı adını ekle; takipçi ve profil fotoğrafın otomatik gelsin." actions={accounts.length ? <SyncOwnButton /> : undefined} />
+      <Card interactive={false} className="flex flex-col gap-3">
+        <CardTitle>Hesap bağla</CardTitle>
+        <OwnAccountForm />
+      </Card>
       {tiktok && notices[tiktok] ? <InfoNote>{notices[tiktok]}</InfoNote> : null}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Sosyal medya hesapları">
         {accounts.map((a) => (
           <Card key={a.id} interactive={false} className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <PlatformIcon platform={a.platform} aria-hidden />
-              <CardTitle>{platformLabels[a.platform]}</CardTitle>
+              <Avatar name={a.handle} src={a.avatarUrl} size={44} />
+              <div className="flex flex-col">
+                <span className="flex items-center gap-2">
+                  <PlatformIcon platform={a.platform} size={14} aria-hidden />
+                  <CardTitle>{platformLabels[a.platform]}</CardTitle>
+                </span>
+                {a.syncError ? <span className="text-[12px] text-critical">{a.syncError}</span> : null}
+              </div>
             </div>
             <p className="text-sm text-fg-muted">@{a.handle.replace(/^@/, "")}</p>
             <dl className="grid grid-cols-2 gap-2">
@@ -54,7 +66,7 @@ export default async function InfluencerAccountsPage({ searchParams }: { searchP
             </p>
           </Card>
         ))}
-        {accounts.length === 0 ? <p className="text-sm text-fg-passive">Kayıtlı hesap yok. Ajansınla iletişime geç.</p> : null}
+        {accounts.length === 0 ? <p className="text-sm text-fg-passive">Henüz hesap yok. Yukarıdan kullanıcı adını ekle.</p> : null}
       </section>
       <Card interactive={false} className="flex flex-col gap-3">
         <CardTitle>TikTok hesabını bağla</CardTitle>

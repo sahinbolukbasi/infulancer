@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const auth = await requireApiActor("ADMIN");
   if (auth.response) return auth.response;
+  if (auth.actor.staffRole) return Response.json({ error: "Bu işlem yalnız platform yöneticisine açık." }, { status: 403 });
   const url = new URL(req.url);
   const batchId = url.searchParams.get("batch") ?? "";
   const format = (url.searchParams.get("format") ?? "csv").toLowerCase();

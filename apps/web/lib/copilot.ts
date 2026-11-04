@@ -11,6 +11,9 @@ export type CopilotWelcome = { role: CopilotRole; userId: string; name: string; 
 export type CopilotAnswer = { reply: string; actions: CopilotAction[]; form?: CopilotForm; steps?: NextStep[]; source: "kural" | "ai" };
 
 const DAY = 24 * 60 * 60 * 1000;
+const STAFF_BLOCKED = new Set(["finance", "users", "landing"]);
+/** Ajans çalışanı yönetici ekranlarına bağlantı görmez. */
+const forActor = (actor: Actor, list: CopilotAction[]) => (actor.staffRole ? list.filter((a) => !STAFF_BLOCKED.has(a.id)) : list);
 const OPEN_DELIVERABLE = ["ATANDI", "BRIEF_GONDERILDI", "ICERIK_YUKLENDI", "REVIZYON", "ONAYLANDI"] as const;
 
 /** Rol başına "bugün ne yapmalıyım" listesi — yalnız aktörün görebileceği verilerden. */
@@ -31,7 +34,7 @@ export async function nextSteps(actor: Actor): Promise<NextStep[]> {
     if (findings) steps.push({ title: `${findings} açık agent uyarısı`, detail: "Uyum, çakışma veya metrik tutarsızlığı bulguları.", href: "/admin/agent", tone: "critical" });
     if (drafts) steps.push({ title: `${drafts} taslak onay bekliyor`, detail: "Yüklenen içerikleri inceleyin, onaylayın veya revizyon isteyin.", href: "/admin", tone: "warn" });
     if (apps) steps.push({ title: `${apps} üyelik başvurusu`, detail: "Davetle gelen başvuruları onaylayın veya reddedin.", href: "/admin/davetler", tone: "warn" });
-    if (payoutReq._count) steps.push({ title: `${payoutReq._count} çekim talebi · ${formatKurus(payoutReq._sum.amountKurus ?? 0)}`, detail: "Onaylayıp ödeme listesine alın.", href: "/admin/finans", tone: "warn" });
+    if (payoutReq._count && !actor.staffRole) steps.push({ title: `${payoutReq._count} çekim talebi · ${formatKurus(payoutReq._sum.amountKurus ?? 0)}`, detail: "Onaylayıp ödeme listesine alın.", href: "/admin/finans", tone: "warn" });
     for (const c of setupDrafts.filter((c) => c._count.assignments === 0 || c._count.briefs === 0).slice(0, 3)) {
       steps.push({
         title: `“${c.name}” kurulumu eksik`,
@@ -113,7 +116,7 @@ export async function copilotAnswer(actor: Actor, message: string, history: { ro
   const steps = rule.intent === "summary" ? await nextSteps(actor) : undefined;
   const base: CopilotAnswer = {
     reply: rule.intent === "summary" ? "Bugün öncelikli olanlar aşağıda. Birine tıklayarak doğrudan ilgili sayfaya gidebilirsiniz." : rule.reply,
-    actions: allowedActions(role, rule.actions),
+    actions: forActor(actor, allowedActions(role, rule.actions)),
     form: rule.form,
     steps,
     source: "kural",
@@ -121,7 +124,7 @@ export async function copilotAnswer(actor: Actor, message: string, history: { ro
   if (envStr("LLM_PROVIDER", "mock") !== "bedrock") return base;
   try {
     const context = (steps ?? (await nextSteps(actor))).map((s) => `- ${s.title}: ${s.detail}`).join("\n");
-    const catalog = COPILOT_ACTIONS[role]
+    const catalog = forActor(actor, COPILOT_ACTIONS[role])
       .map((a) => `${a.id} = ${a.label}`)
       .join("\n");
     const convo = history
@@ -141,7 +144,7 @@ export async function copilotAnswer(actor: Actor, message: string, history: { ro
     const reply = typeof json?.reply === "string" ? json.reply.trim().slice(0, 1500) : "";
     if (!reply) return base;
     const form = json?.form === "campaign-start" && role === "ADMIN" ? "campaign-start" : json?.form === "campaign-request" && role === "BRAND" ? "campaign-request" : base.form;
-    const actions = allowedActions(role, json?.actions);
+    const actions = forActor(actor, allowedActions(role, json?.actions));
     return { reply, actions: actions.length ? actions : base.actions, form, steps, source: "ai" };
   } catch {
     return base;

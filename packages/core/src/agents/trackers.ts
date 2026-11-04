@@ -177,7 +177,7 @@ export async function evaluateTracker(t: { template: string; targetId: string; s
 /** Bildirim alıcıları: admin + (isteğe bağlı) hedef markanın / influencer'ın kullanıcıları. */
 async function recipients(t: { scope: string; targetId: string; notifyAdmins: boolean; notifyBrand: boolean; notifyInfluencer: boolean }): Promise<string[]> {
   const ids = new Set<string>();
-  if (t.notifyAdmins) for (const u of await prisma.user.findMany({ where: { role: "ADMIN", status: "ACTIVE" }, select: { id: true } })) ids.add(u.id);
+  if (t.notifyAdmins) for (const u of await prisma.user.findMany({ where: { role: { in: ["ADMIN", "AGENCY"] }, status: "ACTIVE" }, select: { id: true } })) ids.add(u.id);
   if (t.notifyBrand) {
     const brandId = t.scope === "BRAND" ? t.targetId : t.scope === "CAMPAIGN" ? (await prisma.campaign.findUnique({ where: { id: t.targetId }, select: { brandId: true } }))?.brandId : null;
     if (brandId) for (const u of await prisma.user.findMany({ where: { brandId, status: "ACTIVE" }, select: { id: true } })) ids.add(u.id);

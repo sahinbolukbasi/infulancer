@@ -15,6 +15,8 @@ datasource db {
 
 enum Role {
   ADMIN
+  /// Ajans çalışanı: operasyon yetkisi, kullanıcı/yetki/finans/sistem ayarı yok
+  AGENCY
   BRAND
   INFLUENCER
 }

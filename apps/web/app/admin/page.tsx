@@ -71,7 +71,8 @@ const QUICK_LINKS: { href: string; label: string; icon: ComponentType<IconProps>
   { href: "/admin/agent", label: "Agent merkezi", icon: SparkleIcon },
   { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
 ];
-export default async function AdminHomePage() {
+export default async function AdminHomePage({ searchParams }: { searchParams: Promise<{ yetki?: string }> }) {
+  const { yetki } = await searchParams;
   const actor = await requireActor("ADMIN");
   const now = new Date();
   const since = new Date(now.getTime() - WEEKS * 7 * DAY_MS);
@@ -292,7 +293,7 @@ export default async function AdminHomePage() {
       <Card interactive={false} className="flex flex-col gap-3">
         <CardTitle>Hızlı erişim</CardTitle>
         <nav aria-label="Hızlı erişim" className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
-          {QUICK_LINKS.map((l) => (
+          {QUICK_LINKS.filter((l) => !(actor.staffRole && l.href === "/admin/finans")).map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -509,9 +510,14 @@ export default async function AdminHomePage() {
       </Card>
     ),
   };
-  const widgets: BoardWidget[] = DASHBOARD_WIDGETS.map((w) => ({ id: w.id, title: w.title, description: w.description, size: w.size, content: content[w.id] }));
+  const widgets: BoardWidget[] = DASHBOARD_WIDGETS.filter((w) => !(actor.staffRole && w.id === "finance")).map((w) => ({ id: w.id, title: w.title, description: w.description, size: w.size, content: content[w.id] }));
   return (
     <Stagger className="flex flex-col gap-6">
+      {yetki === "yok" ? (
+        <p role="alert" className="rounded-2xl border border-neon-amber/50 bg-neon-amber/10 px-4 py-3 text-sm">
+          Bu bölüm yalnız platform yöneticisine açık.
+        </p>
+      ) : null}
       <PageHeader title="Genel bakış" description="Panonuzu düzenleyebilirsiniz: alanları sıralayın, gizleyin veya geri ekleyin." />
       <DashboardBoard widgets={widgets} initial={layout} defaults={normalizeLayout(null)} />
     </Stagger>

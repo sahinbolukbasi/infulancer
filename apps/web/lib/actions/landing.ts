@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
-import { requireActor } from "@/lib/auth-guard";
+import { assertPlatformAdmin, requireActor } from "@/lib/auth-guard";
 import { landingSchema, resetLandingContent, saveLandingContent } from "@/lib/landing-store";
 
 export type LandingSaveResult = { ok: boolean; error?: string; path?: string };
@@ -10,6 +10,7 @@ export type LandingSaveResult = { ok: boolean; error?: string; path?: string };
 /** Tanıtım sayfası içeriğini kaydeder (yalnız admin); doğrulama hatasında alan yolunu döndürür. */
 export async function saveLandingAction(input: unknown): Promise<LandingSaveResult> {
   const actor = await requireActor("ADMIN");
+  assertPlatformAdmin(actor);
   const parsed = landingSchema.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -30,6 +31,7 @@ export async function saveLandingAction(input: unknown): Promise<LandingSaveResu
 
 export async function resetLandingAction(): Promise<LandingSaveResult> {
   const actor = await requireActor("ADMIN");
+  assertPlatformAdmin(actor);
   await resetLandingContent();
   await audit.append({ actor: toAuditActor(actor), action: "LANDING_RESET", entityType: "Landing", entityId: "landing", data: {} });
   revalidatePath("/");

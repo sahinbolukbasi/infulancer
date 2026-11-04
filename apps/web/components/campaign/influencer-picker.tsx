@@ -7,6 +7,7 @@ import { PlatformIcon } from "@/components/platform-icon";
 import { Button, Input, Select } from "@/components/ui/form";
 import { createAssignmentsBulk, type BulkAssignResult } from "@/lib/actions/assignments";
 import { cn } from "@/lib/cn";
+import { Avatar } from "@/components/ui/avatar";
 
 export type PickerInfluencer = {
   id: string;
@@ -23,6 +24,7 @@ export type PickerInfluencer = {
   brandHistory: number;
   suggested: boolean;
   rationale?: string;
+  avatarUrl?: string | null;
 };
 
 const compact = new Intl.NumberFormat("tr-TR", { notation: "compact", maximumFractionDigits: 1 });
@@ -177,6 +179,7 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
                   >
                     {on ? <CheckIcon size={14} /> : null}
                   </span>
+                  <Avatar name={i.name} src={i.avatarUrl} size={40} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="truncate text-sm text-fg">{i.name}</span>

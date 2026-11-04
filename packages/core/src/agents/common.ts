@@ -67,7 +67,7 @@ export async function recordRun(input: RunInput): Promise<boolean> {
 }
 
 export async function notifyAdmins(title: string, body: string, href?: string): Promise<void> {
-  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  const admins = await prisma.user.findMany({ where: { role: { in: ["ADMIN", "AGENCY"] } }, select: { id: true } });
   if (!admins.length) return;
   await prisma.notification.createMany({ data: admins.map((a) => ({ userId: a.id, title, body, href })) });
 }

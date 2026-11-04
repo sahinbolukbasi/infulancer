@@ -246,6 +246,8 @@ async function main() {
   const admin = await prisma.user.create({
     data: { email: "admin@ajans.local", name: "Deniz Kaya", role: "ADMIN", passwordHash },
   });
+  // Ajans çalışanı (operasyon rolü: kullanıcı/yetki/finans/tanıtım ekranlarına giremez)
+  await prisma.user.create({ data: { email: "ajans@ajans.local", name: "Ece Operasyon", role: "AGENCY", passwordHash } });
 
   // ───── Markalar ─────
   const lumi = await prisma.brand.create({

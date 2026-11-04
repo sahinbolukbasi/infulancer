@@ -17,6 +17,7 @@ import { Sidebar } from "./sidebar";
 export async function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const actor = await requireActor(role);
   const user = await getSessionUser();
+  const navRole: Role = actor.staffRole ?? role;
 
   return (
     <div className="relative isolate flex min-h-dvh bg-bg text-fg">
@@ -31,7 +32,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
       >
         İçeriğe geç
       </a>
-      <Sidebar role={role} />
+      <Sidebar role={navRole} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line bg-bg/70 px-4 backdrop-blur-xl md:px-8">
           <span className="text-[15px] font-semibold tracking-tight md:hidden">Infulancer</span>
@@ -56,14 +57,14 @@ export async function AppShell({ role, children }: { role: Role; children: React
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
             <NotificationBell userId={actor.userId} />
-            <AccountMenu name={user?.name ?? ""} email={user?.email ?? ""} roleLabel={roleLabels[role]} />
+            <AccountMenu name={user?.name ?? ""} email={user?.email ?? ""} roleLabel={roleLabels[navRole]} />
           </div>
         </header>
         <main id="icerik" className="mx-auto w-full max-w-[1440px] flex-1 px-4 pt-8 pb-24 md:px-8 md:pb-12">
           {children}
         </main>
       </div>
-      <MobileTabBar role={role} />
+      <MobileTabBar role={navRole} />
       <CopilotLauncher />
     </div>
   );

@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma, type Prisma } from "@infulancer/core/db";
 import { roleLabels } from "@infulancer/core/domain/labels";
-import { UserStatusButton } from "@/components/forms/user-status-button";
+import { StaffRoleButton, StaffUserForm, UserStatusButton } from "@/components/forms/user-status-button";
 import { SearchIcon } from "@/components/icons";
 import { DataTable } from "@/components/ui/data-table";
 import { ButtonLink, Input } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot, type StatusTone } from "@/components/ui/status";
-import { requireActor } from "@/lib/auth-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 import { fmtDate } from "@/lib/time";
 export const metadata: Metadata = { title: "Kullanıcılar" };
 export const dynamic = "force-dynamic";
 
-const ROLES = ["ADMIN", "BRAND", "INFLUENCER"] as const;
+const ROLES = ["ADMIN", "AGENCY", "BRAND", "INFLUENCER"] as const;
 const STATUSES = ["ACTIVE", "PENDING", "SUSPENDED", "REJECTED"] as const;
 const statusLabel: Record<(typeof STATUSES)[number], string> = { ACTIVE: "Aktif", PENDING: "Onay bekliyor", SUSPENDED: "Askıda", REJECTED: "Reddedildi" };
 const statusTone: Record<(typeof STATUSES)[number], StatusTone> = { ACTIVE: "active", PENDING: "muted", SUSPENDED: "critical", REJECTED: "passive" };
@@ -27,7 +27,7 @@ function qs(base: Record<string, string | undefined>, patch: Record<string, stri
 
 /** Tüm kullanıcılar: rol ve duruma göre filtre, bağlı marka/influencer, askıya alma. */
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ rol?: string; durum?: string; q?: string }> }) {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireAdmin();
   const sp = await searchParams;
   const rol = ROLES.find((r) => r === sp.rol);
   const durum = STATUSES.find((s) => s === sp.durum);
@@ -68,7 +68,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Kullanıcılar"
-        description="Admin, marka ve influencer hesapları. Askıya alınan kullanıcı panele giremez; başvurular Davetler sayfasından onaylanır."
+        description="Admin, ajans, marka ve influencer hesapları."
         actions={
           <div className="flex gap-2">
             <ButtonLink href="/admin/yetkiler" variant="secondary">
@@ -78,6 +78,12 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           </div>
         }
       />
+      <details className="rounded-3xl border border-line bg-glass px-5 py-4">
+        <summary className="cursor-pointer text-sm font-medium">+ Ajans ekibine kullanıcı ekle</summary>
+        <div className="mt-4">
+          <StaffUserForm />
+        </div>
+      </details>
       <div className="flex flex-col gap-3">
         <nav aria-label="Rol filtresi" className="flex flex-wrap gap-2">
           <Link href={qs(base, { rol: undefined })} aria-current={!rol ? "page" : undefined} className={chip(!rol)}>
@@ -138,7 +144,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                     {linkName}
                   </Link>
                 ) : (
-                  <span className="text-fg-passive">{u.role === "ADMIN" ? "Ajans" : "—"}</span>
+                  <span className="text-fg-passive">{u.role === "ADMIN" || u.role === "AGENCY" ? "Ajans ekibi" : "—"}</span>
                 ),
                 sort: linkName ?? "",
               },
@@ -146,7 +152,10 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
               manage: {
                 display:
                   u.id === actor.userId ? null : u.status === "ACTIVE" || u.status === "SUSPENDED" ? (
-                    <UserStatusButton userId={u.id} status={u.status} name={u.name} />
+                    <span className="inline-flex flex-wrap items-center gap-1">
+                      <UserStatusButton userId={u.id} status={u.status} name={u.name} />
+                      {u.role === "ADMIN" || u.role === "AGENCY" ? <StaffRoleButton userId={u.id} role={u.role} name={u.name} /> : null}
+                    </span>
                   ) : (
                     <Link href="/admin/davetler" className="text-[13px] text-fg-muted hover:text-fg">
                       Başvuruyu incele →

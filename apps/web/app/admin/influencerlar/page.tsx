@@ -13,6 +13,7 @@ import { PageHeader, Stagger } from "@/components/ui/layout";
 import { Sparkline } from "@/components/ui/metric-card";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { Avatar, pickAvatar } from "@/components/ui/avatar";
 import { compact, pct, pct1 } from "@/lib/format";
 import { fmtDate } from "@/lib/time";
 
@@ -37,7 +38,7 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
         categories: { orderBy: { primary: "desc" }, select: { primary: true, category: { select: { name: true, parent: { select: { name: true } } } } } },
         riskScore: true,
         user: { select: { email: true } },
-        socialAccounts: { orderBy: { followers: "desc" }, select: { platform: true, handle: true, followers: true } },
+        socialAccounts: { orderBy: { followers: "desc" }, select: { platform: true, handle: true, followers: true, avatarUrl: true } },
       },
     }),
     computeInfluencerStats(ids, now),
@@ -84,7 +85,9 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
             cells: {
               name: {
                 display: (
-                  <Link href={`/admin/influencerlar/${i.id}`} className="flex flex-col text-fg hover:underline">
+                  <Link href={`/admin/influencerlar/${i.id}`} className="flex items-start gap-3 text-fg hover:underline">
+                    <Avatar name={i.name} src={pickAvatar(i.socialAccounts)} size={36} />
+                    <span className="flex flex-col">
                     {i.name}
                     <span className="flex flex-wrap gap-1 pt-1">
                       {i.categories.slice(0, 3).map((c, idx) => (
@@ -98,6 +101,7 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
                       {i.city ? `${i.city} · ` : ""}
                       {i.user?.email ?? "Giriş hesabı yok"}
                     </span>
+                  </span>
                   </Link>
                 ),
                 sort: i.name,

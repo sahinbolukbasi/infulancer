@@ -17,6 +17,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { requireActor } from "@/lib/auth-guard";
+import { Avatar, pickAvatar } from "@/components/ui/avatar";
 import { WorkHistory } from "@/components/history/work-history";
 import { SyncAccountsButton } from "@/components/forms/agent-job-forms";
 import { categoryLabel } from "@infulancer/core/domain/categories";
@@ -107,6 +108,10 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
 
   return (
     <div className="flex flex-col gap-8">
+      <div className="flex items-center gap-4">
+        <Avatar name={inf.name} src={pickAvatar(inf.socialAccounts)} size={64} className="ring-2 ring-neon-pink/50" />
+        <span className="text-[12px] text-fg-passive">{pickAvatar(inf.socialAccounts) ? "Profil fotoğrafı bağlı hesaptan" : "Hesap senkronlanınca profil fotoğrafı gelir"}</span>
+      </div>
       <PageHeader
         title={inf.name}
         description={`${inf.city ? `${inf.city} · ` : ""}${taxStatusLabels[inf.taxStatus]}${inf.canIssueInvoice ? "" : " · fatura kesemiyor"} · ${inf.user?.email ?? "giriş hesabı yok"}`}

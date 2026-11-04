@@ -10,7 +10,7 @@ import { PageHeader, Stagger } from "@/components/ui/layout";
 import { MetricCard } from "@/components/ui/metric-card";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
-import { requireActor } from "@/lib/auth-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 import { AGENCY_TZ, fmtDate, fmtDateTime, localDay, zonedToUtc } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Finans" };
@@ -19,7 +19,7 @@ type Tax = { taxStatus: "FATURA" | "SERBEST_MESLEK_MAKBUZU" | "STOPAJLI"; canIss
 const needsTaxWarning = (i: Tax) => i.taxStatus !== "FATURA" || !i.canIssueInvoice;
 
 export default async function FinancePage() {
-  await requireActor("ADMIN");
+  await requireAdmin();
   const now = new Date();
   const monthStart = zonedToUtc(`${localDay(now, AGENCY_TZ).slice(0, 7)}-01`, "00:00", AGENCY_TZ);
 

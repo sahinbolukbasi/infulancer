@@ -43,6 +43,8 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/tanitim", label: "Tanıtım sayfası", icon: GridIcon },
     { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
   ],
+  // Ajans çalışanı: yönetici ekranları (kullanıcılar, yetkiler, finans, tanıtım) hariç.
+  AGENCY: [],
   BRAND: [
     { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
     { href: "/marka/gelen-kutusu", label: "Gelen kutusu", icon: BellIcon },
@@ -60,6 +62,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   ],
 };
 
+navByRole.AGENCY = navByRole.ADMIN.filter((i) => !["/admin/kullanicilar", "/admin/yetkiler", "/admin/tanitim", "/admin/finans"].includes(i.href));
 export function isActive(pathname: string, item: NavItem): boolean {
   if (item.exact) return pathname === item.href;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);

@@ -18,7 +18,7 @@ export const instagramInboxNotes = [
 
 export async function assignConversation(tenantId: string, conversationId: string) {
   const users = await prisma.user.findMany({ where: { brandId: tenantId, role: "BRAND" }, select: { id: true } });
-  const pool = users.length ? users : await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  const pool = users.length ? users : await prisma.user.findMany({ where: { role: { in: ["ADMIN", "AGENCY"] } }, select: { id: true } });
   if (!pool.length) return null;
   const loads = await Promise.all(
     pool.map(async (u) => ({ id: u.id, n: await prisma.conversation.count({ where: { assignedUserId: u.id, status: { in: ["assigned", "awaiting_human"] } } }) })),

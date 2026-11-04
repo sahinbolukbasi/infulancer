@@ -6,7 +6,7 @@ import { formatKurus } from "@infulancer/core/domain/labels";
 import { addToPaymentList, approvePayout, markSent, rejectPayout, requestPayout } from "@infulancer/core/domain/payouts";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, optStr, parseInput, revalidateAll, str, tlToKurus } from "@/lib/action-utils";
-import { requireActor } from "@/lib/auth-guard";
+import { assertPlatformAdmin, requireActor } from "@/lib/auth-guard";
 
 const idSchema = z.string().min(1).max(64);
 const idsSchema = z.array(idSchema).min(1, "En az bir talep seçin.").max(500);
@@ -32,6 +32,7 @@ export async function createPayoutRequest(_prev: ActionState, fd: FormData): Pro
 /** Admin: talebi onayla ya da reddet (ret gerekçesi zorunlu). */
 export async function decidePayout(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN");
+  assertPlatformAdmin(actor);
   return attempt(async () => {
     const input = parseInput(
       z.object({ id: idSchema, decision: z.enum(["ONAYLA", "REDDET"]), note: z.string().max(1000).nullable() }),
@@ -48,6 +49,7 @@ export async function decidePayout(_prev: ActionState, fd: FormData): Promise<Ac
 /** Admin: onaylanan talepleri yeni bir ödeme listesine (PayoutBatch) al. */
 export async function addPayoutsToList(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN");
+  assertPlatformAdmin(actor);
   return attempt(async () => {
     const list = parseInput(idsSchema, ids(fd));
     const res = await addToPaymentList(actor, list);
@@ -63,6 +65,7 @@ export async function addPayoutsToList(_prev: ActionState, fd: FormData): Promis
 /** Admin: banka transferi yapıldıktan sonra gönderildi olarak işaretle (ODEME ledger çifti yazılır). */
 export async function markPayoutsSent(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN");
+  assertPlatformAdmin(actor);
   return attempt(async () => {
     const list = parseInput(idsSchema, ids(fd));
     const res = await markSent(actor, list);

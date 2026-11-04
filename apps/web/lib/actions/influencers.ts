@@ -209,6 +209,9 @@ export async function saveInfluencer(_prev: ActionState, fd: FormData): Promise<
       });
     });
     if (created.id) await publish({ type: "INFLUENCER_CREATED", influencerId: created.id });
+    // Bağlı hesaplardan takipçi ve profil fotoğrafını hemen çek (senkron kapalıysa sessizce geçer).
+    const savedId = id ?? created.id;
+    if (savedId) await import("@infulancer/core/social/sync").then((m) => m.syncInfluencer(savedId)).catch(() => null);
     revalidateAll();
     return { ok: true, message: "Influencer kaydedildi." };
   });

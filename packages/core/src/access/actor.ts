@@ -7,13 +7,15 @@ export type Actor = {
   role: Role;
   brandId?: string | null;
   influencerId?: string | null;
+  /** AGENCY kullanıcıları core'da ADMIN yetkisiyle çalışır; asıl rol denetim kaydı ve kısıtlı ekranlar için burada. */
+  staffRole?: "AGENCY";
 };
 
 /** Agent/zamanlanmış işler için audit aktörü (kullanıcı değildir). */
 export const SYSTEM_AUDIT_ACTOR = { id: null, role: "SYSTEM" } as const;
 
 export function toAuditActor(actor: Actor): { id: string; role: string } {
-  return { id: actor.userId, role: actor.role };
+  return { id: actor.userId, role: actor.staffRole ?? actor.role };
 }
 
 /** Rol kontrolü; yetkisizse DomainError("YETKISIZ") fırlatır. */

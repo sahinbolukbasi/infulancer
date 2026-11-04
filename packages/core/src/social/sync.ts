@@ -109,7 +109,7 @@ export const httpSocial: SocialProvider = {
       const key = envStr("YOUTUBE_API_KEY", "");
       if (!key) throw new SyncError("YouTube senkronu yapılandırılmadı (YOUTUBE_API_KEY).", "NOT_CONFIGURED");
       const j = (await getJson(`https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&forHandle=${encodeURIComponent(`@${handle}`)}&key=${key}`)) as {
-        items?: { id: string; statistics: { subscriberCount?: string; videoCount?: string; viewCount?: string }; snippet: { thumbnails?: { default?: { url: string } } } }[];
+        items?: { id: string; statistics: { subscriberCount?: string; videoCount?: string; viewCount?: string }; snippet: { thumbnails?: { default?: { url: string }; medium?: { url: string }; high?: { url: string } } } }[];
       };
       const ch = j.items?.[0];
       if (!ch) throw new SyncError(`@${handle} YouTube kanalı bulunamadı.`, "NOT_FOUND");
@@ -125,7 +125,7 @@ export const httpSocial: SocialProvider = {
         avgViews: videos ? Math.round(views / videos) : null,
         engagementRate: null,
         profileUrl: `https://youtube.com/@${handle}`,
-        avatarUrl: ch.snippet.thumbnails?.default?.url ?? null,
+        avatarUrl: ch.snippet.thumbnails?.medium?.url ?? ch.snippet.thumbnails?.high?.url ?? ch.snippet.thumbnails?.default?.url ?? null,
         verified: false,
         source: "youtube_data",
       };

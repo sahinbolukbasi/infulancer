@@ -34,6 +34,7 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
 import { requireActor } from "@/lib/auth-guard";
+import { pickAvatar } from "@/components/ui/avatar";
 import { TrackerGallery, TrackerList } from "@/components/agent/tracker-ui";
 import { loadTrackerViews, templateViews } from "@/lib/trackers";
 import { isOverdue } from "@/lib/calendar";
@@ -118,7 +119,7 @@ export default async function CampaignDetailPage({
         category: true,
         city: true,
         categories: { include: { category: { include: { parent: { select: { name: true } } } } }, orderBy: { primary: "desc" } },
-        socialAccounts: { select: { platform: true, handle: true, followers: true, engagementRate: true } },
+        socialAccounts: { select: { platform: true, handle: true, followers: true, engagementRate: true, avatarUrl: true } },
         assignments: {
           where: { contractStatus: { not: "RED" } },
           orderBy: { createdAt: "desc" },
@@ -147,6 +148,7 @@ export default async function CampaignDetailPage({
       brandHistory: i.assignments.filter((a) => a.campaign.brandId === campaign.brand.id).length,
       suggested: suggested.has(i.id),
       rationale: suggested.get(i.id),
+      avatarUrl: pickAvatar(i.socialAccounts),
     };
   });
 

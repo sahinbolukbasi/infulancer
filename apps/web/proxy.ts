@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "./auth.config";
-import { requiredRoleForPath, roleHome } from "./lib/roles";
+import { isAdminOnlyPath, requiredRoleForPath, roleHome } from "./lib/roles";
 
 const { auth } = NextAuth(authConfig);
 const PUBLIC_PATHS = new Set(["/gizlilik", "/kullanim-kosullari", "/fiyatlandirma"]);
@@ -43,7 +43,13 @@ export default auth((req) => {
   }
 
   const required = requiredRoleForPath(pathname);
-  if (required && required !== user.role) {
+  // Ajans çalışanı /admin ekranlarını kullanır, yalnız yönetici ekranlarına giremez.
+  const effective = user.role === "AGENCY" ? "ADMIN" : user.role;
+  if (user.role === "AGENCY" && isAdminOnlyPath(pathname)) {
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Bu işlem için yetkiniz yok." }, { status: 403 });
+    return NextResponse.redirect(new URL("/admin?yetki=yok", req.nextUrl));
+  }
+  if (required && required !== effective) {
     return NextResponse.redirect(new URL(roleHome[user.role], req.nextUrl));
   }
   return NextResponse.next();

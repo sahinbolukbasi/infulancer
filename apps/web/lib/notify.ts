@@ -4,7 +4,7 @@ type Message = { title: string; body: string; href?: string | null };
 
 /** Tüm admin kullanıcılarına uygulama içi bildirim. */
 export async function notifyAdmins(tx: Tx, msg: Message): Promise<void> {
-  const admins = await tx.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  const admins = await tx.user.findMany({ where: { role: { in: ["ADMIN", "AGENCY"] } }, select: { id: true } });
   if (admins.length === 0) return;
   await tx.notification.createMany({
     data: admins.map((a) => ({ userId: a.id, title: msg.title, body: msg.body, href: msg.href ?? null })),
