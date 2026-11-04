@@ -5,6 +5,7 @@ import { ReelCard } from "@/components/landing/reel-card";
 import { ScrollDemo } from "@/components/landing/scroll-demo";
 import { AudienceHero } from "@/components/landing/audience-hero";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { BrandBadge, BrandLogo, type BrandLogoName } from "@/components/icons/brand-logos";
 import { LANDING_FEATURES, type LandingReference, type LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
 
@@ -130,15 +131,15 @@ function FeatureVisual({ i }: { i: number }) {
   );
 }
 
-const INTEGRATIONS: { name: string; kind: string; text: string; tone: string; soon?: boolean }[] = [
-  { name: "Instagram", kind: "Sosyal medya", text: "Business Discovery ile takipçi ve etkileşim; DM gelen kutusu.", tone: "from-pink-500 to-amber-400" },
-  { name: "TikTok", kind: "Sosyal medya", text: "Üretici TikTok hesabıyla bağlanır; profil ve video istatistikleri doğrudan okunur.", tone: "from-zinc-700 to-cyan-500" },
-  { name: "YouTube", kind: "Sosyal medya", text: "YouTube Data API ile abone, video ve izlenme verisi otomatik güncellenir.", tone: "from-red-600 to-rose-400" },
-  { name: "WhatsApp", kind: "Mesajlaşma", text: "Cloud API ile gelen kutusu, şablon mesajlar ve AI asistan; İYS onayı kontrol edilir.", tone: "from-emerald-600 to-lime-400" },
-  { name: "UTM ve kupon", kind: "Analitik", text: "Her kampanyaya UTM etiketi ve influencer başına kupon kodu; satışlar skora işlenir.", tone: "from-sky-600 to-indigo-400" },
+const INTEGRATIONS: { name: string; kind: string; text: string; tone: string; soon?: boolean; logo?: BrandLogoName }[] = [
+  { name: "Instagram", logo: "instagram", kind: "Sosyal medya", text: "Business Discovery ile takipçi ve etkileşim; DM gelen kutusu.", tone: "from-pink-500 to-amber-400" },
+  { name: "TikTok", logo: "tiktok", kind: "Sosyal medya", text: "Üretici TikTok hesabıyla bağlanır; profil ve video istatistikleri doğrudan okunur.", tone: "from-zinc-700 to-cyan-500" },
+  { name: "YouTube", logo: "youtube", kind: "Sosyal medya", text: "YouTube Data API ile abone, video ve izlenme verisi otomatik güncellenir.", tone: "from-red-600 to-rose-400" },
+  { name: "WhatsApp", logo: "whatsapp", kind: "Mesajlaşma", text: "Cloud API ile gelen kutusu, şablon mesajlar ve AI asistan; İYS onayı kontrol edilir.", tone: "from-emerald-600 to-lime-400" },
+  { name: "UTM ve kupon", logo: "googleanalytics", kind: "Analitik", text: "Her kampanyaya UTM etiketi ve influencer başına kupon kodu; satışlar skora işlenir.", tone: "from-sky-600 to-indigo-400" },
   { name: "İYS ve KVKK", kind: "Uyum", text: "Ticari ileti onayları, yurt dışı aktarım kayıtları ve saklama süreleri takip edilir.", tone: "from-slate-600 to-slate-400" },
-  { name: "Meta ortaklık reklamları", kind: "Reklam", text: "Üreticinin içeriğini onun adıyla ortaklık reklamı olarak yayınlayın.", tone: "from-blue-600 to-violet-400", soon: true },
-  { name: "TikTok Spark Ads", kind: "Reklam", text: "Üreticinin videosunu kendi hesabından Spark Ads ile öne çıkarın.", tone: "from-fuchsia-600 to-cyan-400", soon: true },
+  { name: "Meta ortaklık reklamları", logo: "meta", kind: "Reklam", text: "Üreticinin içeriğini onun adıyla ortaklık reklamı olarak yayınlayın.", tone: "from-blue-600 to-violet-400", soon: true },
+  { name: "TikTok Spark Ads", logo: "tiktok", kind: "Reklam", text: "Üreticinin videosunu kendi hesabından Spark Ads ile öne çıkarın.", tone: "from-fuchsia-600 to-cyan-400", soon: true },
 ];
 const SEGMENTS = [
   {
@@ -370,7 +371,10 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                       </span>
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">{c.handle}</span>
-                        <span className="text-[12px] text-fg-passive">{[c.city, c.platform].filter(Boolean).join(" · ")}</span>
+                        <span className="flex items-center gap-1.5 text-[12px] text-fg-passive">
+                          <BrandLogo name={c.platform === "TikTok" ? "tiktok" : c.platform === "YouTube" ? "youtube" : "instagram"} size={12} />
+                          {[c.platform, c.city].filter(Boolean).join(" · ")}
+                        </span>
                       </span>
                     </div>
                     <span className="w-fit rounded-full border border-line px-2.5 py-0.5 text-[11px] text-fg-muted">{c.niche}</span>
@@ -431,10 +435,17 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
               <Reveal as="li" key={it.name} delay={(i % 4) * 80}>
                 <div className="group flex h-full flex-col gap-3 rounded-3xl border border-line bg-glass p-5 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:bg-glass">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-semibold text-white", it.tone)} aria-hidden>
-                      {it.name.slice(0, 2)}
-                    </span>
-                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide", it.soon ? "border border-amber-300/40 text-amber-200" : "bg-surface-hover text-fg-muted")}>
+                    {it.logo ? (
+                      <BrandBadge name={it.logo} size={44} className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" />
+                    ) : (
+                      <span className={cn("inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br text-white transition-transform duration-300 group-hover:scale-110", it.tone)} aria-hidden>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.4 7.5 9.5 4.3-1.1 7.5-5 7.5-9.5V6Z" />
+                          <path d="m8.8 12.2 2.2 2.2 4.4-4.6" />
+                        </svg>
+                      </span>
+                    )}
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide", it.soon ? "border border-neon-amber/50 text-neon-amber" : "bg-surface-hover text-fg-muted")}>
                       {it.soon ? "Erken erişim" : it.kind}
                     </span>
                   </div>

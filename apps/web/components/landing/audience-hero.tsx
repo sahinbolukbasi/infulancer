@@ -3,6 +3,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { RotatingWord } from "@/components/landing/motion";
 import { cn } from "@/lib/cn";
+import { BrandLogo, BRAND_LOGO_TITLES, type BrandLogoName } from "@/components/icons/brand-logos";
 
 export const AUDIENCES = [
   {
@@ -115,6 +116,15 @@ export function AudienceHero() {
           >
             {a.alt.label}
           </a>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-fg-passive">
+          <span className="text-[12px]">Resmî API ile bağlanır:</span>
+          {(["instagram", "tiktok", "youtube", "whatsapp", "meta"] as BrandLogoName[]).map((n) => (
+            <span key={n} className="inline-flex items-center gap-1.5 text-[12px] transition-colors hover:text-fg">
+              <BrandLogo name={n} size={16} />
+              {BRAND_LOGO_TITLES[n]}
+            </span>
+          ))}
         </div>
       </div>
     </div>
