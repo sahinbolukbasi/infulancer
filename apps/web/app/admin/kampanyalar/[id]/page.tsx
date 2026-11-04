@@ -34,6 +34,8 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
 import { requireActor } from "@/lib/auth-guard";
+import { TrackerGallery, TrackerList } from "@/components/agent/tracker-ui";
+import { loadTrackerViews, templateViews } from "@/lib/trackers";
 import { isOverdue } from "@/lib/calendar";
 import { num } from "@/lib/format";
 import { scoreDeliverableSelect, toScoreDeliverables } from "@/lib/queries";
@@ -125,6 +127,7 @@ export default async function CampaignDetailPage({
       },
     }),
   ]);
+  const trackers = await loadTrackerViews({ scope: "CAMPAIGN", targetId: campaign.id });
   const suggestions = runs.filter((r) => r.checkType === "INFLUENCER_ONERI" && r.targetType === "Campaign");
   const editable = campaign.status === "TASLAK" || campaign.status === "AKTIF";
   const suggested = new Map<string, string | undefined>();
@@ -420,6 +423,11 @@ export default async function CampaignDetailPage({
   const draftText = (summaryDraft?.findings as { draft?: string } | null)?.draft;
   const agent = (
     <div className="flex flex-col gap-6">
+      <Card interactive={false} className="flex flex-col gap-4">
+        <CardTitle>Takip agent&apos;ları</CardTitle>
+        <TrackerList trackers={trackers} emptyText="Bu kampanyada takipçi yok." />
+        <TrackerGallery templates={templateViews()} targets={{ CAMPAIGN: [], INFLUENCER: [], BRAND: [] }} fixedTarget={{ scope: "CAMPAIGN", id: campaign.id }} />
+      </Card>
       {summaryDraft && draftText ? (
         <Card interactive={false} className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -476,7 +484,7 @@ export default async function CampaignDetailPage({
           { id: "teslimler", label: `Teslimler (${deliverables.length})`, content: delivery },
           { id: "dosyalar", label: "Dosyalar", content: files },
           { id: "brief", label: "Brief", content: briefTab },
-          { id: "agent", label: `Agent (${runs.filter((r) => r.status === "ACIK").length})`, content: agent },
+          { id: "agent", label: `Agent (${runs.filter((r) => r.status === "ACIK").length + trackers.reduce((n, t) => n + t.findings.length, 0)})`, content: agent },
         ]}
       />
     </div>

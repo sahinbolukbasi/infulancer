@@ -12,6 +12,8 @@ import { StatusDot } from "@/components/ui/status";
 import { InfoNote } from "@/components/ui/unverified";
 import { assistantsFor } from "@/lib/assistants";
 import { requireActor } from "@/lib/auth-guard";
+import { TrackerGallery, TrackerList } from "@/components/agent/tracker-ui";
+import { loadTrackerViews, templateViews, trackerTargets } from "@/lib/trackers";
 import { cn } from "@/lib/cn";
 import { fmtDateTime } from "@/lib/time";
 
@@ -20,6 +22,7 @@ export const dynamic = "force-dynamic";
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const SECTIONS = [
+  { id: "takip", label: "Takip agent'ları" },
   { id: "agentlar", label: "Denetim agent'ları" },
   { id: "bulgular", label: "Bulgular" },
   { id: "asistanlar", label: "Sohbet asistanları" },
@@ -28,14 +31,14 @@ const SECTIONS = [
 export default async function AgentCenterPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireActor("ADMIN");
   const sp = await searchParams;
-  const section = SECTIONS.find((s) => s.id === one(sp.bolum))?.id ?? "agentlar";
+  const section = SECTIONS.find((s) => s.id === one(sp.bolum))?.id ?? "takip";
   const openCount = await prisma.agentRun.count({ where: { status: "ACIK" } });
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Agent merkezi"
-        description="Agent’lar iki türdür: denetim agent’ları arka planda kampanya, içerik ve uyumu kontrol edip bulgu üretir; sohbet asistanları markaların WhatsApp/Instagram müşterilerine cevap verir. Hiçbir agent iş durumunu kendi başına değiştirmez."
+        description="Şablondan takipçi kurun; kampanya, story, influencer ve markayı sizin yerinize izlesin."
       />
       <nav aria-label="Agent merkezi bölümleri" className="flex flex-wrap gap-2 border-b border-border">
         {SECTIONS.map((s) => (
@@ -50,11 +53,30 @@ export default async function AgentCenterPage({ searchParams }: { searchParams: 
           </Link>
         ))}
       </nav>
-      {section === "agentlar" ? <AuditAgents /> : section === "bulgular" ? <Findings sp={sp} /> : <Assistants sp={sp} />}
+      {section === "takip" ? <Trackers /> : section === "agentlar" ? <AuditAgents /> : section === "bulgular" ? <Findings sp={sp} /> : <Assistants sp={sp} />}
     </div>
   );
 }
 
+async function Trackers() {
+  const [trackers, targets] = await Promise.all([loadTrackerViews(), trackerTargets()]);
+  return (
+    <div className="flex flex-col gap-8">
+      <section className="flex flex-col gap-3" aria-labelledby="trk-new">
+        <h2 id="trk-new" className="text-section">
+          Hazır şablonlar
+        </h2>
+        <TrackerGallery templates={templateViews()} targets={targets} />
+      </section>
+      <section className="flex flex-col gap-3" aria-labelledby="trk-list">
+        <h2 id="trk-list" className="text-section">
+          Kurulu takipçiler ({trackers.length})
+        </h2>
+        <TrackerList trackers={trackers} emptyText="Henüz takipçi yok. Yukarıdan bir şablon seçin; yeni kampanyalara kampanya ve story takibi otomatik eklenir." />
+      </section>
+    </div>
+  );
+}
 async function AuditAgents() {
   const agents = await agentOverview();
   const groups = Object.keys(agentGroupLabels) as AgentGroup[];

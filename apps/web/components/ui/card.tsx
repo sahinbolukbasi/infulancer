@@ -11,8 +11,8 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-[8px] border border-border bg-surface p-6 transition-standard",
-        interactive && "hover:-translate-y-px hover:border-border-strong",
+        "rounded-[16px] border border-line bg-surface/80 p-6 backdrop-blur transition-standard",
+        interactive && "hover:-translate-y-px hover:border-line-strong",
         className,
       )}
       {...rest}

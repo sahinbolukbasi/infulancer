@@ -10,6 +10,7 @@ import { assertCampaignCanGoLive, CampaignGateError } from "@infulancer/core/com
 import { DomainError } from "@infulancer/core/domain/errors";
 import { utmSafe } from "@infulancer/core/domain/utm";
 import { publish } from "@infulancer/core/events";
+import { ensureCampaignTrackers } from "@infulancer/core/agents/trackers";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, optStr, parseInput, revalidateAll, str, tlToKurus } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
@@ -130,6 +131,8 @@ export async function saveCampaign(_prev: ActionState, fd: FormData): Promise<Ac
         data: { ...input, slug },
       });
     });
+    // Yeni kampanyaya varsayılan takip agent'ları (kampanya + story) eklenir.
+    if (created.id) await ensureCampaignTrackers(created.id, input.name, actor.userId).catch(() => 0);
     revalidateAll();
     return { ok: true, message: "Kampanya kaydedildi." };
   });

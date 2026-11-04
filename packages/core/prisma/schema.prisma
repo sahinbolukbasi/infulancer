@@ -1365,3 +1365,29 @@ model SignupApplication {
 
   @@index([status, createdAt])
 }
+
+// ═════════════ Takip agent'ları (şablondan, kampanya/influencer/marka takibi) ═════════════
+model TrackerAgent {
+  id               String    @id @default(cuid())
+  name             String
+  /// campaign | story | influencer | brand (core/src/agents/trackers.ts)
+  template         String
+  /// CAMPAIGN | INFLUENCER | BRAND
+  scope            String
+  targetId         String
+  /// Şablona özgü eşikler (zod ile doğrulanır)
+  settings         Json      @default("{}")
+  notifyAdmins     Boolean   @default(true)
+  notifyBrand      Boolean   @default(false)
+  notifyInfluencer Boolean   @default(false)
+  enabled          Boolean   @default(true)
+  createdById      String?
+  lastRunAt        DateTime?
+  /// [{key, severity, title, detail, href}] — son çalışmanın bulguları
+  lastFindings     Json      @default("[]")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  @@index([scope, targetId])
+  @@index([enabled])
+  @@map("tracker_agents")
+}

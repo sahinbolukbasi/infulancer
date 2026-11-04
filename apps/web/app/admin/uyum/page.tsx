@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
 import { DocLink } from "@/components/docs/doc-components";
-import { PageGuide } from "@/components/ui/page-guide";
+import { StatusCards } from "@/components/ui/status-cards";
 import { RunJobButton } from "@/components/forms/operations-forms";
 import { fmtDateTime } from "@/lib/time";
 
@@ -26,12 +26,14 @@ export default async function AdminCompliancePage() {
     prisma.disclosureCheck.findMany({ where: { compliant: false }, orderBy: { checkedAt: "desc" }, take: 50 }),
   ]);
   const name = new Map(brands.map((b) => [b.id, b.name]));
+  const kvkkMissing = settings.filter((st) => !TRANSFER_TARGETS.every((t) => filings.some((f) => f.tenantId === st.tenantId && f.transferTarget === t.key && f.receiptS3Key))).length;
+  const kvkkOk = settings.length > 0 && kvkkMissing === 0;
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Uyum"
-        description="İYS onay kapısı, KVKK yurt dışı aktarım bildirimleri, md. 23/A reklam açıklaması ve politika bayrakları."
+        description="Dört kart yeşilse tüm markalar yasal olarak hazır."
         actions={
           <div className="flex gap-2">
             <RunJobButton job="iys-register" label="İYS kuyruğunu şimdi gönder" />
@@ -39,19 +41,17 @@ export default async function AdminCompliancePage() {
           </div>
         }
       />
-      <PageGuide
-        what="Yasal yükümlülüklerin tek ekranı. Sistem bu kuralları sert blok olarak uygular: İYS onayı olmayan kişiye kampanya mesajı gitmez, “Reklam/Tanıtım” etiketi olmayan içerikle kampanya yayına alınmaz, KVKK makbuzu yüklenmeyen marka canlı moda geçemez."
-        why="Bu sayfa bloklananları, süresi yaklaşan kayıtları ve eksik bildirimleri gösterir; cezalar alıcı/içerik başına uygulanır."
-        steps={[
-          { label: "Tüm onay kayıtları 3 iş günü içinde İYS’ye iletildi", done: pending.length === 0, hint: `${pending.length} kayıt bekliyor` },
-          { label: "Tüm markaların KVKK bildirim makbuzu yüklendi", done: settings.length > 0 && settings.every((s) => TRANSFER_TARGETS.every((t) => filings.some((f) => f.tenantId === s.tenantId && f.transferTarget === t.key && f.receiptS3Key))), hint: "Marka panelinde Uyum sayfasından yüklenir" },
-          { label: "md. 23/A uyumsuz içerik yok", done: checks.length === 0, hint: `${checks.length} uyumsuz kare/içerik` },
-          { label: "Engelleyici politika bayrağı yok", done: !flags.some((f) => f.blocking), hint: "Yasaklı dikey beyanı olan markaların gönderimi durur" },
+      <StatusCards
+        items={[
+          { title: "İYS kuyruğu", state: pending.length === 0 ? "ok" : pending.some((e) => e.dueAt < now) ? "bad" : "warn", value: `${pending.length} bekliyor`, text: "3 iş günü içinde İYS'ye iletilmeli.", href: "#iys", action: "Kuyruğu gör" },
+          { title: "KVKK makbuzları", state: kvkkOk ? "ok" : "warn", value: kvkkOk ? "Tamam" : `${kvkkMissing} marka eksik`, text: "Makbuzsuz marka canlıya geçemez.", href: "#kvkk", action: "Eksikleri gör" },
+          { title: "Reklam etiketi (23/A)", state: checks.length === 0 ? "ok" : "bad", value: `${checks.length} uyumsuz`, text: "Etiketsiz içerikle kampanya yayına alınmaz.", href: "#md23a", action: "İçerikleri gör" },
+          { title: "Politika bayrakları", state: flags.some((f) => f.blocking) ? "bad" : "ok", value: `${flags.filter((f) => f.blocking).length} engelleyici`, text: "Yasaklı dikey beyanı gönderimi durdurur.", href: "#bayraklar", action: "Bayrakları gör" },
         ]}
       />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card interactive={false} className="flex flex-col gap-3">
+        <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="iys">
           <CardTitle>İYS kuyruğu (3 iş günü SLA)</CardTitle>
           {pending.length === 0 ? (
             <p className="text-sm text-fg-passive">Bekleyen kayıt yok.</p>
@@ -98,7 +98,7 @@ export default async function AdminCompliancePage() {
         <DocLink slug="iys-ticari-elektronik-ileti" />
       </Card>
 
-      <Card interactive={false} className="flex flex-col gap-3">
+      <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="kvkk">
         <CardTitle>KVKK standart sözleşme bildirimleri</CardTitle>
         <ul className="flex flex-col divide-y divide-border text-sm">
           {settings.map((s) => {
@@ -124,7 +124,7 @@ export default async function AdminCompliancePage() {
         <DocLink slug="kvkk-yurtdisi-aktarim" />
       </Card>
 
-      <Card interactive={false} className="flex flex-col gap-3">
+      <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="md23a">
         <CardTitle>md. 23/A — uyumsuz içerikler</CardTitle>
         {checks.length === 0 ? (
           <p className="text-sm text-fg-passive">Uyumsuz içerik yok.</p>
@@ -143,7 +143,7 @@ export default async function AdminCompliancePage() {
         <DocLink slug="reklam-aciklamasi-23a" />
       </Card>
 
-      <Card interactive={false} className="flex flex-col gap-3">
+      <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="bayraklar">
         <CardTitle>Politika bayrakları</CardTitle>
         {flags.length === 0 ? (
           <p className="text-sm text-fg-passive">Bayrak yok.</p>

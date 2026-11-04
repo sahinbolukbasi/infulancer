@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
-import { PageGuide } from "@/components/ui/page-guide";
+import { StatusCards } from "@/components/ui/status-cards";
 import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Uyum" };
@@ -23,27 +23,41 @@ export default async function BrandCompliancePage() {
   ]);
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Uyum" description="KVKK yurt dışı aktarım bildirimi, İYS onayları ve canlı moda geçiş." />
-      <PageGuide
-        what="Mesajlaşmayı yasal olarak başlatabilmeniz için gereken adımlar. Bu adımlar tamamlanmadan hesabınız deneme (sandbox) modunda kalır."
-        why="KVKK bildirimi yapılmaması 90.308–1.806.377 TL, İYS onayı olmadan ticari ileti alıcı başına 2.859–14.309 TL cezaya konu olabilir."
-        steps={[
-          { label: "Veri işleyen standart sözleşmesini imzalayın", done: status.filings.length > 0 },
-          { label: "Kurul’a bildirim yapıp iki makbuzu yükleyin (AWS ve Meta)", done: status.complete, hint: "İmzadan sonra 5 iş günü içinde" },
-          { label: "Canlı moda geçin", done: settings?.mode === "production" },
-          { label: "Pazarlama mesajı göndereceğiniz kişilerin İYS onaylarını kaydedin", done: consents.some((c) => c.state === "ONAY"), hint: "Onaysız kişiye kampanya mesajı sistem tarafından engellenir" },
+      <PageHeader title="Uyum" description="Üç kart yeşilse yasal olarak hazırsınız." />
+      <StatusCards
+        items={[
+          {
+            title: "KVKK bildirimi",
+            state: status.complete ? "ok" : status.filings.length ? "warn" : "bad",
+            value: status.complete ? "Tamam" : `${status.missing.length} makbuz eksik`,
+            text: status.complete ? "Yurt dışı aktarım makbuzları yüklü." : "Sözleşmeyi imzalayıp iki makbuzu yükleyin (5 iş günü).",
+            href: "#kvkk",
+            action: status.filings.length ? "Makbuz yükle" : "Sözleşmeyi imzala",
+          },
+          {
+            title: "İYS onayları",
+            state: consents.some((c) => c.state === "ONAY") ? "ok" : "warn",
+            value: `${consents.filter((c) => c.state === "ONAY").length} onay`,
+            text: "Onaysız kişiye kampanya mesajı gitmez.",
+            href: "#iys",
+            action: "Onay ekle",
+          },
+          {
+            title: "Canlı mod",
+            state: settings?.mode === "production" ? "ok" : "bad",
+            value: settings?.mode === "production" ? "Canlı" : "Deneme",
+            text: settings?.mode === "production" ? "Mesajlar gerçek alıcılara gidiyor." : "KVKK tamamlanınca canlıya geçilir.",
+            href: "#kvkk",
+            action: "Adımları tamamla",
+          },
         ]}
       />
-
-      <Card interactive={false} className="flex flex-col gap-4">
+      <Card interactive={false} className="flex scroll-mt-24 flex-col gap-4" id="kvkk">
         <div className="flex items-center justify-between gap-3">
           <CardTitle>KVKK standart sözleşme</CardTitle>
           <StatusDot tone={settings?.mode === "production" ? "active" : "muted"}>{settings?.mode === "production" ? "Canlı" : "Sandbox"}</StatusDot>
         </div>
-        <InfoNote>
-          Verileriniz iki ayrı yurt dışı aktarıma konu olur: AWS eu-central-1 (barındırma) ve Meta WhatsApp Cloud API (mesaj işleme). Sözleşme imzasından sonra 5 iş günü içinde Kurul’un
-          Standart Sözleşme Bildirim Modülü’ne bildirim yapıp makbuzu buraya yüklemelisiniz. Makbuz olmadan canlı moda geçilemez.
-        </InfoNote>
+        <p className="text-[13px] text-fg-muted">AWS ve Meta için iki makbuz gerekir; imzadan sonra 5 iş günü içinde yükleyin.</p>
         <ul className="flex flex-col gap-1 text-sm">
           {status.filings.map((f) => (
             <li key={f.id} className="flex justify-between">
@@ -55,7 +69,7 @@ export default async function BrandCompliancePage() {
         <KvkkForms signed={status.filings.length > 0} missing={status.missing.map((m) => ({ key: m.key, label: m.label }))} />
       </Card>
 
-      <Card interactive={false} className="flex flex-col gap-4">
+      <Card interactive={false} className="flex scroll-mt-24 flex-col gap-4" id="iys">
         <CardTitle>İYS onayları</CardTitle>
         <InfoNote>
           {kvkkConsentCopy.marketing} / {kvkkConsentCopy.aiProcessing} — {kvkkConsentCopy.note}
