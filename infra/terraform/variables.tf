@@ -82,12 +82,18 @@ variable "meta_api_mode" {
 }
 
 variable "social_sync_mode" {
-  description = "off | mock | http. http için IG_BUSINESS_ACCOUNT_ID, IG_GRAPH_TOKEN, YOUTUBE_API_KEY gerekir."
+  description = "off | mock | http. http: anahtarı tanımlı platformlar gerçek API'den çeker, diğerleri hata notu düşer (elle girilen veri korunur)."
   type        = string
-  default     = "off"
+  default     = "http"
 
   validation {
     condition     = contains(["off", "mock", "http"], var.social_sync_mode)
     error_message = "social_sync_mode off, mock veya http olmalı."
   }
+}
+
+variable "integration_secret_keys" {
+  description = "infulancer-prod/integrations sırrından konteynere enjekte edilecek anahtar adları. Her ad sırda TANIMLI olmalı, yoksa görev başlamaz."
+  type        = list(string)
+  default     = ["YOUTUBE_API_KEY"]
 }

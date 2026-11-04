@@ -41,3 +41,12 @@ resource "aws_secretsmanager_secret_version" "app" {
     META_VERIFY_TOKEN  = random_password.meta_verify.result
   })
 }
+
+# Dış servis API anahtarları (YouTube, Meta, TikTok, fal…). Terraform yalnız sırrı oluşturur;
+# değerleri AWS Console / CLI ile girilir ve Terraform bunlara dokunmaz (repoda/state'te değer yok).
+# Konteynere enjekte edilecek anahtar adları: var.integration_secret_keys.
+resource "aws_secretsmanager_secret" "integrations" {
+  name                    = "${local.name}/integrations"
+  description             = "Dis servis API anahtarlari (elle yonetilir)"
+  recovery_window_in_days = 7
+}

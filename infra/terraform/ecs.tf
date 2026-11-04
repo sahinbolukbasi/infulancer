@@ -54,7 +54,7 @@ resource "aws_iam_role_policy" "execution_secrets" {
   role = aws_iam_role.execution.id
   policy = jsonencode({
     Version   = "2012-10-17"
-    Statement = [{ Effect = "Allow", Action = ["secretsmanager:GetSecretValue"], Resource = [aws_secretsmanager_secret.app.arn] }]
+    Statement = [{ Effect = "Allow", Action = ["secretsmanager:GetSecretValue"], Resource = [aws_secretsmanager_secret.app.arn, aws_secretsmanager_secret.integrations.arn] }]
   })
 }
 
@@ -133,6 +133,10 @@ locals {
     for k in ["DATABASE_URL", "AUDIT_DATABASE_URL", "AUTH_SECRET", "SEED_PASSWORD", "FAL_WEBHOOK_SECRET", "META_VERIFY_TOKEN"] :
     { name = k, valueFrom = "${aws_secretsmanager_secret.app.arn}:${k}::" }
   ]
+  integration_secrets = [
+    for k in var.integration_secret_keys :
+    { name = k, valueFrom = "${aws_secretsmanager_secret.integrations.arn}:${k}::" }
+  ]
   image = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
 }
 
@@ -156,7 +160,7 @@ resource "aws_ecs_task_definition" "app" {
     essential    = true
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
     environment  = local.container_env
-    secrets      = local.container_secrets
+    secrets      = concat(local.container_secrets, local.integration_secrets)
     logConfiguration = {
       logDriver = "awslogs"
       options = {
