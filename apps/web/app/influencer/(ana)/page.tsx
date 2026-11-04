@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader, Stagger } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { CopilotHome } from "@/components/copilot/copilot-home";
 import { buildCalendarRows, isOverdue, resolveWeek } from "@/lib/calendar";
 import { deliverableTone } from "@/lib/status-tone";
 import { fmtDate, fmtDateTime } from "@/lib/time";
@@ -48,6 +49,7 @@ export default async function InfluencerHomePage() {
   return (
     <Stagger className="flex flex-col gap-6">
       <PageHeader title="İşlerim" description="Brief, dosyalar, yayın tarihleri ve metrik girişi." />
+      <CopilotHome actor={actor} />
 
       <section aria-label="Bakiye" className="flex flex-col gap-2">
         <BalanceCards balances={balances} holdDays={holdDays()} />

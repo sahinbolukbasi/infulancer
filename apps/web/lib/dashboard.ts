@@ -3,6 +3,7 @@ import { prisma } from "@infulancer/core/db";
 
 /** Genel bakış panosundaki alanlar. Sıra = varsayılan sıra. */
 export const DASHBOARD_WIDGETS = [
+  { id: "copilot", title: "Asistan", description: "Bugün ne yapmalıyım, hızlı kampanya başlatma ve yönlendirme.", size: "full" },
   { id: "kpi", title: "Özet metrikler", description: "Aktif kampanya, bekleyen onay, gecikme ve ödenecek tutar.", size: "full" },
   { id: "quick", title: "Hızlı erişim", description: "Sık kullanılan işlemlere tek tıkla gidin.", size: "full" },
   { id: "queue", title: "Aksiyon kuyruğu", description: "Onay, gecikme, agent bulgusu ve çekim talepleri.", size: "full" },

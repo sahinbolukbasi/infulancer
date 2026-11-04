@@ -9,6 +9,7 @@ import { PageHeader, Stagger } from "@/components/ui/layout";
 import { ProgressBar } from "@/components/ui/progress";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { CopilotHome } from "@/components/copilot/copilot-home";
 import { pct } from "@/lib/format";
 import { loadCampaignScores } from "@/lib/queries";
 import { campaignTone } from "@/lib/status-tone";
@@ -44,6 +45,7 @@ export default async function BrandHomePage() {
   return (
     <Stagger className="flex flex-col gap-8">
       <PageHeader title="Kampanyalarım" description="Kampanya skorları, yayın takvimi ve onayınızı bekleyen taslaklar." />
+      <CopilotHome actor={actor} />
       {campaigns.length === 0 ? (
         <EmptyState
           message="Ajansınız bir kampanya başlattığında skoru ve raporu burada görünecek."

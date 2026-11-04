@@ -20,6 +20,7 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { ActionQueueItem } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
 import { DashboardBoard, type BoardWidget } from "@/components/dashboard/dashboard-board";
+import { CopilotHome } from "@/components/copilot/copilot-home";
 import {
   BuildingIcon,
   CalendarIcon,
@@ -277,6 +278,7 @@ export default async function AdminHomePage() {
   const requestedSum = requested.reduce((s, p) => s + p.amountKurus, 0);
   const unpaidSum = unpaidClosed.reduce((s, c) => s + c.brandTotalFeeKurus, 0);
   const content: Record<(typeof DASHBOARD_WIDGETS)[number]["id"], ReactNode> = {
+    copilot: <CopilotHome actor={actor} />,
     kpi: (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Aktif kampanya" value={activeCount} sparkline={sparkActive} hint="Son 8 hafta" />

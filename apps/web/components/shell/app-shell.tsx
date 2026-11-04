@@ -7,6 +7,7 @@ import { AccountMenu } from "./account-menu";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { CopilotLauncher } from "@/components/copilot/copilot-launcher";
 import { Sidebar } from "./sidebar";
 
 /**
@@ -58,6 +59,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
         </main>
       </div>
       <MobileTabBar role={role} />
+      <CopilotLauncher />
     </div>
   );
 }
