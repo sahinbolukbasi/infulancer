@@ -149,10 +149,41 @@ export async function list(filter: {
   }));
 }
 
+/** Birden çok varlığın kayıtları tek sorguda (ör. marka + kampanyaları + atamaları), en yeni önce. */
+export async function listMany(filter: { entities: { entityType: string; entityIds: string[] }[]; limit?: number }): Promise<AuditRecord[]> {
+  const groups = filter.entities.filter((e) => e.entityIds.length > 0);
+  if (groups.length === 0) return [];
+  const params: unknown[] = [];
+  const where = groups
+    .map((g) => {
+      params.push(g.entityType, g.entityIds);
+      return `(entity_type = $${params.length - 1} AND entity_id = ANY($${params.length}::text[]))`;
+    })
+    .join(" OR ");
+  params.push(Math.min(filter.limit ?? 200, 1000));
+  const res = await pool().query<AuditRow>(
+    `SELECT id, at, actor_id, actor_role, action, entity_type, entity_id, data, prev_hash, hash
+       FROM audit_log WHERE ${where}
+       ORDER BY id DESC LIMIT $${params.length}`,
+    params,
+  );
+  return res.rows.map((r) => ({
+    id: String(r.id),
+    at: r.at,
+    actorId: r.actor_id,
+    actorRole: r.actor_role,
+    action: r.action,
+    entityType: r.entity_type,
+    entityId: r.entity_id,
+    data: r.data,
+    prevHash: r.prev_hash,
+    hash: r.hash,
+  }));
+}
 /** Script'ler için havuzu kapatır. */
 export async function closeAuditPool(): Promise<void> {
   await globalForAudit.__infulancerAuditPool?.end();
   globalForAudit.__infulancerAuditPool = undefined;
 }
 
-export const audit = { append, list };
+export const audit = { append, list, listMany };

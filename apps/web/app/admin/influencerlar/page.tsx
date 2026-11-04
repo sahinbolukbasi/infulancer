@@ -80,6 +80,7 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
           const excl = st?.activeExclusivities ?? [];
           return {
             id: i.id,
+            label: i.name,
             cells: {
               name: {
                 display: (
@@ -166,7 +167,7 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
               paid: { display: formatKurus(st?.totalPaidKurus ?? 0), sort: st?.totalPaidKurus ?? 0 },
             },
             actions: [
-              { label: "Profil", href: `/admin/influencerlar/${i.id}` },
+              { label: "Profil", href: `/admin/influencerlar/${i.id}`, icon: "open" },
               { label: "Düzenle", href: `/admin/influencerlar/${i.id}/duzenle` },
             ],
           };

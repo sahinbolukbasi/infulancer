@@ -59,7 +59,12 @@ export default async function BrandsPage() {
             campaigns: { display: b._count.campaigns, sort: b._count.campaigns },
             users: { display: b._count.users, sort: b._count.users },
           },
-          actions: [{ label: "Düzenle", href: `/admin/markalar/${b.id}` }],
+          label: b.name,
+          actions: [
+            { label: "Profil ve geçmiş", href: `/admin/markalar/${b.id}`, icon: "open" },
+            { label: "Yeni kampanya", href: `/admin/kampanyalar/yeni?marka=${b.id}`, icon: "plus" },
+            { label: "Düzenle", href: `/admin/markalar/${b.id}/duzenle`, icon: "edit" },
+          ],
         }))}
       />
     </Stagger>

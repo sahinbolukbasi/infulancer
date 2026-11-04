@@ -37,6 +37,68 @@ const assignmentSchema = z.object({
   overrideReason: z.string().max(1000).nullable(),
 });
 
+type AssignmentInput = z.infer<typeof assignmentSchema>;
+type Actor = Awaited<ReturnType<typeof requireActor>>;
+/** Tek atama: kapalı kampanya, mükerrer atama, kupon ve marka çakışması kuralları burada; audit + bildirim aynı işlemde. */
+async function insertAssignment(actor: Actor, input: AssignmentInput): Promise<string> {
+  return prisma.$transaction(async (tx) => {
+    const campaign = await tx.campaign.findUnique({ where: { id: input.campaignId }, select: { name: true, status: true } });
+    if (!campaign) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
+    if (campaign.status === "KAPANDI" || campaign.status === "IPTAL") {
+      throw new DomainError("KURAL_IHLALI", "Kapanmış/iptal kampanyaya atama yapılamaz.");
+    }
+    const dup = await tx.assignment.findFirst({
+      where: { campaignId: input.campaignId, influencerId: input.influencerId, contractStatus: { not: "RED" } },
+      select: { id: true },
+    });
+    if (dup) throw new DomainError("DOGRULAMA", "Bu influencer kampanyada zaten atanmış.");
+    if (input.couponCode) {
+      const coupon = await tx.assignment.findFirst({
+        where: { campaignId: input.campaignId, couponCode: input.couponCode, contractStatus: { not: "RED" } },
+        select: { id: true },
+      });
+      if (coupon) throw new DomainError("DOGRULAMA", "Bu kupon kodu kampanyada başka bir atamada kullanılıyor.");
+    }
+    const { overrideReason } = await enforceBrandConflict(tx, {
+      influencerId: input.influencerId,
+      campaignId: input.campaignId,
+      actor,
+      overrideReason: input.overrideReason,
+    });
+    const a = await tx.assignment.create({
+      data: {
+        campaignId: input.campaignId,
+        influencerId: input.influencerId,
+        feeKurus: input.feeKurus,
+        commissionKurus: input.commissionKurus,
+        exclusivityDays: input.exclusivityDays,
+        exclusivityCategory: input.exclusivityCategory,
+        couponCode: input.couponCode,
+        conflictOverrideReason: overrideReason,
+      },
+    });
+    await audit.append({
+      actor: toAuditActor(actor),
+      action: "ASSIGNMENT_CREATED",
+      entityType: "Assignment",
+      entityId: a.id,
+      data: {
+        campaignId: input.campaignId,
+        influencerId: input.influencerId,
+        feeKurus: input.feeKurus,
+        commissionKurus: input.commissionKurus,
+        exclusivityDays: input.exclusivityDays,
+        conflictOverrideReason: overrideReason,
+      },
+    });
+    await notifyInfluencer(tx, input.influencerId, {
+      title: "Yeni iş teklifi",
+      body: `"${campaign.name}" kampanyası için teklif aldınız. Kabul veya red seçin.`,
+      href: "/influencer",
+    });
+    return a.id;
+  });
+}
 /** Kampanyaya influencer atar; marka çakışması varsa yalnız yazılı gerekçeyle ezilebilir. */
 export async function createAssignment(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN");
@@ -61,63 +123,7 @@ export async function createAssignment(_prev: ActionState, fd: FormData): Promis
         couponCode: "Kupon kodu",
       },
     );
-    const assignmentId = await prisma.$transaction(async (tx) => {
-      const campaign = await tx.campaign.findUnique({ where: { id: input.campaignId }, select: { name: true, status: true } });
-      if (!campaign) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
-      if (campaign.status === "KAPANDI" || campaign.status === "IPTAL") {
-        throw new DomainError("KURAL_IHLALI", "Kapanmış/iptal kampanyaya atama yapılamaz.");
-      }
-      const dup = await tx.assignment.findFirst({
-        where: { campaignId: input.campaignId, influencerId: input.influencerId, contractStatus: { not: "RED" } },
-        select: { id: true },
-      });
-      if (dup) throw new DomainError("DOGRULAMA", "Bu influencer kampanyada zaten atanmış.");
-      if (input.couponCode) {
-        const coupon = await tx.assignment.findFirst({
-          where: { campaignId: input.campaignId, couponCode: input.couponCode, contractStatus: { not: "RED" } },
-          select: { id: true },
-        });
-        if (coupon) throw new DomainError("DOGRULAMA", "Bu kupon kodu kampanyada başka bir atamada kullanılıyor.");
-      }
-      const { overrideReason } = await enforceBrandConflict(tx, {
-        influencerId: input.influencerId,
-        campaignId: input.campaignId,
-        actor,
-        overrideReason: input.overrideReason,
-      });
-      const a = await tx.assignment.create({
-        data: {
-          campaignId: input.campaignId,
-          influencerId: input.influencerId,
-          feeKurus: input.feeKurus,
-          commissionKurus: input.commissionKurus,
-          exclusivityDays: input.exclusivityDays,
-          exclusivityCategory: input.exclusivityCategory,
-          couponCode: input.couponCode,
-          conflictOverrideReason: overrideReason,
-        },
-      });
-      await audit.append({
-        actor: toAuditActor(actor),
-        action: "ASSIGNMENT_CREATED",
-        entityType: "Assignment",
-        entityId: a.id,
-        data: {
-          campaignId: input.campaignId,
-          influencerId: input.influencerId,
-          feeKurus: input.feeKurus,
-          commissionKurus: input.commissionKurus,
-          exclusivityDays: input.exclusivityDays,
-          conflictOverrideReason: overrideReason,
-        },
-      });
-      await notifyInfluencer(tx, input.influencerId, {
-        title: "Yeni iş teklifi",
-        body: `"${campaign.name}" kampanyası için teklif aldınız. Kabul veya red seçin.`,
-        href: "/influencer",
-      });
-      return a.id;
-    });
+    const assignmentId = await insertAssignment(actor, input);
     revalidateAll();
     return { ok: true, message: "Influencer atandı; sözleşme teklifi gönderildi.", data: { assignmentId } };
   });
@@ -197,4 +203,63 @@ export async function decideContract(_prev: ActionState, fd: FormData): Promise<
     revalidateAll();
     return { ok: true, message: input.decision === "KABUL" ? "Sözleşme kabul edildi." : "Sözleşme reddedildi; işler iptal edildi." };
   });
+}
+
+const bulkSchema = z.object({
+  campaignId: z.string().min(1).max(64),
+  commissionPct: z.number().min(0).max(100),
+  items: z
+    .array(z.object({ influencerId: z.string().min(1).max(64), feeKurus: z.number().int().positive({ error: "Bedel girin." }) }))
+    .min(1, { error: "En az bir influencer seçin." })
+    .max(50, { error: "Tek seferde en fazla 50 influencer." }),
+});
+export type BulkAssignResult = {
+  ok: boolean;
+  error?: string;
+  created: { influencerId: string; name: string }[];
+  failed: { influencerId: string; name: string; reason: string; conflict: boolean }[];
+};
+/**
+ * Çoklu atama: her influencer kendi işleminde eklenir (biri hata verirse diğerleri etkilenmez).
+ * Marka çakışması olanlar eklenmez; gerekçeyle tekli formdan atanmaları gerekir.
+ */
+export async function createAssignmentsBulk(input: {
+  campaignId: string;
+  commissionPct: number;
+  items: { influencerId: string; feeKurus: number }[];
+}): Promise<BulkAssignResult> {
+  const actor = await requireActor("ADMIN");
+  const parsed = bulkSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz giriş.", created: [], failed: [] };
+  const { campaignId, commissionPct, items } = parsed.data;
+  const names = new Map(
+    (await prisma.influencer.findMany({ where: { id: { in: items.map((i) => i.influencerId) } }, select: { id: true, name: true } })).map((i) => [i.id, i.name]),
+  );
+  const created: BulkAssignResult["created"] = [];
+  const failed: BulkAssignResult["failed"] = [];
+  for (const it of items) {
+    const name = names.get(it.influencerId) ?? it.influencerId;
+    try {
+      const conflict = await checkBrandConflict(prisma, { campaignId, influencerId: it.influencerId });
+      if (conflict.blocked) {
+        failed.push({ influencerId: it.influencerId, name, conflict: true, reason: conflict.conflicts.map((c) => c.message).join(" · ") });
+        continue;
+      }
+      await insertAssignment(actor, {
+        campaignId,
+        influencerId: it.influencerId,
+        feeKurus: it.feeKurus,
+        commissionKurus: Math.round((it.feeKurus * commissionPct) / 100),
+        exclusivityDays: 0,
+        exclusivityCategory: null,
+        couponCode: null,
+        overrideReason: null,
+      });
+      created.push({ influencerId: it.influencerId, name });
+    } catch (err) {
+      failed.push({ influencerId: it.influencerId, name, conflict: false, reason: err instanceof DomainError ? err.message : "Beklenmeyen hata." });
+    }
+  }
+  if (created.length) revalidateAll();
+  return { ok: created.length > 0, created, failed, error: created.length ? undefined : "Hiçbir influencer eklenemedi." };
 }

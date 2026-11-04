@@ -23,7 +23,9 @@ import { FileUploader } from "@/components/files/file-uploader";
 import { AssignmentForm } from "@/components/forms/assignment-form";
 import { DeliverableForm } from "@/components/forms/deliverable-form";
 import { BrandDataForm, BrandPaymentForm, CloseCampaignForm, ContractDecision } from "@/components/forms/small-forms";
-import { ExternalIcon } from "@/components/icons";
+import { ExternalIcon, UserPlusIcon } from "@/components/icons";
+import { InfluencerPicker, type PickerInfluencer } from "@/components/campaign/influencer-picker";
+import { categoryLabel } from "@infulancer/core/domain/categories";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -50,9 +52,16 @@ function candidatesOf(findings: unknown): Candidate[] {
   return Array.isArray(f?.candidates) ? (f.candidates as Candidate[]).filter((c) => c && typeof c === "object") : [];
 }
 
-export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CampaignDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ sekme?: string }>;
+}) {
   await requireActor("ADMIN");
   const { id } = await params;
+  const { sekme } = await searchParams;
   const campaign = await prisma.campaign.findUnique({
     where: { id },
     include: {
@@ -103,11 +112,42 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
     prisma.influencer.findMany({
       where: { assignments: { none: { campaignId: campaign.id, contractStatus: { not: "RED" } } } },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, category: true },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        city: true,
+        categories: { include: { category: { include: { parent: { select: { name: true } } } } }, orderBy: { primary: "desc" } },
+        socialAccounts: { select: { platform: true, handle: true, followers: true, engagementRate: true } },
+        assignments: {
+          where: { contractStatus: { not: "RED" } },
+          orderBy: { createdAt: "desc" },
+          select: { feeKurus: true, campaign: { select: { brandId: true } } },
+        },
+      },
     }),
   ]);
   const suggestions = runs.filter((r) => r.checkType === "INFLUENCER_ONERI" && r.targetType === "Campaign");
   const editable = campaign.status === "TASLAK" || campaign.status === "AKTIF";
+  const suggested = new Map<string, string | undefined>();
+  for (const s of suggestions) for (const c of candidatesOf(s.findings)) if (c.influencerId) suggested.set(c.influencerId, c.rationale);
+  const pickerInfluencers: PickerInfluencer[] = influencers.map((i) => {
+    const accounts = i.socialAccounts.map((a) => ({ platform: a.platform, handle: a.handle, followers: a.followers, er: Number(a.engagementRate) }));
+    return {
+      id: i.id,
+      name: i.name,
+      city: i.city,
+      primaryCategory: i.categories[0] ? categoryLabel(i.categories[0].category) : i.category,
+      categories: [...new Set(i.categories.flatMap((c) => [c.category.name, c.category.parent?.name].filter((x): x is string => !!x)).concat(i.category ? [i.category] : []))],
+      accounts,
+      totalFollowers: accounts.reduce((s, a) => s + a.followers, 0),
+      bestEr: accounts.reduce((m, a) => Math.max(m, a.er), 0),
+      lastFeeTl: i.assignments[0] ? Math.round(i.assignments[0].feeKurus / 100) : null,
+      brandHistory: i.assignments.filter((a) => a.campaign.brandId === campaign.brand.id).length,
+      suggested: suggested.has(i.id),
+      rationale: suggested.get(i.id),
+    };
+  });
 
   const latestReach = (snaps: { reach: number | null; measuredAt: Date }[]) =>
     [...snaps].sort((a, b) => b.measuredAt.getTime() - a.measuredAt.getTime()).find((s) => s.reach != null)?.reach ?? 0;
@@ -152,7 +192,14 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
         </Card>
       </div>
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Influencerlar</CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>Influencerlar</CardTitle>
+          {editable ? (
+            <ButtonLink href={`/admin/kampanyalar/${campaign.id}?sekme=influencerlar`} variant="secondary" size="sm">
+              <UserPlusIcon size={14} /> Ekle
+            </ButtonLink>
+          ) : null}
+        </div>
         <DataTable
           caption="Kampanya influencerları"
           emptyText="Henüz atama yok."
@@ -178,7 +225,11 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
                 reach: { display: num.format(reach), sort: reach },
                 coupon: a.couponCode ?? "—",
               },
-              actions: [{ label: "Profili düzenle", href: `/admin/influencerlar/${a.influencer.id}/duzenle` }],
+              label: a.influencer.name,
+              actions: [
+                { label: "Influencer profili", href: `/admin/influencerlar/${a.influencer.id}`, icon: "open" },
+                { label: "Profili düzenle", href: `/admin/influencerlar/${a.influencer.id}/duzenle`, icon: "edit" },
+              ],
             };
           })}
         />
@@ -220,7 +271,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   const delivery = (
     <div className="flex flex-col gap-6">
       {campaign.assignments.length === 0 ? (
-        <EmptyState message="Kampanyaya henüz influencer atanmadı. Aşağıdan ilk atamayı yapın." />
+        <EmptyState message="Kampanyaya henüz influencer atanmadı. Influencerlar sekmesinden ekleyin." />
       ) : (
         campaign.assignments.map((a) => {
           const tz = a.influencer.audienceTimezone;
@@ -291,40 +342,6 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
           );
         })
       )}
-      {editable ? (
-        <div className="grid-12">
-          <Card interactive={false} className="flex flex-col gap-4 md:col-span-7">
-            <CardTitle>Influencer ata</CardTitle>
-            <AssignmentForm campaignId={campaign.id} influencers={influencers} />
-          </Card>
-          <Card interactive={false} className="flex flex-col gap-4 md:col-span-5">
-            <div className="flex items-center justify-between gap-3">
-              <CardTitle>Önerilen adaylar</CardTitle>
-              <RecommendButton campaignId={campaign.id} />
-            </div>
-            {suggestions.length === 0 ? (
-              <EmptyState message="Henüz aday önerisi yok. Influencer öneri agent'ı çalıştığında burada listelenir." />
-            ) : (
-              suggestions.map((s) => (
-                <div key={s.id} className="flex flex-col gap-3">
-                  <p className="text-sm text-fg-muted">{s.summary}</p>
-                  <ul className="flex flex-col divide-y divide-border">
-                    {candidatesOf(s.findings).map((c, i) => (
-                      <li key={c.influencerId ?? i} className="flex flex-col gap-1 py-2 text-sm">
-                        <span className="flex justify-between gap-2">
-                          <span className="text-fg">{c.name ?? c.influencerId}</span>
-                          {typeof c.score === "number" ? <span className="tabular-nums text-fg-muted">{num.format(c.score)}</span> : null}
-                        </span>
-                        {c.rationale ? <span className="text-[13px] text-fg-passive">{c.rationale}</span> : null}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))
-            )}
-          </Card>
-        </div>
-      ) : null}
       {live.some((a) => a.couponCode) ? (
         <Card interactive={false} className="flex flex-col gap-4">
           <CardTitle>Marka verisi (kupon koduyla)</CardTitle>
@@ -371,6 +388,36 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
     </Card>
   );
 
+  const people = (
+    <div className="flex flex-col gap-6">
+      {editable ? (
+        <>
+          <Card interactive={false} className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <CardTitle>Influencer ekle</CardTitle>
+                <p className="text-[13px] text-fg-muted">
+                  Filtreleyin, işaretleyin, bedeli girin. Eklenen herkese sözleşme teklifi gider; rakip markayla çakışanlar otomatik engellenir.
+                </p>
+              </div>
+              <RecommendButton campaignId={campaign.id} />
+            </div>
+            <InfluencerPicker campaignId={campaign.id} influencers={pickerInfluencers} />
+          </Card>
+          <details className="rounded-[8px] border border-border">
+            <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">
+              Tekli atama (kupon, münhasırlık veya çakışma gerekçesiyle)
+            </summary>
+            <div className="border-t border-border p-4">
+              <AssignmentForm campaignId={campaign.id} influencers={influencers.map((i) => ({ id: i.id, name: i.name, category: i.category }))} />
+            </div>
+          </details>
+        </>
+      ) : (
+        <EmptyState message="Kapanmış veya iptal edilmiş kampanyaya influencer eklenemez." />
+      )}
+    </div>
+  );
   const summaryDraft = runs.find((r) => r.checkType === "KAMPANYA_OZETI");
   const draftText = (summaryDraft?.findings as { draft?: string } | null)?.draft;
   const agent = (
@@ -404,6 +451,11 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
         }
         actions={
           <>
+            {editable ? (
+              <ButtonLink href={`/admin/kampanyalar/${campaign.id}?sekme=influencerlar`}>
+                <UserPlusIcon size={16} /> Influencer ekle
+              </ButtonLink>
+            ) : null}
             <ButtonLink href={`/admin/kampanyalar/${campaign.id}/brief`} variant="secondary">
               Brief
             </ButtonLink>
@@ -417,9 +469,12 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
       />
       {setup ? <SetupSteps campaignId={campaign.id} steps={setup.steps} compact /> : null}
       <Tabs
+        key={sekme ?? "genel"}
         label="Kampanya bölümleri"
+        defaultTab={sekme}
         tabs={[
           { id: "genel", label: "Genel", content: general },
+          { id: "influencerlar", label: `Influencerlar (${live.length})`, content: people },
           { id: "teslimler", label: `Teslimler (${deliverables.length})`, content: delivery },
           { id: "dosyalar", label: "Dosyalar", content: files },
           { id: "brief", label: "Brief", content: briefTab },

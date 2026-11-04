@@ -1,9 +1,20 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDownIcon, ArrowUpIcon, MoreHorizontalIcon } from "@/components/icons";
-import { useDismiss } from "@/lib/use-dismiss";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CalendarIcon,
+  EyeIcon,
+  FileIcon,
+  LinkIcon,
+  PencilIcon,
+  PlusIcon,
+  SettingsIcon,
+  UserPlusIcon,
+  WalletIcon,
+} from "@/components/icons";
 import { cn } from "@/lib/cn";
 
 export type DataTableColumn = {
@@ -16,60 +27,69 @@ export type DataTableColumn = {
 
 export type DataTableCell = { display: ReactNode; sort?: string | number | null };
 
-export type DataTableRowAction = { label: string; href: string };
+export type DataTableRowAction = { label: string; href: string; icon?: DataTableActionIcon };
 
 export type DataTableRow = {
   id: string;
   cells: Record<string, DataTableCell | ReactNode>;
   actions?: DataTableRowAction[];
+  /** Ekran okuyucu için satır adı (ör. kampanya adı); yoksa id. */
+  label?: string;
 };
 
 function isCell(v: unknown): v is DataTableCell {
   return typeof v === "object" && v !== null && "display" in v;
 }
 
-function RowMenu({ actions, label }: { actions: DataTableRowAction[]; label: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const close = useCallback(() => setOpen(false), []);
-  useDismiss(ref, open, close);
+const ACTION_ICONS = {
+  open: EyeIcon,
+  edit: PencilIcon,
+  add: UserPlusIcon,
+  plus: PlusIcon,
+  file: FileIcon,
+  settings: SettingsIcon,
+  calendar: CalendarIcon,
+  wallet: WalletIcon,
+  link: LinkIcon,
+} as const;
+export type DataTableActionIcon = keyof typeof ACTION_ICONS;
+/** Etiketten ikon tahmini; satır verisi sunucudan geldiği için ikon adı string taşınır. */
+function iconFor(a: DataTableRowAction): DataTableActionIcon {
+  if (a.icon) return a.icon;
+  const l = a.label.toLocaleLowerCase("tr");
+  if (l.includes("düzenle")) return "edit";
+  if (l.includes("influencer ekle") || l.includes("ata")) return "add";
+  if (l.includes("brief") || l.includes("rapor")) return "file";
+  if (l.includes("kurulum") || l.includes("ayar")) return "settings";
+  if (l.includes("takvim")) return "calendar";
+  if (l.includes("ödeme") || l.includes("finans")) return "wallet";
+  if (l.includes("yeni")) return "plus";
+  return "open";
+}
+/** Satır sonu hızlı erişim ikonları (üç nokta menüsü yerine): her işlem tek tıkla, ipucu ve ekran okuyucu etiketiyle. */
+function RowActions({ actions, rowLabel }: { actions: DataTableRowAction[]; rowLabel: string }) {
   return (
-    <div ref={ref} className="relative inline-block">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={`${label} için işlemler`}
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
-      >
-        <MoreHorizontalIcon size={18} />
-      </button>
-      {open ? (
-        <div
-          role="menu"
-          className="animate-modal-in absolute right-0 z-20 mt-1 min-w-44 rounded-[8px] border border-border bg-surface p-1"
-        >
-          {actions.map((a) => (
-            <Link
-              key={a.href + a.label}
-              role="menuitem"
-              href={a.href}
-              onClick={close}
-              className="block rounded-[6px] px-3 py-2 text-left text-sm text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
-            >
-              {a.label}
-            </Link>
-          ))}
-        </div>
-      ) : null}
+    <div className="inline-flex items-center gap-1">
+      {actions.map((a) => {
+        const Icon = ACTION_ICONS[iconFor(a)];
+        return (
+          <Link
+            key={a.href + a.label}
+            href={a.href}
+            title={a.label}
+            aria-label={`${rowLabel}: ${a.label}`}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg"
+          >
+            <Icon size={17} />
+          </Link>
+        );
+      })}
     </div>
   );
 }
-
 /**
  * Veri tablosu: sticky başlık, ince ayraçlar, zebra yok, sıralanabilir kolonlar,
- * satır sonunda açılır menü. Hücreler sunucuda render edilmiş ReactNode olabilir.
+ * satır sonunda hızlı erişim ikonları. Hücreler sunucuda render edilmiş ReactNode olabilir.
  */
 export function DataTable({
   columns,
@@ -139,7 +159,7 @@ export function DataTable({
               );
             })}
             {hasActions ? (
-              <th scope="col" className="w-12 px-2">
+              <th scope="col" className="w-px px-2">
                 <span className="sr-only">İşlemler</span>
               </th>
             ) : null}
@@ -167,8 +187,8 @@ export function DataTable({
                   );
                 })}
                 {hasActions ? (
-                  <td className="px-2 py-2 text-right">
-                    {row.actions && row.actions.length > 0 ? <RowMenu actions={row.actions} label={row.id} /> : null}
+                  <td className="whitespace-nowrap px-2 py-2 text-right">
+                    {row.actions && row.actions.length > 0 ? <RowActions actions={row.actions} rowLabel={row.label ?? row.id} /> : null}
                   </td>
                 ) : null}
               </tr>

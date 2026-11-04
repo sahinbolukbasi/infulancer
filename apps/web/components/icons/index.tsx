@@ -193,3 +193,56 @@ export const YoutubeIcon = (p: IconProps) => (
     <path d="m10 9.5 4.5 2.5-4.5 2.5Z" />
   </Base>
 );
+export const EyeIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+    <circle cx="12" cy="12" r="3" />
+  </Base>
+);
+export const EyeOffIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 3l18 18" />
+    <path d="M10.6 5.6A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.7M6.4 6.9C3.9 8.6 2.5 12 2.5 12S6 18.5 12 18.5c1.5 0 2.9-.4 4.1-1" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+  </Base>
+);
+export const PencilIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 20h4L19 9l-4-4L4 16Z" />
+    <path d="m13.5 6.5 4 4" />
+  </Base>
+);
+export const PlusIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Base>
+);
+export const UserPlusIcon = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+    <path d="M19 8v6M16 11h6" />
+  </Base>
+);
+export const SettingsIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+    <circle cx="16" cy="6" r="2" />
+    <circle cx="10" cy="12" r="2" />
+    <circle cx="18" cy="18" r="2" />
+  </Base>
+);
+export const GridIcon = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+    <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+    <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+    <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+  </Base>
+);
+export const ResetIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.5" />
+    <path d="M4 4v4.5h4.5" />
+  </Base>
+);
