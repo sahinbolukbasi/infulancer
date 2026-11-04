@@ -29,7 +29,7 @@ export function PageHeader({
     <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
       <div className="flex flex-col gap-2">
         <h1 className="text-title text-fg">{title}</h1>
-        {description ? <p className="text-sm text-fg-muted">{description}</p> : null}
+        {description ? <p className="line-clamp-1 max-w-3xl text-sm text-fg-muted" title={typeof description === "string" ? description : undefined}>{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>

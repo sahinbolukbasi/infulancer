@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { Role } from "@infulancer/core/enums";
 import { PanelIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
+import { Tooltip } from "@/components/ui/tooltip";
 import { isActive, navByRole } from "./nav";
 
 const STORAGE_KEY = "infulancer.sidebar.collapsed";
@@ -46,7 +47,7 @@ export function Sidebar({ role }: { role: Role }) {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-bg transition-standard md:flex",
+        "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-line bg-bg/70 backdrop-blur-xl transition-standard md:flex",
         collapsed ? "w-16" : "w-60",
       )}
     >
@@ -70,21 +71,27 @@ export function Sidebar({ role }: { role: Role }) {
         {items.map((item) => {
           const active = isActive(pathname, item);
           const Icon = item.icon;
-          return (
+          const link = (
             <Link
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              title={collapsed ? item.label : undefined}
               className={cn(
                 "flex h-10 items-center gap-3 rounded-[8px] text-sm transition-standard",
-                collapsed ? "justify-center" : "px-3",
-                active ? "bg-surface text-fg" : "text-fg-muted hover:bg-surface-hover hover:text-fg",
+                collapsed ? "w-10 justify-center" : "px-3",
+                active ? "bg-surface text-fg shadow-[inset_2px_0_0_var(--color-neon-pink)]" : "text-fg-muted hover:bg-surface-hover hover:text-fg",
               )}
             >
               <Icon size={18} />
               <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
             </Link>
+          );
+          return collapsed ? (
+            <Tooltip key={item.href} label={item.label} side="right" className="flex">
+              {link}
+            </Tooltip>
+          ) : (
+            link
           );
         })}
       </nav>

@@ -88,3 +88,63 @@ export function buildCalendarRows(days: string[], items: CalendarSource[], hrefF
   }
   return [...rows.values()].sort((a, b) => a.name.localeCompare(b.name, "tr"));
 }
+
+export type CalendarView = "gun" | "hafta" | "ay" | "yil";
+export const CALENDAR_VIEWS: { id: CalendarView; label: string }[] = [
+  { id: "gun", label: "Gün" },
+  { id: "hafta", label: "Hafta" },
+  { id: "ay", label: "Ay" },
+  { id: "yil", label: "Yıl" },
+];
+const MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+export const monthName = (m: number) => MONTHS[m - 1]!;
+const pad2 = (n: number) => String(n).padStart(2, "0");
+function shiftMonth(day: string, n: number): string {
+  const [y, m] = day.split("-").map(Number) as [number, number];
+  const t = new Date(Date.UTC(y, m - 1 + n, 1));
+  return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-01`;
+}
+/**
+ * Görünüm + tarih → gösterilecek günler, sorgu aralığı, önceki/sonraki/bugün bağlantı tarihleri ve başlık.
+ * Ay görünümü takvim ızgarası için pazartesiden başlayan tam haftaları içerir.
+ */
+export function resolvePeriod(viewRaw: string | undefined, dateRaw: string | undefined, now: Date = new Date()) {
+  const view: CalendarView = (["gun", "hafta", "ay", "yil"] as const).find((v) => v === viewRaw) ?? "hafta";
+  const today = localDay(now, AGENCY_TZ);
+  const anchor = dateRaw && isDay(dateRaw) ? dateRaw : today;
+  const [y, m] = anchor.split("-").map(Number) as [number, number];
+  let days: string[];
+  let prev: string;
+  let next: string;
+  let title: string;
+  if (view === "gun") {
+    days = [anchor];
+    prev = addDays(anchor, -1);
+    next = addDays(anchor, 1);
+    title = anchor;
+  } else if (view === "hafta") {
+    const mon = mondayOf(anchor);
+    days = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
+    prev = addDays(mon, -7);
+    next = addDays(mon, 7);
+    title = `${days[0]} – ${days[6]}`;
+  } else if (view === "ay") {
+    const first = `${y}-${pad2(m)}-01`;
+    const start = mondayOf(first);
+    const lastOfMonth = addDays(shiftMonth(first, 1), -1);
+    const end = addDays(mondayOf(lastOfMonth), 6);
+    days = [];
+    for (let d = start; d <= end; d = addDays(d, 1)) days.push(d);
+    prev = shiftMonth(first, -1);
+    next = shiftMonth(first, 1);
+    title = `${monthName(m)} ${y}`;
+  } else {
+    const first = `${y}-01-01`;
+    days = [];
+    for (let d = first; d <= `${y}-12-31`; d = addDays(d, 1)) days.push(d);
+    prev = `${y - 1}-01-01`;
+    next = `${y + 1}-01-01`;
+    title = String(y);
+  }
+  return { view, anchor, today, days, prev, next, title, year: y, month: m };
+}

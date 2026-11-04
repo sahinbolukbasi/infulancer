@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/form";
 import { saveDashboardLayout } from "@/lib/actions/dashboard";
 import type { DashboardLayout, DashboardWidgetId } from "@/lib/dashboard";
 import { cn } from "@/lib/cn";
+import { Tooltip } from "@/components/ui/tooltip";
 
 export type BoardWidget = { id: DashboardWidgetId; title: string; description: string; size: "full" | "half"; content: ReactNode };
 
@@ -140,22 +141,32 @@ export function DashboardBoard({ widgets, initial, defaults }: { widgets: BoardW
                     <span className="truncate text-[12px] text-fg-passive">{w.description}</span>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <button type="button" className={iconBtn} onClick={() => move(id, -1)} disabled={idx === 0} aria-label={`${w.title}: yukarı taşı`} title="Yukarı">
+                    <Tooltip label="Yukarı">
+                    <button type="button" className={iconBtn} onClick={() => move(id, -1)} disabled={idx === 0} aria-label={`${w.title}: yukarı taşı`}>
                       <ArrowUpIcon size={16} />
                     </button>
+                    </Tooltip>
+                    <Tooltip label="Aşağı">
+
                     <button
                       type="button"
                       className={iconBtn}
                       onClick={() => move(id, 1)}
                       disabled={idx === visible.length - 1}
                       aria-label={`${w.title}: aşağı taşı`}
-                      title="Aşağı"
+                     
                     >
                       <ArrowDownIcon size={16} />
                     </button>
-                    <button type="button" className={iconBtn} onClick={() => hide(id)} aria-label={`${w.title}: gizle`} title="Gizle">
+
+                    </Tooltip>
+                    <Tooltip label="Gizle">
+
+                    <button type="button" className={iconBtn} onClick={() => hide(id)} aria-label={`${w.title}: gizle`}>
                       <EyeOffIcon size={16} />
                     </button>
+
+                    </Tooltip>
                   </div>
                 </div>
               ) : null}

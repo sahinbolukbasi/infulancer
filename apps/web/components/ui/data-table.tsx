@@ -16,6 +16,7 @@ import {
   WalletIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/cn";
+import { Tooltip } from "@/components/ui/tooltip";
 
 export type DataTableColumn = {
   key: string;
@@ -73,15 +74,15 @@ function RowActions({ actions, rowLabel }: { actions: DataTableRowAction[]; rowL
       {actions.map((a) => {
         const Icon = ACTION_ICONS[iconFor(a)];
         return (
+          <Tooltip key={a.href + a.label} label={a.label}>
           <Link
-            key={a.href + a.label}
             href={a.href}
-            title={a.label}
             aria-label={`${rowLabel}: ${a.label}`}
             className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg"
           >
             <Icon size={17} />
           </Link>
+          </Tooltip>
         );
       })}
     </div>

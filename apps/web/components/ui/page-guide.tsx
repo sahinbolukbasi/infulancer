@@ -5,12 +5,13 @@ import { cn } from "@/lib/cn";
 export type GuideStep = { label: string; done: boolean; hint?: ReactNode };
 
 /** Sayfa rehberi: bu sayfa ne işe yarar, neden önemli, sırada ne var (yapılacaklar listesi). */
-export function PageGuide({ what, why, steps, open = true }: { what: ReactNode; why?: ReactNode; steps?: GuideStep[]; open?: boolean }) {
+export function PageGuide({ what, why, steps }: { what: ReactNode; why?: ReactNode; steps?: GuideStep[]; open?: boolean }) {
   const done = steps?.filter((s) => s.done).length ?? 0;
   return (
-    <details open={open} className="rounded-[12px] border border-border">
-      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-5 py-4 text-sm text-fg">
-        <span>Bu sayfa ne işe yarar?</span>
+    <details className="w-fit max-w-full rounded-full border border-line bg-glass open:w-full open:rounded-[16px]">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-2 text-[13px] text-fg-muted hover:text-fg [&::-webkit-details-marker]:hidden">
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-line-strong text-[11px]" aria-hidden>?</span>
+        <span>Nasıl kullanılır</span>
         {steps?.length ? (
           <span className="text-[13px] text-fg-muted">
             {done}/{steps.length} adım tamam

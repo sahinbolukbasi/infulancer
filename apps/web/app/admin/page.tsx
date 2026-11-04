@@ -35,6 +35,7 @@ import {
 } from "@/components/icons";
 import { PlatformIcon } from "@/components/platform-icon";
 import { StatusDot } from "@/components/ui/status";
+import { Tooltip } from "@/components/ui/tooltip";
 import { DASHBOARD_WIDGETS, loadDashboardLayout, normalizeLayout } from "@/lib/dashboard";
 import { compact, pct } from "@/lib/format";
 import { loadCampaignScores } from "@/lib/queries";
@@ -378,14 +379,15 @@ export default async function AdminHomePage() {
                     </Link>
                     <span className="flex items-center gap-2">
                       <StatusDot tone={c.status === "AKTIF" ? "active" : "muted"}>{campaignStatusLabels[c.status]}</StatusDot>
+                      <Tooltip label="Influencer ekle">
                       <Link
                         href={`/admin/kampanyalar/${c.id}?sekme=influencerlar`}
-                        title="Influencer ekle"
                         aria-label={`${c.name}: influencer ekle`}
                         className="inline-flex h-7 w-7 items-center justify-center rounded-[8px] text-fg-muted hover:bg-surface-hover hover:text-fg"
                       >
                         <UserPlusIcon size={15} />
                       </Link>
+                      </Tooltip>
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-[12px] tabular-nums text-fg-muted">

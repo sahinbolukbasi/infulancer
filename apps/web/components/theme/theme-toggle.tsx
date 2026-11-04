@@ -2,6 +2,7 @@
 import { useSyncExternalStore } from "react";
 import { MoonIcon, SunIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
+import { Tooltip } from "@/components/ui/tooltip";
 import { THEME_KEY as KEY } from "@/lib/theme";
 
 type Theme = "dark" | "light";
@@ -29,11 +30,11 @@ export function ThemeToggle({ className }: { className?: string }) {
   const theme = useSyncExternalStore(subscribe, read, () => "dark" as Theme);
   const next: Theme = theme === "light" ? "dark" : "light";
   return (
+    <Tooltip label={next === "light" ? "Açık tema" : "Koyu tema"} side="bottom">
     <button
       type="button"
       onClick={() => apply(next)}
       aria-label={next === "light" ? "Açık temaya geç" : "Koyu temaya geç"}
-      title={next === "light" ? "Açık tema" : "Koyu tema"}
       className={cn(
         "inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted transition-standard hover:border-line-strong hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-pink",
         className,
@@ -41,5 +42,6 @@ export function ThemeToggle({ className }: { className?: string }) {
     >
       {theme === "light" ? <MoonIcon size={17} /> : <SunIcon size={17} />}
     </button>
+    </Tooltip>
   );
 }
