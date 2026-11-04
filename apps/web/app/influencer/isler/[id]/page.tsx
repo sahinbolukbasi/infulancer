@@ -19,13 +19,14 @@ import { BriefPanel } from "@/components/brief-panel";
 import { AssetList } from "@/components/files/asset-list";
 import { FileUploader } from "@/components/files/file-uploader";
 import { ContractDecision, TransitionPanel } from "@/components/forms/small-forms";
-import { ChevronLeftIcon, ExternalIcon } from "@/components/icons";
+import { ChevronLeftIcon } from "@/components/icons";
 import { MetricEntryForm } from "@/components/metrics/metric-entry-form";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { PostUrlForm } from "@/components/forms/post-url-form";
 import { isOverdue } from "@/lib/calendar";
 import { num } from "@/lib/format";
 import { deliverableTone } from "@/lib/status-tone";
@@ -149,14 +150,11 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
                 <dd className="font-mono">{view.couponCode}</dd>
               </>
             ) : null}
-            {d.postUrl ? (
+            {d.postUrl || published ? (
               <>
                 <dt className="text-fg-passive">Paylaşım</dt>
                 <dd>
-                  <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
-                    Bağlantıyı aç <ExternalIcon size={12} />
-                    <span className="sr-only">(yeni sekmede açılır)</span>
-                  </a>
+                  <PostUrlForm deliverableId={d.id} current={d.postUrl} editable={published} />
                 </dd>
               </>
             ) : null}

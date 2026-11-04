@@ -25,6 +25,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buttonClass } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
+import { CampaignLifecycle } from "@/components/campaign/campaign-lifecycle";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
 import { buildCalendarRows, resolveWeek } from "@/lib/calendar";
@@ -309,6 +310,7 @@ export default async function BrandCampaignPage({
           </a>
         }
       />
+      <CampaignLifecycle campaignId={campaign.id} />
       {summary}
       {drafts}
       {report.deliverables.length === 0 ? <EmptyState message="Bu kampanyada henüz planlanmış içerik yok." /> : calendar}

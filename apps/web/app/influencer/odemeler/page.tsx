@@ -6,6 +6,7 @@ import { BalanceCards } from "@/components/finance/balance-cards";
 import { PayoutRequestButton } from "@/components/finance/payout-forms";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader, Stagger } from "@/components/ui/layout";
+import { WorkHistory } from "@/components/history/work-history";
 import { StatusDot, type StatusTone } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
 import { maskIban } from "@/lib/format";
@@ -117,6 +118,10 @@ export default async function InfluencerPaymentsPage() {
             })}
           </ul>
         )}
+      </Card>
+      <Card interactive={false} className="flex flex-col gap-4">
+        <CardTitle>İş ve ödeme geçmişi</CardTitle>
+        <WorkHistory influencerId={actor.influencerId!} mode="influencer" />
       </Card>
     </Stagger>
   );

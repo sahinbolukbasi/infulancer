@@ -21,7 +21,6 @@ import { AssetList } from "@/components/files/asset-list";
 import { FileUploader } from "@/components/files/file-uploader";
 import { DeliverableForm, PlatformRulePanel } from "@/components/forms/deliverable-form";
 import { BrandDataForm, TransitionPanel } from "@/components/forms/small-forms";
-import { ExternalIcon } from "@/components/icons";
 import { MetricEntryForm } from "@/components/metrics/metric-entry-form";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -30,6 +29,7 @@ import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { PostUrlForm } from "@/components/forms/post-url-form";
 import { isOverdue } from "@/lib/calendar";
 import { num, pct1 } from "@/lib/format";
 import { deliverableTone } from "@/lib/status-tone";
@@ -142,15 +142,9 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
               {tz !== AGENCY_TZ ? <span className="text-fg-muted"> · İstanbul {fmtDateTime(d.approvalDeadline)}</span> : null}
             </dd>
             <dt className="text-fg-passive">Yayın</dt>
-            <dd>
-              {d.postUrl ? (
-                <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
-                  {d.publishedAt ? fmtDateTime(d.publishedAt, tz) : "Bağlantı"} <ExternalIcon size={12} />
-                  <span className="sr-only">(yeni sekmede açılır)</span>
-                </a>
-              ) : (
-                "—"
-              )}
+            <dd className="flex flex-col gap-1">
+              {d.publishedAt ? <span className="tabular-nums">{fmtDateTime(d.publishedAt, tz)}</span> : null}
+              <PostUrlForm deliverableId={d.id} current={d.postUrl} editable={["YAYINLANDI", "METRIK_BEKLIYOR", "TAMAMLANDI"].includes(d.status)} />
             </dd>
             <dt className="text-fg-passive">Caption</dt>
             <dd className="whitespace-pre-line">{d.caption || "—"}</dd>

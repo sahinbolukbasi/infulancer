@@ -4,8 +4,6 @@ import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { computeInfluencerStats, latestReachSnapshot } from "@infulancer/core/domain/influencer-stats";
 import {
-  campaignStatusLabels,
-  contentTypeLabels,
   formatKurus,
   platformLabels,
   taxStatusLabels,
@@ -16,16 +14,14 @@ import { BarChart, LineChart } from "@/components/charts/charts";
 import { BalanceCards } from "@/components/finance/balance-cards";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
 import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
-import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { WorkHistory } from "@/components/history/work-history";
 import { SyncAccountsButton } from "@/components/forms/agent-job-forms";
 import { categoryLabel } from "@infulancer/core/domain/categories";
 import { syncSourceLabels } from "@infulancer/core/social/sync";
-import { compact, num, pct, pct1 } from "@/lib/format";
-import { campaignTone, contractTone, contractUiLabels } from "@/lib/status-tone";
+import { compact, pct, pct1 } from "@/lib/format";
 import { fmtDate } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Influencer profili" };
@@ -251,53 +247,8 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
       </section>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Geçmiş kampanyalar</CardTitle>
-        <DataTable
-          caption="Geçmiş kampanyalar"
-          emptyText="Henüz kampanya yok."
-          initialSort={{ key: "date", dir: "desc" }}
-          columns={[
-            { key: "campaign", header: "Kampanya", sortable: true },
-            { key: "date", header: "Tarih", sortable: true },
-            { key: "status", header: "Durum", sortable: true },
-            { key: "contract", header: "Sözleşme", sortable: true },
-            { key: "deliverables", header: "İş", align: "right", sortable: true },
-            { key: "reach", header: "Erişim", align: "right", sortable: true },
-            { key: "fee", header: "Bedel", align: "right", sortable: true },
-          ]}
-          rows={inf.assignments.map((a) => {
-            const live = a.deliverables.filter((d) => d.status !== "IPTAL");
-            const reach = live.reduce((s, d) => s + (latestReachSnapshot(d.metricSnapshots)?.reach ?? 0), 0);
-            return {
-              id: a.id,
-              cells: {
-                campaign: {
-                  display: (
-                    <Link href={`/admin/kampanyalar/${a.campaign.id}`} className="flex flex-col hover:underline">
-                      {a.campaign.name}
-                      <span className="text-[12px] text-fg-passive">
-                        {a.campaign.brand.name} · {live.map((d) => contentTypeLabels[d.contentType]).join(", ") || "iş yok"}
-                      </span>
-                    </Link>
-                  ),
-                  sort: a.campaign.name,
-                },
-                date: { display: `${fmtDate(a.campaign.startsAt)} – ${fmtDate(a.campaign.endsAt)}`, sort: a.campaign.startsAt.getTime() },
-                status: {
-                  display: <StatusDot tone={campaignTone(a.campaign.status)}>{campaignStatusLabels[a.campaign.status]}</StatusDot>,
-                  sort: a.campaign.status,
-                },
-                contract: {
-                  display: <StatusDot tone={contractTone(a.contractStatus)}>{contractUiLabels[a.contractStatus]}</StatusDot>,
-                  sort: a.contractStatus,
-                },
-                deliverables: { display: live.length, sort: live.length },
-                reach: { display: num.format(reach), sort: reach },
-                fee: { display: formatKurus(a.feeKurus), sort: a.feeKurus },
-              },
-            };
-          })}
-        />
+        <CardTitle>İş ve ödeme geçmişi</CardTitle>
+        <WorkHistory influencerId={inf.id} mode="admin" />
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-4">
