@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { safeNextPath } from "@/lib/roles";
 import Link from "next/link";
 import { LoginForm } from "./login-form";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { getLandingContent, toVideos } from "@/lib/landing-store";
 
 export const metadata: Metadata = { title: "Giriş" };
+export const dynamic = "force-dynamic";
 
 const DEV_ACCOUNTS = [
   { label: "Admin", emails: ["admin@ajans.local"] },
@@ -19,30 +22,30 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const nextPath = safeNextPath(Array.isArray(next) ? next[0] : next);
   const showDevHint = process.env.NODE_ENV !== "production";
 
+  const videos = toVideos(await getLandingContent());
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-bg px-4 py-12">
-      <div className="flex w-full max-w-sm animate-enter flex-col gap-8">
-        <div className="flex flex-col gap-2">
-          <span className="text-label text-fg-passive">Infulancer</span>
-          <h1 className="text-title">Giriş yap</h1>
-          <p className="text-sm text-fg-muted">Ajans, marka ve influencer hesapları için tek giriş.</p>
-        </div>
+    <AuthShell
+      videos={videos}
+      title="Tekrar hoş geldiniz"
+      subtitle="Ajans, marka ve influencer hesapları için tek giriş."
+      footer={
+        <>
+          Davet kodunuz mu var?{" "}
+          <Link href="/kayit" className="text-fg underline-offset-4 hover:underline">
+            Kayıt olun →
+          </Link>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-5">
         {onaylandi ? (
-          <p role="status" className="rounded-[8px] border border-border p-4 text-sm text-fg">
+          <p role="status" className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-fg">
             Üyeliğiniz onaylandı. E-posta ve şifrenizle giriş yapın.
           </p>
         ) : null}
-        <div className="rounded-[8px] border border-border bg-surface p-6">
-          <LoginForm next={nextPath} />
-        </div>
-        <p className="text-center text-[13px] text-fg-muted">
-          Davet kodunuz mu var?{" "}
-          <Link href="/kayit" className="text-fg underline underline-offset-4">
-            Kayıt olun
-          </Link>
-        </p>
+        <LoginForm next={nextPath} />
         {showDevHint ? (
-          <section aria-labelledby="demo-hesaplar" className="flex flex-col gap-3 rounded-[8px] border border-dashed border-border p-4">
+          <section aria-labelledby="demo-hesaplar" className="flex flex-col gap-3 rounded-2xl border border-dashed border-white/15 p-4">
             <h2 id="demo-hesaplar" className="text-label text-fg-passive">
               Geliştirme hesapları · şifre Demo1234!
             </h2>
@@ -61,6 +64,6 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </section>
         ) : null}
       </div>
-    </main>
+    </AuthShell>
   );
 }

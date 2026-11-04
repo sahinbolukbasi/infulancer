@@ -18,6 +18,8 @@ export type LandingVideo = {
   metric: string;
   /** Video yokken kullanılan degrade (Tailwind sınıfları) */
   tone: string;
+  /** Reklam/işbirliği içeriği: kartta "Reklam" etiketi */
+  sponsored?: boolean;
 };
 export type LandingReference = {
   brand: string;
@@ -116,4 +118,16 @@ export const LANDING_FEATURES = [
   { title: "Mesaj kanalları", text: "WhatsApp ve Instagram DM gelen kutusu, AI asistan ve insan devri." },
   { title: "Finans", text: "Hakediş defteri, çekim talepleri, marka tahsilatı ve brüt fark raporu." },
   { title: "Raporlama", text: "Kampanya skoru, KPI kırılımı ve marka için PDF rapor." },
+];
+
+/** Kayan içerik üreticisi şeridi (örnek profiller; gerçek isimlerle değiştirin). */
+export const LANDING_CREATORS: { handle: string; niche: string; followers: string; tone: string; platform: "Instagram" | "TikTok" | "YouTube"; city: string; engagement: string }[] = [
+  { handle: "@guzellik.rutini", niche: "Güzellik", followers: "412B", tone: "from-rose-400 to-fuchsia-500", platform: "Instagram", city: "İstanbul", engagement: "%6,8" },
+  { handle: "@tekno.kutu", niche: "Teknoloji", followers: "1,2M", tone: "from-sky-400 to-cyan-500", platform: "YouTube", city: "Ankara", engagement: "%4,1" },
+  { handle: "@mutfakta.bir.gun", niche: "Yemek", followers: "860B", tone: "from-amber-400 to-orange-500", platform: "TikTok", city: "İzmir", engagement: "%9,2" },
+  { handle: "@hareket.et", niche: "Spor", followers: "540B", tone: "from-lime-400 to-emerald-500", platform: "Instagram", city: "Antalya", engagement: "%7,5" },
+  { handle: "@gezgin.not", niche: "Seyahat", followers: "320B", tone: "from-teal-400 to-sky-500", platform: "Instagram", city: "Muğla", engagement: "%5,9" },
+  { handle: "@anne.gunlugu", niche: "Aile", followers: "275B", tone: "from-pink-400 to-rose-500", platform: "Instagram", city: "Bursa", engagement: "%11,3" },
+  { handle: "@oyun.masasi", niche: "Oyun", followers: "980B", tone: "from-violet-400 to-indigo-500", platform: "TikTok", city: "İstanbul", engagement: "%8,0" },
+  { handle: "@stil.defteri", niche: "Moda", followers: "690B", tone: "from-fuchsia-400 to-purple-500", platform: "Instagram", city: "İstanbul", engagement: "%6,2" },
 ];

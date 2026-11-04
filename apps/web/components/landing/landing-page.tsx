@@ -1,201 +1,540 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
+import { CountUp, Reveal, RevealRoot, RotatingWord, Spotlight, Tilt } from "@/components/landing/motion";
 import { ReelCard } from "@/components/landing/reel-card";
-import { buttonClass } from "@/components/ui/form";
-import { LANDING_FEATURES, LANDING_REFERENCES, LANDING_STEPS, LANDING_VIDEOS } from "@/lib/landing-content";
-
-const compact = new Intl.NumberFormat("tr-TR", { notation: "compact", maximumFractionDigits: 1 });
+import { ScrollDemo } from "@/components/landing/scroll-demo";
+import { LANDING_FEATURES, type LandingReference, type LandingVideo } from "@/lib/landing-content";
+import { cn } from "@/lib/cn";
 
 export type LandingStats = { influencers: number; followers: number; campaigns: number; published: number };
 
-/** Herkese açık tanıtım sayfası: video vitrini, nasıl çalışır, özellikler, referanslar, giriş/kayıt yönlendirmesi. */
-export function LandingPage({ stats }: { stats: LandingStats }) {
-  const statItems = [
-    { label: "Influencer", value: compact.format(stats.influencers) },
-    { label: "Toplam takipçi", value: compact.format(stats.followers) },
-    { label: "Kampanya", value: compact.format(stats.campaigns) },
-    { label: "Yayınlanan içerik", value: compact.format(stats.published) },
-  ];
+/** Parlayan kenarlı ana buton */
+function GlowButton({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
   return (
-    <div className="min-h-screen bg-bg text-fg">
+    <Link
+      href={href}
+      className={cn(
+        "group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-full px-7 text-[15px] font-medium text-black transition-transform duration-300 hover:scale-[1.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white",
+        className,
+      )}
+    >
+      <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,#f0abfc,#a78bfa,#60a5fa,#34d399,#f0abfc)] bg-[length:300%_100%] animate-gradient-x" />
+      <span aria-hidden className="absolute inset-[2px] rounded-full bg-white/90 transition-opacity duration-300 group-hover:opacity-0" />
+      <span className="relative">{children}</span>
+    </Link>
+  );
+}
+
+function GhostButton({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex h-12 items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 text-[15px] text-fg backdrop-blur transition-standard hover:border-white/40 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+    >
+      {children}
+    </a>
+  );
+}
+
+/** Hero'da reel kartlarının etrafında yüzen bildirimler */
+function FloatChip({ className, dot, children, delay = 0 }: { className?: string; dot: string; children: ReactNode; delay?: number }) {
+  return (
+    <div
+      aria-hidden
+      className={cn("absolute z-20 flex items-center gap-2 rounded-2xl border border-white/10 bg-black/60 px-3 py-2 text-[12px] text-white backdrop-blur-md animate-pop", className)}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <span className="relative flex h-2 w-2">
+        <span className={cn("absolute inline-flex h-full w-full rounded-full animate-ping-slow", dot)} />
+        <span className={cn("relative inline-flex h-2 w-2 rounded-full", dot)} />
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: ReactNode; text?: string }) {
+  return (
+    <Reveal className="mb-12 flex flex-col items-center gap-4 text-center">
+      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] tracking-wide text-fg-muted uppercase">{eyebrow}</span>
+      <h2 className="max-w-3xl text-[34px] leading-tight font-semibold tracking-tight sm:text-[48px]">{title}</h2>
+      {text ? <p className="max-w-2xl text-fg-muted">{text}</p> : null}
+    </Reveal>
+  );
+}
+
+/** Özellik kutularındaki küçük canlı görseller */
+function FeatureVisual({ i }: { i: number }) {
+  if (i === 0)
+    return (
+      <div aria-hidden className="flex h-24 items-end gap-2">
+        {[40, 65, 50, 85, 70, 100, 90].map((h, k) => (
+          <span key={k} className="w-full origin-bottom rounded-t-md bg-gradient-to-t from-violet-500/40 to-fuchsia-400 animate-bar" style={{ height: `${h}%`, animationDelay: `${k * 120}ms` }} />
+        ))}
+      </div>
+    );
+  if (i === 1)
+    return (
+      <div aria-hidden className="relative flex h-24 items-center justify-center">
+        <span className="absolute h-20 w-20 rounded-full border border-dashed border-sky-400/50 animate-spin-slow" />
+        <span className="absolute h-12 w-12 rounded-full bg-sky-400/20 animate-ping-slow" />
+        <span className="relative text-2xl font-semibold text-sky-300">+18%</span>
+      </div>
+    );
+  if (i === 2)
+    return (
+      <ul aria-hidden className="flex h-24 flex-col justify-center gap-2 text-[12px]">
+        {["#reklam etiketi", "İYS onayı", "KVKK kaydı"].map((t, k) => (
+          <li key={t} className="flex items-center gap-2 text-emerald-300">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400/20 animate-pop" style={{ animationDelay: `${k * 400}ms` }}>
+              ✓
+            </span>
+            {t}
+          </li>
+        ))}
+      </ul>
+    );
+  if (i === 3)
+    return (
+      <div aria-hidden className="flex h-24 flex-col justify-center gap-2 text-[12px]">
+        <span className="w-fit rounded-2xl rounded-bl-sm bg-white/10 px-3 py-1.5">Kampanya kodu nedir?</span>
+        <span className="ml-auto w-fit rounded-2xl rounded-br-sm bg-violet-500/30 px-3 py-1.5">
+          Yazıyor<span className="animate-blink">…</span>
+        </span>
+      </div>
+    );
+  if (i === 4)
+    return (
+      <div aria-hidden className="flex h-24 flex-col justify-center gap-2">
+        {[80, 55, 92].map((w, k) => (
+          <span key={k} className="h-2 overflow-hidden rounded-full bg-white/10">
+            <span className="block h-full origin-left rounded-full bg-gradient-to-r from-amber-400 to-rose-400 animate-fill" style={{ width: `${w}%`, animationDelay: `${k * 200}ms` }} />
+          </span>
+        ))}
+      </div>
+    );
+  return (
+    <div aria-hidden className="relative flex h-24 items-center justify-center">
+      <svg viewBox="0 0 120 60" className="h-full w-full">
+        <path d="M0 50 C 20 45, 30 20, 50 28 S 80 10, 120 6" fill="none" stroke="url(#lg)" strokeWidth="3" strokeLinecap="round" pathLength={100} strokeDasharray="100" className="animate-draw" />
+        <defs>
+          <linearGradient id="lg" x1="0" x2="1">
+            <stop offset="0" stopColor="#60a5fa" />
+            <stop offset="1" stopColor="#f0abfc" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
+}
+
+const INTEGRATIONS: { name: string; kind: string; text: string; tone: string; soon?: boolean }[] = [
+  { name: "Instagram", kind: "Sosyal medya", text: "Business Discovery ile takipçi ve etkileşim; DM gelen kutusu.", tone: "from-pink-500 to-amber-400" },
+  { name: "TikTok", kind: "Sosyal medya", text: "Üretici TikTok hesabıyla bağlanır; profil ve video istatistikleri doğrudan okunur.", tone: "from-zinc-700 to-cyan-500" },
+  { name: "YouTube", kind: "Sosyal medya", text: "YouTube Data API ile abone, video ve izlenme verisi otomatik güncellenir.", tone: "from-red-600 to-rose-400" },
+  { name: "WhatsApp", kind: "Mesajlaşma", text: "Cloud API ile gelen kutusu, şablon mesajlar ve AI asistan; İYS onayı kontrol edilir.", tone: "from-emerald-600 to-lime-400" },
+  { name: "UTM ve kupon", kind: "Analitik", text: "Her kampanyaya UTM etiketi ve influencer başına kupon kodu; satışlar skora işlenir.", tone: "from-sky-600 to-indigo-400" },
+  { name: "İYS ve KVKK", kind: "Uyum", text: "Ticari ileti onayları, yurt dışı aktarım kayıtları ve saklama süreleri takip edilir.", tone: "from-slate-600 to-slate-400" },
+  { name: "Meta ortaklık reklamları", kind: "Reklam", text: "Üreticinin içeriğini onun adıyla ortaklık reklamı olarak yayınlayın.", tone: "from-blue-600 to-violet-400", soon: true },
+  { name: "TikTok Spark Ads", kind: "Reklam", text: "Üreticinin videosunu kendi hesabından Spark Ads ile öne çıkarın.", tone: "from-fuchsia-600 to-cyan-400", soon: true },
+];
+const FEATURE_TONES = [
+  "from-violet-500/20",
+  "from-sky-500/20",
+  "from-emerald-500/20",
+  "from-fuchsia-500/20",
+  "from-amber-500/20",
+  "from-blue-500/20",
+];
+const BENTO = ["md:col-span-4", "md:col-span-2", "md:col-span-2", "md:col-span-2", "md:col-span-2", "md:col-span-6"];
+
+/** Herkese açık tanıtım sayfası. */
+export type LandingData = {
+  videos: LandingVideo[];
+  references: (LandingReference & { logo?: string })[];
+  creators: { handle: string; niche: string; followers: string; tone: string; platform: string; city: string; engagement: string; brand: string }[];
+};
+export function LandingPage({ stats, data }: { stats: LandingStats; data: LandingData }) {
+  const vid = (i: number) => data.videos[i % data.videos.length]!;
+  const statItems = [
+    { label: "Influencer", value: stats.influencers },
+    { label: "Toplam takipçi", value: stats.followers },
+    { label: "Kampanya", value: stats.campaigns },
+    { label: "Yayınlanan içerik", value: stats.published },
+  ];
+  const creators = [...data.creators, ...data.creators];
+  return (
+    <RevealRoot className="min-h-screen overflow-x-clip bg-[#06060a] text-fg">
+      {/* İlk boyamadan önce: kaydırma animasyonları JS varken etkin (JS yoksa içerik görünür kalır). */}
+      <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js-reveal')" }} />
       <a href="#icerik" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded focus:bg-fg focus:px-3 focus:py-2 focus:text-bg">
         İçeriğe geç
       </a>
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-bg/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
+
+      {/* Üst menü */}
+      <header className="fixed inset-x-0 top-4 z-50 px-4">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/40 py-2 pr-2 pl-5 backdrop-blur-xl">
+          <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
+            <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#f0abfc,#a78bfa,#60a5fa,#34d399,#f0abfc)] animate-spin-slow" />
             Infulancer
           </Link>
-          <nav aria-label="Tanıtım" className="hidden gap-6 text-sm text-fg-muted md:flex">
-            <a href="#nasil" className="hover:text-fg">
-              Nasıl çalışır
-            </a>
-            <a href="#ozellikler" className="hover:text-fg">
-              Özellikler
-            </a>
-            <a href="#referanslar" className="hover:text-fg">
-              Referanslar
-            </a>
-            <Link href="/fiyatlandirma" className="hover:text-fg">
+          <nav aria-label="Tanıtım" className="hidden gap-7 text-sm text-fg-muted md:flex">
+            {[
+              ["#ureticiler", "Üreticiler"],
+              ["#icerikler", "İçerikler"],
+              ["#nasil", "Nasıl çalışır"],
+              ["#entegrasyonlar", "Entegrasyonlar"],
+              ["#referanslar", "Referanslar"],
+            ].map(([h, l]) => (
+              <a key={h} href={h} className="transition-standard hover:text-fg">
+                {l}
+              </a>
+            ))}
+            <Link href="/fiyatlandirma" className="transition-standard hover:text-fg">
               Fiyatlandırma
             </Link>
           </nav>
-          <div className="flex items-center gap-2">
-            <Link href="/giris" className={buttonClass("ghost", "sm")}>
-              Giriş yap
-            </Link>
-            <a href="#iletisim" className={buttonClass("primary", "sm")}>
-              Demo iste
-            </a>
-          </div>
+          <Link href="/giris" className="inline-flex h-9 items-center rounded-full bg-white px-4 text-sm font-medium text-black transition-transform hover:scale-105">
+            Giriş yap
+          </Link>
         </div>
       </header>
 
       <main id="icerik">
-        {/* Hero */}
-        <section className="relative overflow-hidden">
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(217,70,239,0.18),transparent_60%)]" />
-          <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 pt-16 pb-20 lg:grid-cols-2 lg:pt-24">
-            <div className="flex flex-col gap-6 animate-enter">
-              <span className="w-fit rounded-full border border-border px-3 py-1 text-[12px] text-fg-muted">Influencer marketing ajansları için operasyon platformu</span>
-              <h1 className="text-[40px] leading-[1.05] font-semibold tracking-tight sm:text-[56px]">
-                Doğru içerik üreticisi, ölçülebilir sonuç.
-              </h1>
-              <p className="max-w-xl text-lg text-fg-muted">
-                Brief&apos;ten yayına, ölçümden ödemeye kadar tüm influencer kampanyanızı tek panelden yönetin. Markalar sonuçları canlı izler, içerik üreticileri işlerini ve
-                ödemelerini takip eder.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link href="/giris" className={buttonClass("primary", "md", "h-12 px-6 text-base")}>
-                  Panele giriş yap →
-                </Link>
-                <a href="#referanslar" className={buttonClass("secondary", "md", "h-12 px-6 text-base")}>
-                  Referansları gör
-                </a>
-              </div>
-              <dl className="mt-4 grid grid-cols-2 gap-6 sm:grid-cols-4">
-                {statItems.map((s) => (
-                  <div key={s.label} className="flex flex-col gap-1">
-                    <dt className="text-[12px] text-fg-passive">{s.label}</dt>
-                    <dd className="text-2xl font-semibold tabular-nums">{s.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-            <div className="relative mx-auto grid w-full max-w-md grid-cols-2 gap-4">
-              <ReelCard video={LANDING_VIDEOS[0]!} className="mt-10 animate-float" />
-              <ReelCard video={LANDING_VIDEOS[1]!} delay={1500} className="animate-float" />
-            </div>
+        {/* HERO */}
+        <Spotlight className="relative isolate overflow-hidden">
+          <div aria-hidden className="absolute inset-0 -z-10">
+            <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
+            <div className="absolute -top-40 -left-32 h-[520px] w-[520px] rounded-full bg-fuchsia-600/30 blur-[120px] animate-aurora" />
+            <div className="absolute top-20 -right-40 h-[560px] w-[560px] rounded-full bg-indigo-600/30 blur-[120px] animate-aurora [animation-delay:-6s]" />
+            <div className="absolute -bottom-40 left-1/3 h-[420px] w-[420px] rounded-full bg-emerald-500/20 blur-[120px] animate-aurora [animation-delay:-12s]" />
           </div>
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 pt-36 pb-24 lg:grid-cols-[1.1fr_1fr] lg:pt-44">
+            <div className="flex flex-col gap-7">
+              <Reveal>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] text-fg-muted backdrop-blur">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 animate-ping-slow" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  Influencer ve UGC kampanyaları için
+                </span>
+              </Reveal>
+              <Reveal delay={80}>
+                <h1 className="text-[46px] leading-[1.02] font-semibold tracking-[-0.03em] sm:text-[68px]">
+                  İçerik üreticileriyle
+                  <br />
+                  ölçülebilir <RotatingWord words={["erişim.", "etkileşim.", "satış.", "güven."]} />
+                </h1>
+              </Reveal>
+              <Reveal delay={160}>
+                <p className="max-w-xl text-lg leading-relaxed text-fg-muted">
+                  Brief&apos;ten yayına, ölçümden ödemeye kadar tüm kampanyanızı tek panelden yönetin. Markalar sonuçları canlı izler, içerik üreticileri işlerini ve
+                  ödemelerini takip eder.
+                </p>
+              </Reveal>
+              <Reveal delay={240} className="flex flex-col gap-4">
+                <div className="flex flex-wrap gap-3">
+                  <GlowButton href="/giris">Panele giriş yap →</GlowButton>
+                  <GhostButton href="#nasil">Demoyu kaydırarak izle</GhostButton>
+                </div>
+                <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-fg-muted">
+                  {["Resmî Instagram, TikTok, YouTube API", "KVKK ve İYS uyumlu", "md. 23/A reklam kontrolü"].map((t) => (
+                    <li key={t} className="flex items-center gap-1.5">
+                      <span className="text-emerald-300">✓</span> {t}
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+              <Reveal delay={320}>
+                <dl className="mt-2 grid grid-cols-2 gap-6 border-t border-white/10 pt-6 sm:grid-cols-4">
+                  {statItems.map((s) => (
+                    <div key={s.label} className="flex flex-col gap-1">
+                      <dt className="text-[12px] text-fg-passive">{s.label}</dt>
+                      <dd className="text-[28px] font-semibold">
+                        <CountUp value={s.value} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </Reveal>
+            </div>
+
+            <Reveal delay={200} className="relative mx-auto h-[560px] w-full max-w-[460px]">
+              <div aria-hidden className="absolute inset-10 rounded-full bg-[conic-gradient(from_0deg,#f0abfc33,#60a5fa33,#34d39933,#f0abfc33)] blur-2xl animate-spin-slow" />
+              <div className="absolute top-16 left-0 z-10 w-[46%] -rotate-6">
+                <Tilt>
+                  <ReelCard video={vid(0)} />
+                </Tilt>
+              </div>
+              <div className="absolute top-0 left-1/2 z-20 w-[50%] -translate-x-1/2">
+                <Tilt>
+                  <ReelCard video={vid(1)} delay={1200} className="ring-1 ring-white/20" />
+                </Tilt>
+              </div>
+              <div className="absolute top-20 right-0 z-10 w-[46%] rotate-6">
+                <Tilt>
+                  <ReelCard video={vid(2)} delay={2400} />
+                </Tilt>
+              </div>
+              <FloatChip className="top-6 -left-2" dot="bg-fuchsia-400">
+                +12,4B beğeni
+              </FloatChip>
+              <FloatChip className="top-[46%] -right-4" dot="bg-emerald-400" delay={900}>
+                Teklif kabul edildi
+              </FloatChip>
+              <FloatChip className="bottom-10 left-6" dot="bg-sky-400" delay={1800}>
+                Ödeme gönderildi · 45.000 TL
+              </FloatChip>
+            </Reveal>
+          </div>
+        </Spotlight>
+
+        {/* Kayan içerik üreticileri */}
+        <section aria-label="Platformdaki içerik üreticileri" className="relative border-y border-white/10 py-8 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
+          {[false, true].map((rev) => (
+            <div key={String(rev)} className={cn("flex w-max gap-4", rev ? "mt-4 animate-marquee-reverse" : "animate-marquee")} aria-hidden={rev || undefined}>
+              {creators.map((c, k) => (
+                <div key={`${c.handle}-${k}`} className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] py-2 pr-5 pl-2" aria-hidden={k >= data.creators.length || undefined}>
+                  <span className={cn("h-9 w-9 rounded-full bg-gradient-to-br", c.tone)} />
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-sm text-fg">{c.handle}</span>
+                    <span className="text-[11px] text-fg-passive">
+                      {c.niche} · {c.followers} takipçi
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
         </section>
 
-        {/* Platform şeridi */}
-        <section aria-label="Desteklenen platformlar" className="overflow-hidden border-y border-border py-5">
-          <div className="flex w-max gap-12 whitespace-nowrap text-sm text-fg-passive animate-marquee">
-            {Array.from({ length: 2 }).flatMap((_, k) =>
-              ["Instagram", "TikTok", "YouTube", "WhatsApp", "Meta Partnership Ads", "TikTok Spark Ads", "İYS", "KVKK", "md. 23/A", "AI Creative"].map((t) => (
-                <span key={`${k}-${t}`} aria-hidden={k === 1 || undefined}>
-                  {t}
-                </span>
-              )),
-            )}
-          </div>
+        {/* İçerik üreticileri */}
+        <section id="ureticiler" className="mx-auto max-w-6xl px-6 pt-28">
+          <SectionTitle eyebrow="Platformdaki içerik üreticileri" title="Markana uygun profili keşfet" text="Takipçi, etkileşim, şehir ve kategoriye göre karşılaştır; birlikte çalıştığı markaları gör." />
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {data.creators.slice(0, 8).map((c, i) => (
+              <Reveal as="li" key={`${c.handle}-${i}`} delay={(i % 4) * 90}>
+                <Tilt max={8} className="h-full">
+                  <div className="group flex h-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5 transition-colors duration-300 hover:border-white/25">
+                    <div className="flex items-center gap-3">
+                      <span className="relative">
+                        <span aria-hidden className={cn("block h-12 w-12 rounded-full bg-gradient-to-br ring-2 ring-white/10", c.tone)} />
+                        <span aria-hidden className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full border-2 border-[#06060a] bg-emerald-400" />
+                      </span>
+                      <span className="flex min-w-0 flex-col leading-tight">
+                        <span className="truncate text-sm font-medium">{c.handle}</span>
+                        <span className="text-[12px] text-fg-passive">{[c.city, c.platform].filter(Boolean).join(" · ")}</span>
+                      </span>
+                    </div>
+                    <span className="w-fit rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-fg-muted">{c.niche}</span>
+                    <dl className="mt-auto grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+                      <div>
+                        <dt className="text-[11px] text-fg-passive">Takipçi</dt>
+                        <dd className="text-lg font-semibold tabular-nums">{c.followers}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-fg-passive">Etkileşim</dt>
+                        <dd className="text-gradient text-lg font-semibold tabular-nums">{c.engagement || "—"}</dd>
+                      </div>
+                    </dl>
+                    {c.brand ? <p className="text-[12px] text-fg-muted">Çalıştığı marka: {c.brand}</p> : null}
+                  </div>
+                </Tilt>
+              </Reveal>
+            ))}
+          </ul>
         </section>
 
         {/* Video vitrini */}
-        <section className="mx-auto max-w-6xl px-6 py-20">
-          <div className="mb-10 flex flex-col gap-3">
-            <h2 className="text-3xl font-semibold tracking-tight">Kampanyalardan içerikler</h2>
-            <p className="max-w-2xl text-fg-muted">Reels, TikTok ve YouTube içerikleri; her biri planlandı, onaylandı ve ölçüldü.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {LANDING_VIDEOS.map((v, i) => (
-              <ReelCard key={v.handle} video={v} delay={i * 700} />
+        <section id="icerikler" className="relative mx-auto max-w-6xl px-6 py-28">
+          <SectionTitle
+            eyebrow="Kampanyalardan içerikler"
+            title={
+              <>
+                Planlandı, onaylandı, <span className="text-gradient">ölçüldü.</span>
+              </>
+            }
+            text="Reels, TikTok ve YouTube içerikleri tek akışta: brief, taslak onayı, reklam açıklaması kontrolü ve yayın sonrası metrikler."
+          />
+          <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+            {data.videos.map((v, i) => (
+              <Reveal key={`${v.handle}-${i}`} delay={i * 120} className={cn(i % 2 === 1 && "md:mt-12")}>
+                <Tilt max={14}>
+                  <ReelCard video={v} delay={i * 700} />
+                </Tilt>
+              </Reveal>
             ))}
           </div>
         </section>
 
-        {/* Nasıl çalışır */}
-        <section id="nasil" className="border-t border-border bg-surface/40">
-          <div className="mx-auto max-w-6xl px-6 py-20">
-            <h2 className="mb-10 text-3xl font-semibold tracking-tight">Nasıl çalışır</h2>
-            <ol className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              {LANDING_STEPS.map((s, i) => (
-                <li key={s.title} className="flex flex-col gap-3 rounded-[12px] border border-border bg-bg p-5">
-                  <span className="text-[13px] tabular-nums text-fg-passive">0{i + 1}</span>
-                  <h3 className="text-lg font-medium">{s.title}</h3>
-                  <p className="text-sm text-fg-muted">{s.text}</p>
-                </li>
-              ))}
-            </ol>
+        {/* Nasıl çalışır — kaydırdıkça ilerleyen demo */}
+        <section id="nasil" className="relative py-28">
+          <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_60%)]" />
+          <div className="mx-auto max-w-6xl px-6">
+            <SectionTitle eyebrow="Nasıl çalışır · kaydırdıkça demo ilerler" title="Brief'ten sonuca bir kampanya" text="Bir kampanyanın panelde nasıl ilerlediğini adım adım görün." />
+            <ScrollDemo />
           </div>
         </section>
 
-        {/* Özellikler */}
-        <section id="ozellikler" className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="mb-10 text-3xl font-semibold tracking-tight">Tek panelde her şey</h2>
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {LANDING_FEATURES.map((f) => (
-              <li key={f.title} className="flex flex-col gap-2 rounded-[12px] border border-border p-5 transition-standard hover:border-border-strong hover:bg-surface">
-                <h3 className="font-medium">{f.title}</h3>
-                <p className="text-sm text-fg-muted">{f.text}</p>
-              </li>
+        {/* Entegrasyonlar */}
+        <section id="entegrasyonlar" className="mx-auto max-w-6xl px-6 py-28">
+          <SectionTitle eyebrow="Entegrasyonlar" title="Kullandığın kanallarla çalışır" text="Veriler resmî API'lerden okunur; ekran görüntüsü toplamaya gerek kalmaz." />
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {INTEGRATIONS.map((it, i) => (
+              <Reveal as="li" key={it.name} delay={(i % 4) * 80}>
+                <div className="group flex h-full flex-col gap-3 rounded-3xl border border-white/10 bg-white/[0.02] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.05]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-semibold text-white", it.tone)} aria-hidden>
+                      {it.name.slice(0, 2)}
+                    </span>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide", it.soon ? "border border-amber-300/40 text-amber-200" : "bg-white/10 text-fg-muted")}>
+                      {it.soon ? "Erken erişim" : it.kind}
+                    </span>
+                  </div>
+                  <h3 className="font-medium">{it.name}</h3>
+                  <p className="text-[13px] leading-relaxed text-fg-muted">{it.text}</p>
+                </div>
+              </Reveal>
+            ))}
+          </ul>
+        </section>
+
+        {/* Özellikler (bento) */}
+        <section id="ozellikler" className="mx-auto max-w-6xl px-6 py-28">
+          <SectionTitle eyebrow="Özellikler" title="Tek panelde her şey" text="Ajans, marka ve içerik üreticisi aynı veriye bakar; kimse e-posta ve Excel arasında kaybolmaz." />
+          <ul className="grid grid-cols-1 gap-4 md:grid-cols-6">
+            {LANDING_FEATURES.map((f, i) => (
+              <Reveal as="li" key={f.title} delay={(i % 3) * 100} className={BENTO[i]}>
+                <Tilt max={4} className="h-full">
+                  <div
+                    className={cn(
+                      "group relative flex h-full flex-col gap-4 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br to-transparent p-6 transition-colors duration-300 hover:border-white/25",
+                      FEATURE_TONES[i],
+                    )}
+                  >
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      style={{ background: "radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.08), transparent 40%)" }}
+                    />
+                    <FeatureVisual i={i} />
+                    <h3 className="text-lg font-medium">{f.title}</h3>
+                    <p className="text-sm leading-relaxed text-fg-muted">{f.text}</p>
+                  </div>
+                </Tilt>
+              </Reveal>
             ))}
           </ul>
         </section>
 
         {/* Referanslar */}
-        <section id="referanslar" className="border-t border-border bg-surface/40">
-          <div className="mx-auto max-w-6xl px-6 py-20">
-            <div className="mb-10 flex flex-col gap-3">
-              <h2 className="text-3xl font-semibold tracking-tight">Referanslar</h2>
-              <p className="max-w-2xl text-fg-muted">Markaların platformla yürüttüğü kampanyalardan sonuçlar.</p>
-            </div>
-            <ul className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              {LANDING_REFERENCES.map((r) => (
-                <li key={r.brand} className="flex flex-col gap-5 rounded-[12px] border border-border bg-bg p-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{r.brand}</span>
-                      <span className="text-[13px] text-fg-passive">{r.sector}</span>
-                    </div>
-                    {r.sample ? <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-fg-muted">Örnek çalışma</span> : null}
-                  </div>
-                  <blockquote className="text-[15px] leading-relaxed text-fg">“{r.quote}”</blockquote>
-                  <p className="text-[13px] text-fg-muted">— {r.person}</p>
-                  <dl className="mt-auto grid grid-cols-3 gap-3 border-t border-border pt-4">
-                    {r.results.map((x) => (
-                      <div key={x.label} className="flex flex-col gap-1">
-                        <dt className="text-[11px] text-fg-passive">{x.label}</dt>
-                        <dd className="text-lg font-semibold tabular-nums">{x.value}</dd>
+        {data.references.length > 0 ? (
+        <section id="referanslar" className="relative py-28">
+          <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom,rgba(217,70,239,0.12),transparent_60%)]" />
+          <div className="mx-auto max-w-6xl px-6">
+            <SectionTitle eyebrow="Referanslar" title="Markalar sonuçla konuşuyor" />
+            <ul className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              {data.references.map((r, i) => (
+                <Reveal as="li" key={`${r.brand}-${i}`} delay={i * 140}>
+                  <Tilt max={6} className="h-full">
+                    <figure className="relative flex h-full flex-col gap-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur">
+                      <span aria-hidden className="absolute -top-6 right-4 text-[120px] leading-none text-white/5">
+                        “
+                      </span>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {r.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- admin tarafından girilen harici logo adresi
+                            <img src={r.logo} alt={`${r.brand} logosu`} className="h-10 w-10 rounded-xl bg-white object-contain p-1" loading="lazy" />
+                          ) : (
+                            <span aria-hidden className={cn("h-10 w-10 rounded-xl bg-gradient-to-br", ["from-rose-400 to-fuchsia-600", "from-sky-400 to-indigo-600", "from-amber-400 to-red-600"][i % 3])} />
+                          )}
+                          <div className="flex flex-col">
+                            <span className="font-medium">{r.brand}</span>
+                            <span className="text-[12px] text-fg-passive">{r.sector}</span>
+                          </div>
+                        </div>
+                        {r.sample ? <span className="rounded-full border border-white/15 px-2 py-0.5 text-[11px] text-fg-muted">Örnek çalışma</span> : null}
                       </div>
-                    ))}
-                  </dl>
-                </li>
+                      <blockquote className="relative text-[16px] leading-relaxed">{r.quote}</blockquote>
+                      <figcaption className="text-[13px] text-fg-muted">— {r.person}</figcaption>
+                      <dl className="mt-auto grid grid-cols-3 gap-3 border-t border-white/10 pt-5">
+                        {r.results.map((x) => (
+                          <div key={x.label} className="flex flex-col gap-1">
+                            <dt className="text-[11px] text-fg-passive">{x.label}</dt>
+                            <dd className="text-gradient text-xl font-semibold tabular-nums">{x.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </figure>
+                  </Tilt>
+                </Reveal>
               ))}
             </ul>
           </div>
         </section>
+        ) : null}
+
+        {/* Karşılaştırma */}
+        <section className="mx-auto max-w-5xl px-6 py-28">
+          <SectionTitle eyebrow="Neden Infulancer" title="Kampanyanın her adımı tek yerde" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Reveal className="rounded-3xl border border-white/10 bg-white/[0.02] p-7">
+              <h3 className="mb-4 text-sm tracking-wide text-fg-passive uppercase">Platform olmadan</h3>
+              <ul className="flex flex-col gap-3 text-fg-muted">
+                {["Hashtag'lerde tek tek profil aramak", "Excel tabloları ve e-posta zincirleri", "Ekran görüntüsüyle toplanan sonuçlar", "Elle hesaplanan hakediş ve ödemeler"].map((t) => (
+                  <li key={t} className="flex items-start gap-3">
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/5 text-[11px] text-fg-passive">✕</span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+            <Reveal delay={120} className="relative overflow-hidden rounded-3xl border border-fuchsia-300/30 bg-gradient-to-br from-fuchsia-500/15 via-indigo-500/10 to-transparent p-7">
+              <h3 className="mb-4 text-sm tracking-wide text-fuchsia-200 uppercase">Infulancer ile</h3>
+              <ul className="flex flex-col gap-3">
+                {["Filtreyle doğru profil, tek tıkla teklif", "Brief, onay ve takvim tek panelde", "Metrikler resmî API'lerden otomatik", "Hakediş, ödeme listesi ve marka raporu hazır"].map((t, i) => (
+                  <li key={t} className="flex items-start gap-3">
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-[11px] text-emerald-300 animate-pop" style={{ animationDelay: `${i * 300}ms` }}>
+                      ✓
+                    </span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+          </div>
+        </section>
 
         {/* CTA */}
-        <section id="iletisim" className="mx-auto max-w-6xl px-6 py-24">
-          <div className="flex flex-col items-start gap-6 rounded-[16px] border border-border bg-[radial-gradient(ellipse_at_top_left,rgba(217,70,239,0.15),transparent_60%)] p-10 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-3xl font-semibold tracking-tight">Kampanyanızı bugün başlatın</h2>
-              <p className="text-fg-muted">Üyelik davetle açılır. Davet kodunuz varsa kayıt olun, hesabınız varsa giriş yapın.</p>
+        <section className="mx-auto max-w-6xl px-6 pt-10 pb-32">
+          <Reveal>
+            <div className="relative isolate overflow-hidden rounded-[32px] border border-white/10 px-8 py-16 text-center sm:px-16">
+              <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,#86198f,#4338ca,#0e7490,#047857,#86198f)] bg-[length:300%_300%] opacity-60 animate-gradient-x" />
+              <div aria-hidden className="bg-grid absolute inset-0 -z-10 opacity-40" />
+              <h2 className="mx-auto max-w-2xl text-[34px] leading-tight font-semibold tracking-tight sm:text-[48px]">Bir sonraki kampanyanız burada başlıyor.</h2>
+              <p className="mx-auto mt-4 max-w-xl text-white/80">Üyelik davetle açılır. Davet kodunuz varsa kayıt olun, hesabınız varsa giriş yapın.</p>
+              <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 text-left md:grid-cols-2">
+                <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-black/30 p-6 backdrop-blur">
+                  <span className="text-[12px] tracking-wide text-white/60 uppercase">Markalar ve ajanslar</span>
+                  <p className="text-lg font-medium">Kampanyanızı panelden yönetin</p>
+                  <GlowButton href="/giris" className="mt-auto w-full">
+                    Giriş yap
+                  </GlowButton>
+                </div>
+                <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-black/30 p-6 backdrop-blur">
+                  <span className="text-[12px] tracking-wide text-white/60 uppercase">İçerik üreticileri</span>
+                  <p className="text-lg font-medium">Davet kodunla katıl, işlerini ve ödemelerini takip et</p>
+                  <GhostButton href="/kayit">Davet koduyla kayıt ol</GhostButton>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/giris" className={buttonClass("primary", "md", "h-12 px-6 text-base")}>
-                Giriş yap
-              </Link>
-              <Link href="/kayit" className={buttonClass("secondary", "md", "h-12 px-6 text-base")}>
-                Davet koduyla kayıt ol
-              </Link>
-            </div>
-          </div>
+          </Reveal>
         </section>
       </main>
 
-      <footer className="border-t border-border">
+      <footer className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-[13px] text-fg-passive">
           <span>© {new Date().getFullYear()} Infulancer</span>
           <nav aria-label="Yasal" className="flex gap-6">
@@ -214,6 +553,6 @@ export function LandingPage({ stats }: { stats: LandingStats }) {
           </nav>
         </div>
       </footer>
-    </div>
+    </RevealRoot>
   );
 }

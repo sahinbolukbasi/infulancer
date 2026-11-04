@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { LandingPage, type LandingStats } from "@/components/landing/landing-page";
 import { getActor } from "@/lib/auth-guard";
+import { getLandingContent, toReferences, toVideos } from "@/lib/landing-store";
 import { roleHome } from "@/lib/roles";
 export const metadata: Metadata = {
   title: { absolute: "Infulancer · Influencer marketing platformu" },
@@ -21,5 +22,6 @@ export default async function RootPage() {
   ])
     .then(([influencers, f, campaigns, published]) => ({ influencers, followers: f._sum.followers ?? 0, campaigns, published }))
     .catch(() => ({ influencers: 0, followers: 0, campaigns: 0, published: 0 }));
-  return <LandingPage stats={stats} />;
+  const content = await getLandingContent();
+  return <LandingPage stats={stats} data={{ videos: toVideos(content), references: toReferences(content), creators: content.creators }} />;
 }

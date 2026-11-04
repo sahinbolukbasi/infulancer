@@ -28,6 +28,88 @@
   --animate-reel-progress: reel-progress 6s linear infinite;
   --animate-reel-pan: reel-pan 12s ease-in-out infinite alternate;
   --animate-float: float 5s ease-in-out infinite;
+  --animate-marquee-reverse: marquee-reverse 45s linear infinite;
+  --animate-aurora: aurora 18s ease-in-out infinite alternate;
+  --animate-gradient-x: gradient-x 6s ease infinite;
+  --animate-spin-slow: spin 14s linear infinite;
+  --animate-word-in: word-in 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-bar: bar 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 4s ease-in-out infinite;
+  --animate-blink: blink 1.2s steps(2, start) infinite;
+  --animate-ping-slow: ping-slow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  @keyframes marquee-reverse {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes aurora {
+    0% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+    50% {
+      transform: translate(8%, -6%) scale(1.15) rotate(20deg);
+    }
+    100% {
+      transform: translate(-6%, 8%) scale(0.95) rotate(-10deg);
+    }
+  }
+  @keyframes gradient-x {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  @keyframes word-in {
+    from {
+      opacity: 0;
+      transform: translateY(60%) rotateX(-60deg);
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) rotateX(0);
+      filter: blur(0);
+    }
+  }
+  @keyframes bar {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+  @keyframes pop {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-10px) scale(1.03);
+    }
+  }
+  @keyframes blink {
+    to {
+      opacity: 0.2;
+    }
+  }
+  @keyframes ping-slow {
+    0% {
+      transform: scale(1);
+      opacity: 0.7;
+    }
+    80%,
+    100% {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+  }
   @keyframes marquee {
     from {
       transform: translateX(0);
@@ -201,7 +283,43 @@ dialog::backdrop {
   backdrop-filter: blur(4px);
 }
 
+/* Kaydırınca beliren bloklar (components/landing/motion.tsx). JS yoksa içerik görünür kalır. */
+.js-reveal [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px) scale(0.98);
+  filter: blur(4px);
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.js-reveal [data-reveal][data-visible="true"] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+.text-gradient {
+  background-image: linear-gradient(90deg, #f0abfc, #a78bfa, #60a5fa, #34d399, #f0abfc);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-gradient-x);
+}
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
 @media (prefers-reduced-motion: reduce) {
+  .js-reveal [data-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
   *,
   *::before,
   *::after {

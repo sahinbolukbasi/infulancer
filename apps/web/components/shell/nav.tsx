@@ -5,6 +5,8 @@ import type { Role } from "@infulancer/core/enums";
 import {
   AlertIcon,
   FileIcon,
+  GridIcon,
+  SettingsIcon,
   UserIcon,
   BellIcon,
   BuildingIcon,
@@ -36,6 +38,9 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/creative", label: "Creative", icon: SparkleIcon },
     { href: "/admin/kategoriler", label: "Kategoriler", icon: CalendarIcon },
     { href: "/admin/davetler", label: "Davetler", icon: UserIcon },
+    { href: "/admin/kullanicilar", label: "Kullanıcılar", icon: UsersIcon },
+    { href: "/admin/yetkiler", label: "Rol ve yetkiler", icon: SettingsIcon },
+    { href: "/admin/tanitim", label: "Tanıtım sayfası", icon: GridIcon },
     { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
   ],
   BRAND: [

@@ -83,6 +83,7 @@ export function ReelCard({ video, className, delay = 0 }: { video: LandingVideo;
           <span aria-hidden className="h-6 w-6 rounded-full border border-white/50 bg-white/20" />
           {video.handle}
           <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wide">{video.platform}</span>
+          {video.sponsored ? <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-black">Reklam</span> : null}
         </span>
         <span className="text-[13px] leading-snug text-white/85">{video.caption}</span>
         <span className="text-[12px] font-semibold tabular-nums">{video.metric}</span>
