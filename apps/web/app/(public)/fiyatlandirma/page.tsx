@@ -8,6 +8,9 @@ import { InfoNote, UnverifiedBadge } from "@/components/ui/unverified";
 export const metadata: Metadata = { title: "Fiyatlandırma" };
 export const dynamic = "force-dynamic";
 
+/** Fiyatlar altı çizgisiz; satırın üstüne gelince (veya klavyeyle odaklanınca) koyulaşır ve kalınlaşır. */
+const PRICE = "text-fg-muted no-underline transition-standard group-hover:text-fg group-hover:font-semibold group-focus-within:text-fg group-focus-within:font-semibold";
+const ROW = "group -mx-2 flex justify-between gap-4 rounded-[6px] px-2 py-2 transition-standard hover:bg-surface-hover";
 const usd = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "USD", maximumFractionDigits: 4 });
 
 export default async function PricingPage() {
@@ -60,11 +63,11 @@ export default async function PricingPage() {
           </thead>
           <tbody>
             {rates.map((r) => (
-              <tr key={`${r.countryCode}-${r.category}-${r.effectiveFrom.toISOString()}`} className="border-b border-border">
+              <tr key={`${r.countryCode}-${r.category}-${r.effectiveFrom.toISOString()}`} className="group border-b border-border transition-standard hover:bg-surface-hover">
                 <td className="py-2">{r.countryCode}</td>
                 <td className="py-2">{r.category}</td>
                 <td className="py-2 tabular-nums">
-                  {usd.format(Number(r.rateUsd))}
+                  <span className={PRICE}>{usd.format(Number(r.rateUsd))}</span>
                   <UnverifiedBadge verified={r.verified} />
                 </td>
               </tr>
@@ -80,15 +83,15 @@ export default async function PricingPage() {
         </h2>
         <ul className="flex flex-col divide-y divide-border text-sm">
           {competitors.map((c) => (
-            <li key={c.name} className="flex justify-between gap-4 py-2">
+            <li key={c.name} className={ROW}>
               <span>{c.name}</span>
-              <span className="text-fg-muted">{c.detail}</span>
+              <span className={PRICE}>{c.detail}</span>
             </li>
           ))}
           {bsp.map((b) => (
-            <li key={b.tier} className="flex justify-between gap-4 py-2">
+            <li key={b.tier} className={ROW}>
               <span>360dialog {b.tier}</span>
-              <span className="text-fg-muted">
+              <span className={PRICE}>
                 €{b.eurPerMonth}/ay · {b.channels} kanal
               </span>
             </li>
