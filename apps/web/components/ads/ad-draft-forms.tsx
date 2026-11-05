@@ -8,7 +8,7 @@ type Objective = { key: string; label: string };
 type Asset = { id: string; label: string };
 
 /** Tek reklam taslağı oluşturma (marka seçimi admin'de, markada gizli). */
-export function AdDraftForm({ brands, metaObjectives, tiktokObjectives, assets, isAdmin }: { brands: Brand[]; metaObjectives: Objective[]; tiktokObjectives: Objective[]; assets: Asset[]; isAdmin: boolean }) {
+export function AdDraftForm({ brands, metaObjectives, tiktokObjectives, assets, isAdmin, defaultAssetId }: { brands: Brand[]; metaObjectives: Objective[]; tiktokObjectives: Objective[]; assets: Asset[]; isAdmin: boolean; defaultAssetId?: string }) {
   return (
     <ActionForm action={createAdDraftAction} submitLabel="Taslak oluştur" resetOnSuccess aria-label="Reklam taslağı oluştur">
       {isAdmin ? (
@@ -62,7 +62,7 @@ export function AdDraftForm({ brands, metaObjectives, tiktokObjectives, assets, 
       </div>
       <Field label="Görsel (opsiyonel)" hint="Creative'de üretilmiş bir görseli bağlayın.">
         {(p) => (
-          <Select {...p} name="assetId" defaultValue="">
+          <Select {...p} name="assetId" defaultValue={defaultAssetId ?? ""}>
             <option value="">Görsel yok</option>
             {assets.map((a) => (
               <option key={a.id} value={a.id}>
@@ -78,7 +78,7 @@ export function AdDraftForm({ brands, metaObjectives, tiktokObjectives, assets, 
 }
 
 /** Toplu kampanya: aynı içerikle birden çok platformda taslak. */
-export function BulkAdDraftForm({ brands, metaObjectives, tiktokObjectives, assets, isAdmin }: { brands: Brand[]; metaObjectives: Objective[]; tiktokObjectives: Objective[]; assets: Asset[]; isAdmin: boolean }) {
+export function BulkAdDraftForm({ brands, metaObjectives, tiktokObjectives, assets, isAdmin, defaultAssetId }: { brands: Brand[]; metaObjectives: Objective[]; tiktokObjectives: Objective[]; assets: Asset[]; isAdmin: boolean; defaultAssetId?: string }) {
   const objectives = [...metaObjectives];
   for (const o of tiktokObjectives) if (!objectives.some((x) => x.key === o.key)) objectives.push(o);
   return (
@@ -125,7 +125,7 @@ export function BulkAdDraftForm({ brands, metaObjectives, tiktokObjectives, asse
       </Field>
       <Field label="Görsel (opsiyonel)">
         {(p) => (
-          <Select {...p} name="assetId" defaultValue="">
+          <Select {...p} name="assetId" defaultValue={defaultAssetId ?? ""}>
             <option value="">Görsel yok</option>
             {assets.map((a) => (
               <option key={a.id} value={a.id}>

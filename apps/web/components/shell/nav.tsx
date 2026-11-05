@@ -50,6 +50,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/marka/teklifler", label: "Teklifler", icon: WalletIcon },
     { href: "/marka/gelen-kutusu", label: "Gelen kutusu", icon: BellIcon },
     { href: "/marka/kanallar", label: "Kanallar ve asistan", icon: LinkIcon },
+    { href: "/marka/reklam", label: "Reklam", icon: MegaphoneIcon },
     { href: "/marka/uyum", label: "Uyum", icon: AlertIcon },
     { href: "/profil", label: "Profilim", icon: UserIcon },
     { href: "/docs", label: "Dokümantasyon", icon: FileIcon },

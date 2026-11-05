@@ -51,6 +51,7 @@ export default async function AdminCreativePage() {
             units: Number(j.units),
             reject: j.rejectReason,
             c2pa: assets.find((x) => x.jobId === j.id)?.c2paManifestId ?? null,
+            assetId: assets.find((x) => x.jobId === j.id)?.id ?? null,
           }))}
         />
       ) : (

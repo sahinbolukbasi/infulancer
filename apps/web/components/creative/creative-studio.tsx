@@ -1,5 +1,6 @@
 "use client";
 import { useActionState, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SparkleIcon } from "@/components/icons";
 import { ReelCard } from "@/components/landing/reel-card";
@@ -9,7 +10,7 @@ import type { LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
 
 export type StudioModel = { key: string; label: string; kind: string; unit: string; creditsPerUnit: number; maxUnits: number | null };
-export type StudioJob = { id: string; prompt: string; brand: string; modelKey: string; status: string; at: string; units: number; reject?: string | null; c2pa?: string | null };
+export type StudioJob = { id: string; prompt: string; brand: string; modelKey: string; status: string; at: string; units: number; reject?: string | null; c2pa?: string | null; assetId?: string | null };
 
 const IDEAS = [
   { label: "15 sn ürün videosu", text: "15 saniyelik dikey ürün tanıtım videosu: pastel stüdyo, yavaş kamera hareketi, sonda logo ve '%20 indirim' yazısı" },
@@ -27,7 +28,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 const TONES = ["from-rose-500/70 via-fuchsia-600/50 to-indigo-700/70", "from-sky-500/70 via-cyan-600/50 to-emerald-700/70", "from-amber-500/70 via-orange-600/50 to-red-700/70", "from-violet-500/70 via-purple-600/50 to-fuchsia-700/70"];
 
 /** Creative stüdyosu: sohbet akışı (istek → üretim kartı), örnek videolar ve tek satır besteci. */
-export function CreativeStudio({ brands, models, jobs, examples }: { brands: { id: string; name: string }[]; models: StudioModel[]; jobs: StudioJob[]; examples: LandingVideo[] }) {
+export function CreativeStudio({ brands, models, jobs, examples, adHref = "/admin/reklam" }: { brands: { id: string; name: string }[]; models: StudioModel[]; jobs: StudioJob[]; examples: LandingVideo[]; adHref?: string }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(generateCreative, idleState);
   const [prompt, setPrompt] = useState("");
@@ -86,6 +87,11 @@ export function CreativeStudio({ brands, models, jobs, examples }: { brands: { i
                     </span>
                     {j.reject ? <span className="text-critical">{j.reject}</span> : null}
                     {j.c2pa ? <span className="text-[12px] text-fg-passive">C2PA kimliği {j.c2pa.slice(0, 8)}… · &quot;AI ile üretildi&quot; etiketi gömülü</span> : null}
+                    {j.status === "COMPLETED" && j.assetId ? (
+                      <Link href={`${adHref}?asset=${j.assetId}`} className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border border-neon-pink/50 px-3 py-1 text-[12px] text-fg hover:bg-neon-pink/10">
+                        Reklama dönüştür →
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
               </div>

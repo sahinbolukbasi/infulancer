@@ -17,8 +17,9 @@ import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Reklam" };
 
-export default async function AdminAdsPage() {
+export default async function AdminAdsPage({ searchParams }: { searchParams: Promise<{ asset?: string }> }) {
   await requireActor("ADMIN");
+  const { asset: defaultAssetId } = await searchParams;
   const [limits, quota, changes, codes, brands, assets, pendingAds] = await Promise.all([
     getConfig("meta.ads.writeLimits"),
     getConfig("meta.ads.quota"),
@@ -51,8 +52,8 @@ export default async function AdminAdsPage() {
         <Tabs
           label="Reklam oluşturma"
           tabs={[
-            { id: "tek", label: "Tek reklam", content: <AdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin /> },
-            { id: "toplu", label: "Toplu kampanya", content: <BulkAdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin /> },
+            { id: "tek", label: "Tek reklam", content: <AdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin defaultAssetId={defaultAssetId} /> },
+            { id: "toplu", label: "Toplu kampanya", content: <BulkAdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin defaultAssetId={defaultAssetId} /> },
           ]}
         />
         <AdDraftList isAdmin />
