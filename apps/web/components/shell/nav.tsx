@@ -18,29 +18,33 @@ import {
   WalletIcon,
   type IconProps,
 } from "@/components/icons";
-export type NavItem = { href: string; label: string; icon: ComponentType<IconProps>; exact?: boolean };
-/** Rol başına gezinme öğeleri (kenar çubuğu ve mobil sekme çubuğu ortak kullanır). */
+export type NavItem = { href: string; label: string; icon: ComponentType<IconProps>; exact?: boolean; section?: string };
+/**
+ * Rol başına gezinme öğeleri (kenar çubuğu ve mobil sekme çubuğu ortak kullanır).
+ * Sıra önemlidir: mobil sekme çubuğu yalnız ilk 5 öğeyi gösterir, bu yüzden en sık
+ * kullanılanlar başa alınır. `section` alanı kenar çubuğunda grup başlığı oluşturur.
+ */
 export const navByRole: Record<Role, NavItem[]> = {
   ADMIN: [
-    { href: "/admin", label: "Genel bakış", icon: HomeIcon, exact: true },
-    { href: "/admin/kampanyalar", label: "Kampanyalar", icon: MegaphoneIcon },
-    { href: "/admin/teklifler", label: "Teklifler", icon: WalletIcon },
-    { href: "/admin/takvim", label: "Takvim", icon: CalendarIcon },
-    { href: "/admin/influencerlar", label: "Influencerlar", icon: UsersIcon },
-    { href: "/admin/markalar", label: "Markalar", icon: BuildingIcon },
-    { href: "/admin/finans", label: "Finans", icon: WalletIcon },
-    { href: "/admin/agent", label: "Agent merkezi", icon: SparkleIcon },
-    { href: "/admin/kanallar", label: "Kanallar", icon: LinkIcon },
-    { href: "/admin/uyum", label: "Uyum", icon: AlertIcon },
-    { href: "/admin/reklam", label: "Reklam", icon: MegaphoneIcon },
-    { href: "/admin/creative", label: "Creative", icon: SparkleIcon },
-    { href: "/admin/ai", label: "AI sağlayıcıları", icon: SparkleIcon },
-    { href: "/admin/kategoriler", label: "Kategoriler", icon: CalendarIcon },
-    { href: "/admin/davetler", label: "Davetler", icon: UserIcon },
-    { href: "/admin/kullanicilar", label: "Kullanıcılar", icon: UsersIcon },
-    { href: "/admin/yetkiler", label: "Rol ve yetkiler", icon: SettingsIcon },
-    { href: "/admin/tanitim", label: "Tanıtım sayfası", icon: GridIcon },
-    { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
+    { href: "/admin", label: "Genel bakış", icon: HomeIcon, exact: true, section: "Çalışma" },
+    { href: "/admin/kampanyalar", label: "Kampanyalar", icon: MegaphoneIcon, section: "Çalışma" },
+    { href: "/admin/teklifler", label: "Teklifler", icon: WalletIcon, section: "Çalışma" },
+    { href: "/admin/takvim", label: "Takvim", icon: CalendarIcon, section: "Çalışma" },
+    { href: "/admin/influencerlar", label: "Influencerlar", icon: UsersIcon, section: "Taraflar" },
+    { href: "/admin/markalar", label: "Markalar", icon: BuildingIcon, section: "Taraflar" },
+    { href: "/admin/kanallar", label: "Mesajlar ve asistan", icon: LinkIcon, section: "Taraflar" },
+    { href: "/admin/reklam", label: "Reklam", icon: MegaphoneIcon, section: "İçerik ve AI" },
+    { href: "/admin/creative", label: "Creative", icon: SparkleIcon, section: "İçerik ve AI" },
+    { href: "/admin/ai", label: "AI sağlayıcıları", icon: SparkleIcon, section: "İçerik ve AI" },
+    { href: "/admin/finans", label: "Finans", icon: WalletIcon, section: "Para ve uyum" },
+    { href: "/admin/uyum", label: "Uyum", icon: AlertIcon, section: "Para ve uyum" },
+    { href: "/admin/kullanicilar", label: "Kullanıcılar", icon: UsersIcon, section: "Yönetim" },
+    { href: "/admin/yetkiler", label: "Rol ve yetkiler", icon: SettingsIcon, section: "Yönetim" },
+    { href: "/admin/davetler", label: "Davetler", icon: UserIcon, section: "Yönetim" },
+    { href: "/admin/kategoriler", label: "Kategoriler", icon: CalendarIcon, section: "Yönetim" },
+    { href: "/admin/agent", label: "Agent merkezi", icon: SparkleIcon, section: "Yönetim" },
+    { href: "/admin/tanitim", label: "Tanıtım sayfası", icon: GridIcon, section: "Yönetim" },
+    { href: "/docs", label: "Dokümantasyon", icon: FileIcon, section: "Yönetim" },
   ],
   // Ajans çalışanı: yönetici ekranları (kullanıcılar, yetkiler, finans, tanıtım, AI sağlayıcıları) hariç.
   AGENCY: [],
@@ -48,20 +52,18 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
     { href: "/marka/kesfet", label: "Influencer bul", icon: UsersIcon },
     { href: "/marka/teklifler", label: "Teklifler", icon: WalletIcon },
+    { href: "/marka/reklam", label: "Reklam", icon: MegaphoneIcon },
     { href: "/marka/gelen-kutusu", label: "Gelen kutusu", icon: BellIcon },
     { href: "/marka/kanallar", label: "Kanallar ve asistan", icon: LinkIcon },
-    { href: "/marka/reklam", label: "Reklam", icon: MegaphoneIcon },
-    { href: "/marka/uyum", label: "Uyum", icon: AlertIcon },
     { href: "/profil", label: "Profilim", icon: UserIcon },
-    { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
+    { href: "/docs", label: "Yardım", icon: FileIcon },
   ],
   INFLUENCER: [
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
     { href: "/influencer/teklifler", label: "Teklifler", icon: MegaphoneIcon },
-    { href: "/influencer/vitrin", label: "Vitrinim", icon: SparkleIcon },
     { href: "/influencer/odemeler", label: "Ödemeler", icon: WalletIcon },
+    { href: "/influencer/vitrin", label: "Vitrinim", icon: SparkleIcon },
     { href: "/influencer/hesaplar", label: "Hesaplar", icon: LinkIcon },
-    { href: "/influencer/davet", label: "Davet et", icon: UserIcon },
     { href: "/profil", label: "Profilim", icon: UserIcon },
     { href: "/docs", label: "Rehber", icon: FileIcon },
   ],

@@ -67,9 +67,10 @@ export function Sidebar({ role }: { role: Role }) {
           <PanelIcon size={18} />
         </button>
       </div>
-      <nav aria-label="Ana gezinme" className="flex flex-1 flex-col gap-1 p-3">
-        {items.map((item) => {
+      <nav aria-label="Ana gezinme" className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+        {items.map((item, idx) => {
           const active = isActive(pathname, item);
+          const showSection = !collapsed && item.section && item.section !== items[idx - 1]?.section;
           const Icon = item.icon;
           const link = (
             <Link
@@ -86,12 +87,20 @@ export function Sidebar({ role }: { role: Role }) {
               <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
             </Link>
           );
-          return collapsed ? (
+          const node = collapsed ? (
             <Tooltip key={item.href} label={item.label} side="right" className="flex">
               {link}
             </Tooltip>
           ) : (
             link
+          );
+          return showSection ? (
+            <div key={`sec-${item.href}`} className="flex flex-col gap-1">
+              <span className="px-3 pb-0.5 pt-3 text-[11px] font-medium uppercase tracking-wide text-fg-passive">{item.section}</span>
+              {node}
+            </div>
+          ) : (
+            node
           );
         })}
       </nav>

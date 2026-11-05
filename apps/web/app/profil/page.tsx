@@ -174,6 +174,23 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           <CardTitle>Güvenlik</CardTitle>
           <PasswordForm />
         </Card>
+        {actor.role === "INFLUENCER" || actor.role === "BRAND" ? (
+          <Card interactive={false} className="flex flex-col gap-3">
+            <CardTitle>Hızlı erişim</CardTitle>
+            <div className="flex flex-wrap gap-2">
+              {actor.role === "INFLUENCER" ? (
+                <ButtonLink href="/influencer/davet" variant="secondary" size="sm">
+                  Arkadaşını davet et →
+                </ButtonLink>
+              ) : null}
+              {actor.role === "BRAND" ? (
+                <ButtonLink href="/marka/uyum" variant="secondary" size="sm">
+                  Uyum ve yasal gereklilikler →
+                </ButtonLink>
+              ) : null}
+            </div>
+          </Card>
+        ) : null}
       </div>
     ),
   });
