@@ -195,6 +195,8 @@ model User {
   /// Davetle kayıt olanlar admin onayına kadar PENDING; mevcut kullanıcılar ACTIVE.
   status       UserStatus  @default(ACTIVE)
   phone        String?
+  /// Kullanıcının yüklediği profil fotoğrafı (S3 anahtarı). Yoksa influencer sosyal hesabından türetilir.
+  avatarKey    String?
   brandId      String?
   brand        Brand?      @relation(fields: [brandId], references: [id], onDelete: SetNull)
   influencerId String?     @unique
@@ -253,6 +255,8 @@ model Influencer {
   bio              String?
   /// Vitrin: markalara görünen kısa başlık ve görünürlük tercihleri (influencer yönetir)
   headline           String?
+  /// Influencer'ın yüklediği profil fotoğrafı (S3 anahtarı); sosyal senkron avatarını ezer.
+  avatarKey          String?
   showcaseVisible    Boolean   @default(true)
   showCollaborations Boolean   @default(true)
   showPrices         Boolean   @default(true)

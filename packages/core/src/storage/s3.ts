@@ -155,3 +155,19 @@ export async function completeMultipart(
 export async function abortMultipart(key: string, uploadId: string): Promise<void> {
   await s3().send(new AbortMultipartUploadCommand({ Bucket: bucket(), Key: key, UploadId: uploadId }));
 }
+
+/** Profil fotoğrafı: küçük, herkese açık okunabilir bir anahtar (avatars/<uuid>.<ext>). */
+export async function presignAvatarPut(mime: string): Promise<{ key: string; url: string }> {
+  const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+  const key = `avatars/${randomUUID()}.${ext}`;
+  const url = await getSignedUrl(s3(), new PutObjectCommand({ Bucket: bucket(), Key: key, ContentType: mime, CacheControl: "public, max-age=31536000, immutable" }), { expiresIn: presignTtlSeconds() });
+  return { key, url };
+}
+/** Profil fotoğrafını görüntülemek için kısa süreli imzalı GET (inline). */
+export async function presignAvatarGet(key: string): Promise<string> {
+  return getSignedUrl(s3(), new GetObjectCommand({ Bucket: bucket(), Key: key, ResponseContentDisposition: "inline" }), { expiresIn: 3600 });
+}
+export async function deleteObject(key: string): Promise<void> {
+  const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+  await s3().send(new DeleteObjectCommand({ Bucket: bucket(), Key: key })).catch(() => {});
+}

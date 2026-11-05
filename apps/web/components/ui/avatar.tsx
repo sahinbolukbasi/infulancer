@@ -31,8 +31,9 @@ export function Avatar({ name, src, size = 36, className }: { name: string; src?
   );
 }
 
-/** Sosyal hesaplardan ilk mevcut profil fotoğrafı (Instagram > YouTube > TikTok). */
-export function pickAvatar(accounts: { platform: string; avatarUrl?: string | null }[]): string | null {
+/** Yüklenen avatar (varsa) > sosyal hesaplardan ilk mevcut fotoğraf (Instagram > YouTube > TikTok). */
+export function pickAvatar(accounts: { platform: string; avatarUrl?: string | null }[], uploadedKey?: string | null): string | null {
+  if (uploadedKey) return `/api/avatar/${uploadedKey.replace(/^avatars\//, "")}`;
   const order = ["INSTAGRAM", "YOUTUBE", "TIKTOK"];
   return [...accounts].sort((a, b) => order.indexOf(a.platform) - order.indexOf(b.platform)).find((a) => a.avatarUrl)?.avatarUrl ?? null;
 }

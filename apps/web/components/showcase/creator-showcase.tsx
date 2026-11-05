@@ -36,6 +36,7 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
       category: true,
       showPrices: true,
       showCollaborations: true,
+      avatarKey: true,
       categories: { include: { category: { include: { parent: { select: { name: true } } } } }, orderBy: { primary: "desc" } },
       socialAccounts: { orderBy: { followers: "desc" }, select: { platform: true, handle: true, followers: true, engagementRate: true, avatarUrl: true, profileUrl: true, postsCount: true, avgViews: true, verified: true, lastSyncedAt: true } },
     },
@@ -68,7 +69,7 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
       <section className="relative overflow-hidden rounded-3xl border border-line bg-glass p-6">
         <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-neon-pink/20 blur-3xl" />
         <div className="relative flex flex-wrap items-start gap-5">
-          <Avatar name={inf.name} src={pickAvatar(inf.socialAccounts)} size={96} className="ring-2 ring-neon-pink/60" />
+          <Avatar name={inf.name} src={pickAvatar(inf.socialAccounts, inf.avatarKey)} size={96} className="ring-2 ring-neon-pink/60" />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <h1 className="text-[30px] leading-tight font-semibold tracking-tight">{inf.name}</h1>
             {inf.headline ? <p className="text-[15px] text-fg">{inf.headline}</p> : null}

@@ -65,6 +65,10 @@ export const MODEL_SEEDS: Seed[] = [
   { key: "stability-remove-bg", provider: "bedrock", modelId: "stability.stable-image-remove-background-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.07, licenseStatus: "cleared" },
   { key: "stability-conservative-upscale", provider: "bedrock", modelId: "stability.stable-conservative-upscale-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.4, licenseStatus: "cleared" },
   { key: "stability-creative-upscale", provider: "bedrock", modelId: "stability.stable-creative-upscale-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.6, licenseStatus: "cleared" },
+  // Amazon Bedrock üretim modelleri. Bölge/erişim açılana kadar featureFlag ile kapalı (erişim bekliyor).
+  { key: "nova-canvas", provider: "bedrock", modelId: "amazon.nova-canvas-v1:0", kind: "image", unit: "image", unitPriceUsd: 0.04, licenseStatus: "cleared", featureFlag: "creative.bedrockImage" },
+  { key: "titan-image-g1-v2", provider: "bedrock", modelId: "amazon.titan-image-generator-v2:0", kind: "image", unit: "image", unitPriceUsd: 0.01, licenseStatus: "cleared", featureFlag: "creative.bedrockImage" },
+  { key: "nova-reel", provider: "bedrock", modelId: "amazon.nova-reel-v1:1", kind: "video", unit: "second", unitPriceUsd: 0.08, licenseStatus: "cleared", maxUnits: 120, featureFlag: "creative.bedrockVideo" },
 ];
 
 export async function seedModelRegistry() {

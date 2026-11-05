@@ -157,7 +157,9 @@ export const defaultConfig: { [K in ConfigKey]: Entry<K> } = {
       "creative.flux": false,
       "creative.researchModels": false,
       "whatsapp.calling": false,
-    },
+    "creative.bedrockImage": false,
+    "creative.bedrockVideo": false,
+  },
   },
   "sensitive.keywords": {
     verified: true,

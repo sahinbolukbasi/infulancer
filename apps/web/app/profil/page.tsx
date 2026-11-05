@@ -6,6 +6,7 @@ import { campaignStatusLabels, formatKurus, roleLabels, taxStatusLabels } from "
 import { computeBalances, minPayoutKurus } from "@infulancer/core/domain/ledger";
 import { PayoutRequestButton } from "@/components/finance/payout-forms";
 import { WorkHistory } from "@/components/history/work-history";
+import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { PasswordForm, ProfileForm } from "@/components/profile/profile-forms";
 import { Avatar, pickAvatar } from "@/components/ui/avatar";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -50,21 +51,21 @@ const humanize = (a: string) => ACTION_TR[a] ?? a.toLocaleLowerCase("tr").replac
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
   const actor = await requireActor();
   const { sekme } = await searchParams;
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: actor.userId }, select: { name: true, email: true, phone: true, role: true, createdAt: true, brand: { select: { name: true } } } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: actor.userId }, select: { name: true, email: true, phone: true, role: true, createdAt: true, avatarKey: true, brand: { select: { name: true } } } });
   const activity = await audit.listByActor(actor.userId, 60).catch(() => []);
   const tabs: { id: string; label: string; content: React.ReactNode }[] = [];
 
-  let avatar: string | null = null;
+  let avatar: string | null = user.avatarKey ? `/api/avatar/${user.avatarKey.replace(/^avatars\//, "")}` : null;
   let headline = roleLabels[user.role];
   if (actor.role === "INFLUENCER" && actor.influencerId) {
     const id = actor.influencerId;
     const now = new Date();
     const [inf, balances, offers] = await Promise.all([
-      prisma.influencer.findUniqueOrThrow({ where: { id }, select: { iban: true, ibanHolder: true, taxStatus: true, city: true, socialAccounts: { select: { platform: true, avatarUrl: true } } } }),
+      prisma.influencer.findUniqueOrThrow({ where: { id }, select: { iban: true, ibanHolder: true, taxStatus: true, city: true, avatarKey: true, socialAccounts: { select: { platform: true, avatarUrl: true } } } }),
       computeBalances(id, now),
       prisma.offer.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, take: 30 }),
     ]);
-    avatar = pickAvatar(inf.socialAccounts);
+    avatar = pickAvatar(inf.socialAccounts, inf.avatarKey);
     headline = `İçerik üreticisi${inf.city ? ` · ${inf.city}` : ""}`;
     tabs.push({
       id: "odeme",
@@ -160,6 +161,10 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     label: "Bilgilerim",
     content: (
       <div className="flex flex-col gap-4">
+        <Card interactive={false} className="flex flex-col gap-3">
+          <CardTitle>Profil fotoğrafı</CardTitle>
+          <AvatarUploader name={user.name} current={avatar} />
+        </Card>
         <Card interactive={false} className="flex flex-col gap-3">
           <CardTitle>Kişisel bilgiler</CardTitle>
           <ProfileForm name={user.name} phone={user.phone} />

@@ -1,5 +1,4 @@
 "use client";
-
 import type { ComponentType } from "react";
 import type { Role } from "@infulancer/core/enums";
 import {
@@ -19,9 +18,7 @@ import {
   WalletIcon,
   type IconProps,
 } from "@/components/icons";
-
 export type NavItem = { href: string; label: string; icon: ComponentType<IconProps>; exact?: boolean };
-
 /** Rol başına gezinme öğeleri (kenar çubuğu ve mobil sekme çubuğu ortak kullanır). */
 export const navByRole: Record<Role, NavItem[]> = {
   ADMIN: [
@@ -37,6 +34,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/uyum", label: "Uyum", icon: AlertIcon },
     { href: "/admin/reklam", label: "Reklam", icon: MegaphoneIcon },
     { href: "/admin/creative", label: "Creative", icon: SparkleIcon },
+    { href: "/admin/ai", label: "AI sağlayıcıları", icon: SparkleIcon },
     { href: "/admin/kategoriler", label: "Kategoriler", icon: CalendarIcon },
     { href: "/admin/davetler", label: "Davetler", icon: UserIcon },
     { href: "/admin/kullanicilar", label: "Kullanıcılar", icon: UsersIcon },
@@ -44,7 +42,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/tanitim", label: "Tanıtım sayfası", icon: GridIcon },
     { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
   ],
-  // Ajans çalışanı: yönetici ekranları (kullanıcılar, yetkiler, finans, tanıtım) hariç.
+  // Ajans çalışanı: yönetici ekranları (kullanıcılar, yetkiler, finans, tanıtım, AI sağlayıcıları) hariç.
   AGENCY: [],
   BRAND: [
     { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
@@ -67,8 +65,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/docs", label: "Rehber", icon: FileIcon },
   ],
 };
-
-navByRole.AGENCY = navByRole.ADMIN.filter((i) => !["/admin/kullanicilar", "/admin/yetkiler", "/admin/tanitim", "/admin/finans"].includes(i.href));
+navByRole.AGENCY = navByRole.ADMIN.filter((i) => !["/admin/kullanicilar", "/admin/yetkiler", "/admin/tanitim", "/admin/finans", "/admin/ai"].includes(i.href));
 export function isActive(pathname: string, item: NavItem): boolean {
   if (item.exact) return pathname === item.href;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
