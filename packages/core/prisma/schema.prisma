@@ -1496,3 +1496,165 @@ model AdDraft {
   @@index([batchId])
   @@map("ad_drafts")
 }
+
+// ============================================================================
+// Etkinlik yönetimi + Kupon/Hediye çeki + Cüzdan (Apple/Google Wallet) sistemi
+// ============================================================================
+
+enum EventVisibility {
+  HERKESE_ACIK
+  KAPALI
+}
+
+enum EventStatus {
+  TASLAK
+  YAYINDA
+  IPTAL
+  TAMAMLANDI
+}
+
+/// Etkinlik: marka/ajans oluşturur. Konum (harita), görseller, açıklama; herkese açık/kapalı.
+model Event {
+  id            String          @id @default(cuid())
+  tenantId      String?         @map("tenant_id")
+  title         String
+  description   String
+  coverImageKey String?         @map("cover_image_key")
+  /// Galeri görselleri (S3 anahtarları)
+  imageKeys     String[]        @map("image_keys")
+  venueName     String?         @map("venue_name")
+  address       String?
+  city          String?
+  latitude      Float?
+  longitude     Float?
+  startsAt      DateTime        @map("starts_at")
+  endsAt        DateTime?       @map("ends_at")
+  visibility    EventVisibility @default(KAPALI)
+  status        EventStatus     @default(TASLAK)
+  capacity      Int?
+  createdByUserId String?       @map("created_by_user_id")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  invites EventInvite[]
+  tickets EventTicket[]
+  @@index([tenantId, status])
+  @@index([visibility, status])
+  @@map("events")
+}
+
+enum InviteStatus {
+  DAVET_EDILDI
+  KATILIM_TALEBI
+  KABUL
+  RED
+  IPTAL
+}
+
+/// Etkinlik daveti veya katılım talebi. Davet marka/ajanstan, talep kullanıcıdan gelir.
+model EventInvite {
+  id           String       @id @default(cuid())
+  eventId      String       @map("event_id")
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  influencerId String?      @map("influencer_id")
+  userId       String?      @map("user_id")
+  guestName    String?      @map("guest_name")
+  guestEmail   String?      @map("guest_email")
+  status       InviteStatus @default(DAVET_EDILDI)
+  isRequest    Boolean      @default(false) @map("is_request")
+  respondedAt  DateTime?    @map("responded_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  ticket       EventTicket?
+  @@index([eventId, status])
+  @@index([influencerId])
+  @@map("event_invites")
+}
+
+enum TicketStatus {
+  GECERLI
+  KULLANILDI
+  IPTAL
+}
+
+/// Katılımcı bileti: benzersiz QR kodu + kişi adı + etkinlik. Apple/Google Wallet'a eklenebilir.
+model EventTicket {
+  id            String       @id @default(cuid())
+  eventId       String       @map("event_id")
+  event         Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  inviteId      String?      @unique @map("invite_id")
+  invite        EventInvite? @relation(fields: [inviteId], references: [id], onDelete: SetNull)
+  holderName    String       @map("holder_name")
+  /// QR içeriğinde kodlanan ve giriş doğrulamasında kullanılan benzersiz jeton
+  code          String       @unique
+  status        TicketStatus @default(GECERLI)
+  checkedInAt   DateTime?    @map("checked_in_at")
+  walletPassId  String?      @map("wallet_pass_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  @@index([eventId, status])
+  @@map("event_tickets")
+}
+
+enum CouponKind {
+  KUPON
+  HEDIYE_CEKI
+}
+
+enum CouponValueType {
+  YUZDE
+  TUTAR
+}
+
+enum CouponStatus {
+  TASLAK
+  YAYINDA
+  PASIF
+}
+
+/// Marka tarafından tasarlanan kupon veya hediye çeki şablonu (logo, görsel, kod, koşullar).
+model Coupon {
+  id             String          @id @default(cuid())
+  tenantId       String          @map("tenant_id")
+  kind           CouponKind      @default(KUPON)
+  title          String
+  description    String?
+  logoKey        String?         @map("logo_key")
+  heroImageKey   String?         @map("hero_image_key")
+  brandColor     String?         @map("brand_color")
+  /// Ortak kod (tek kod herkeste) ya da boşsa her gönderimde benzersiz kod üretilir
+  sharedCode     String?         @map("shared_code")
+  valueType      CouponValueType @default(YUZDE) @map("value_type")
+  /// YUZDE için 1-100, TUTAR için kuruş
+  value          BigInt
+  terms          String?
+  validFrom      DateTime?       @map("valid_from")
+  validUntil     DateTime?       @map("valid_until")
+  status         CouponStatus    @default(TASLAK)
+  createdByUserId String?        @map("created_by_user_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  grants CouponGrant[]
+  @@index([tenantId, status])
+  @@map("coupons")
+}
+
+enum GrantStatus {
+  GONDERILDI
+  GORULDU
+  KULLANILDI
+  IPTAL
+}
+
+/// Bir kuponun bir influencer'a gönderimi: benzersiz kod + durum + wallet pass.
+model CouponGrant {
+  id           String      @id @default(cuid())
+  couponId     String      @map("coupon_id")
+  coupon       Coupon      @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  influencerId String?     @map("influencer_id")
+  code         String      @unique
+  status       GrantStatus @default(GONDERILDI)
+  redeemedAt   DateTime?   @map("redeemed_at")
+  walletPassId String?     @map("wallet_pass_id")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  @@index([couponId, status])
+  @@index([influencerId])
+  @@map("coupon_grants")
+}

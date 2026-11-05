@@ -19,6 +19,8 @@ export default auth((req) => {
   const user = req.auth?.user;
 
   if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/webhooks/")) return NextResponse.next();
+  // Herkese açık bilet/kupon kartları ve görsel uçları (davetlilere gönderilen bağlantılar).
+  if (pathname.startsWith("/bilet/") || pathname.startsWith("/kupon/") || pathname.startsWith("/api/media/")) return NextResponse.next();
   if (pathname === LANDING && !user?.role) return NextResponse.next();
   const pending = !!user?.role && user.status && user.status !== "ACTIVE";
   if (pathname === "/onay-bekliyor") return user?.role ? NextResponse.next() : NextResponse.redirect(new URL("/giris", req.nextUrl));
