@@ -107,13 +107,21 @@ export async function respondInvite(inviteId: string, accept: boolean, holderNam
     include: { event: { select: { id: true, title: true, capacity: true, status: true } }, ticket: true },
   });
   if (!invite) throw new DomainError("BULUNAMADI", "Davet bulunamadı.");
-  if (invite.status === "KABUL" || invite.status === "RED") throw new DomainError("KURAL_IHLALI", "Bu davet zaten yanıtlanmış.");
 
+  // Katılmıyorum: varsa bileti iptal et, daveti RED yap. (Fikir değiştirmeye izin verilir.)
   if (!accept) {
-    return prisma.eventInvite.update({ where: { id: inviteId }, data: { status: "RED", respondedAt: new Date() } });
+    return prisma.$transaction(async (tx) => {
+      if (invite.ticket && invite.ticket.status !== "IPTAL") {
+        await tx.eventTicket.update({ where: { id: invite.ticket.id }, data: { status: "IPTAL" } });
+      }
+      return tx.eventInvite.update({ where: { id: inviteId }, data: { status: "RED", respondedAt: new Date() } });
+    });
   }
+
+  // Katılıyorum: zaten geçerli bileti varsa onu döndür (tekrar üretme).
+  if (invite.ticket && invite.ticket.status !== "IPTAL") return invite.ticket;
   if (invite.event.status === "IPTAL") throw new DomainError("KURAL_IHLALI", "İptal edilmiş etkinliğe katılınamaz.");
-  // Kapasite kontrolü.
+  // Kapasite kontrolü (iptal olmayan biletler).
   if (invite.event.capacity != null) {
     const issued = await prisma.eventTicket.count({ where: { eventId: invite.event.id, status: { not: "IPTAL" } } });
     if (issued >= invite.event.capacity) throw new DomainError("KURAL_IHLALI", "Etkinlik kapasitesi doldu.");
@@ -121,9 +129,11 @@ export async function respondInvite(inviteId: string, accept: boolean, holderNam
   const name = holderName?.trim() || invite.guestName?.trim() || "Katılımcı";
   return prisma.$transaction(async (tx) => {
     await tx.eventInvite.update({ where: { id: inviteId }, data: { status: "KABUL", respondedAt: new Date() } });
-    return tx.eventTicket.create({
-      data: { eventId: invite.event.id, inviteId, holderName: name, code: uniqueCode("TKT") },
-    });
+    // Daha önce iptal edilmiş bir bilet varsa yeniden geçerli kıl; yoksa yeni üret.
+    if (invite.ticket) {
+      return tx.eventTicket.update({ where: { id: invite.ticket.id }, data: { status: "GECERLI", holderName: name } });
+    }
+    return tx.eventTicket.create({ data: { eventId: invite.event.id, inviteId, holderName: name, code: uniqueCode("TKT") } });
   });
 }
 

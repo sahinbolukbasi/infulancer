@@ -56,6 +56,19 @@ describe("K29 etkinlik ve bilet", () => {
     expect(r1).toHaveLength(1); // tekrar atlandı
   });
 
+  it("katılım durumu değiştirilebilir: kabul→ret bileti iptal eder, ret→kabul yeniden geçerli kılar", async () => {
+    const e = await createEvent({ tenantId: T.tenantId, title: "Fikir", description: "d", startsAt: new Date(Date.now() + 864e5), visibility: "HERKESE_ACIK" });
+    await setEventStatus(e.id, "YAYINDA");
+    const inv = await inviteToEvent({ eventId: e.id, guestName: "Kararsız" });
+    const t1 = await respondInvite(inv.id, true);
+    expect(t1.status).toBe("GECERLI");
+    const red = await respondInvite(inv.id, false);
+    expect(red.status).toBe("RED");
+    const t2 = await respondInvite(inv.id, true);
+    expect(t2.status).toBe("GECERLI");
+    expect(t2.id).toBe(t1.id); // aynı bilet yeniden geçerli
+  });
+
   it("bilet QR ile check-in; ikinci kez kullanılmış döner", async () => {
     const e = await createEvent({ tenantId: T.tenantId, title: "CheckIn", description: "d", startsAt: new Date(Date.now() + 864e5), visibility: "HERKESE_ACIK" });
     await setEventStatus(e.id, "YAYINDA");

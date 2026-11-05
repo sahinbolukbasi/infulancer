@@ -4,6 +4,7 @@ import { prisma } from "@infulancer/core/db";
 import { couponValueLabel } from "@infulancer/core/coupons/service";
 import { InviteResponse } from "@/components/events/event-forms";
 import { Card, CardTitle } from "@/components/ui/card";
+import { mediaSrc } from "@/lib/media";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
@@ -19,7 +20,7 @@ export default async function InfluencerInvitesPage() {
   const id = actor.influencerId!;
   const [invites, grants] = await Promise.all([
     prisma.eventInvite.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, include: { event: { select: { id: true, title: true, startsAt: true, endsAt: true, city: true, tenantId: true } }, ticket: true } }),
-    prisma.couponGrant.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, include: { coupon: { select: { title: true, kind: true, valueType: true, value: true, validUntil: true } } } }),
+    prisma.couponGrant.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, include: { coupon: { select: { title: true, kind: true, valueType: true, value: true, validUntil: true, logoKey: true } } } }),
   ]);
   const orgNames = new Map(
     (await prisma.brand.findMany({ where: { id: { in: invites.map((i) => i.event.tenantId).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((b) => [b.id, b.name]),
@@ -38,21 +39,34 @@ export default async function InfluencerInvitesPage() {
                 <p className="text-sm text-fg-passive">Henüz davet yok.</p>
               ) : (
                 <ul className="flex flex-col gap-3">
-                  {invites.map((inv) => (
+                  {invites.map((inv) => {
+                    const hasTicket = !!inv.ticket && inv.ticket.status !== "IPTAL";
+                    return (
                     <li key={inv.id}>
-                      <Card interactive={false} className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-col">
-                          <CardTitle>{inv.event.title}</CardTitle>
-                          <span className="text-[13px] text-fg-muted">{inv.event.tenantId ? `${orgNames.get(inv.event.tenantId) ?? "Marka"} · ` : "Ajans · "}{fmtDateTime(inv.event.startsAt)}{inv.event.endsAt ? ` – ${fmtDateTime(inv.event.endsAt)}` : ""}{inv.event.city ? ` · ${inv.event.city}` : ""} · {inviteTr[inv.status]}</span>
+                      <Card interactive={false} className="flex flex-col gap-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex flex-col">
+                            <CardTitle>{inv.event.title}</CardTitle>
+                            <span className="text-[13px] text-fg-muted">{inv.event.tenantId ? `${orgNames.get(inv.event.tenantId) ?? "Marka"} · ` : "Ajans · "}{fmtDateTime(inv.event.startsAt)}{inv.event.endsAt ? ` – ${fmtDateTime(inv.event.endsAt)}` : ""}{inv.event.city ? ` · ${inv.event.city}` : ""}</span>
+                          </div>
+                          <StatusDot tone={inv.status === "KABUL" ? "active" : inv.status === "RED" ? "critical" : "muted"}>{inviteTr[inv.status]}</StatusDot>
                         </div>
-                        {inv.ticket ? (
-                          <Link href={`/bilet/${inv.ticket.id}`} className="text-[13px] text-neon-pink hover:underline">Biletim →</Link>
-                        ) : inv.status === "DAVET_EDILDI" ? (
-                          <InviteResponse inviteId={inv.id} />
-                        ) : null}
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+                          <span className="flex items-center gap-3 text-[13px]">
+                            {hasTicket ? <Link href={`/bilet/${inv.ticket!.id}`} className="font-medium text-neon-pink hover:underline">Etkinlik sayfası ve biletim →</Link> : null}
+                            {hasTicket ? <a href={`/api/etkinlik/${inv.event.id}/ics`} className="text-fg-muted hover:text-fg">Takvime ekle</a> : null}
+                          </span>
+                          {inv.status !== "IPTAL" ? (
+                            <span className="flex flex-col items-end gap-1">
+                              <span className="text-[11px] text-fg-passive">Katılım durumu</span>
+                              <InviteResponse inviteId={inv.id} />
+                            </span>
+                          ) : null}
+                        </div>
                       </Card>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               ),
           },
@@ -68,9 +82,16 @@ export default async function InfluencerInvitesPage() {
                     <li key={g.id}>
                       <Link href={`/kupon/${g.id}`} className="block">
                         <Card className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex flex-col">
-                            <CardTitle>{g.coupon.title}</CardTitle>
-                            <span className="text-[13px] text-fg-muted">{g.coupon.kind === "HEDIYE_CEKI" ? "Hediye çeki" : "Kupon"} · {couponValueLabel(g.coupon.valueType, g.coupon.value)}{g.coupon.validUntil ? ` · son ${fmtDate(g.coupon.validUntil)}` : ""}</span>
+                          <div className="flex items-center gap-3">
+                            {mediaSrc(g.coupon.logoKey) ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={mediaSrc(g.coupon.logoKey)!} alt="" className="h-11 w-11 rounded-xl object-cover ring-1 ring-line" />
+                            ) : null}
+                            <div className="flex flex-col">
+                              <CardTitle>{g.coupon.title}</CardTitle>
+                              <span className="text-[13px] text-fg-muted">{g.coupon.kind === "HEDIYE_CEKI" ? "Hediye çeki" : "Kupon"} · {couponValueLabel(g.coupon.valueType, g.coupon.value)}{g.coupon.validUntil ? ` · son ${fmtDate(g.coupon.validUntil)}` : ""}</span>
+                              <span className="text-[12px] text-neon-pink">Kodu ve kullanım detaylarını gör →</span>
+                            </div>
                           </div>
                           <StatusDot tone={g.status === "KULLANILDI" ? "passive" : "active"}>{g.status === "KULLANILDI" ? "Kullanıldı" : "Aktif"}</StatusDot>
                         </Card>

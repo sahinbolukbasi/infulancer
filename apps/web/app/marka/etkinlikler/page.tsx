@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
 import { EventForm } from "@/components/events/event-forms";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { DataTable, type DataTableRow } from "@/components/ui/data-table";
+import { StatusCards } from "@/components/ui/status-cards";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
@@ -13,13 +14,43 @@ export const metadata: Metadata = { title: "Etkinlikler" };
 export const dynamic = "force-dynamic";
 const statusTr: Record<string, string> = { TASLAK: "Taslak", YAYINDA: "Yayında", IPTAL: "İptal", TAMAMLANDI: "Tamamlandı" };
 const tone: Record<string, "active" | "muted" | "passive" | "critical"> = { TASLAK: "muted", YAYINDA: "active", IPTAL: "critical", TAMAMLANDI: "passive" };
+const statusRank: Record<string, number> = { YAYINDA: 0, TASLAK: 1, TAMAMLANDI: 2, IPTAL: 3 };
 
 export default async function BrandEventsPage() {
   const actor = await requireActor("BRAND");
-  const events = await prisma.event.findMany({ where: { tenantId: actor.brandId! }, orderBy: { startsAt: "desc" }, take: 60, include: { _count: { select: { invites: true, tickets: true } } } });
+  const events = await prisma.event.findMany({ where: { tenantId: actor.brandId! }, orderBy: { startsAt: "desc" }, take: 100, include: { _count: { select: { invites: true, tickets: true } } } });
+  const now = new Date();
+  const active = events.filter((e) => e.status === "YAYINDA").length;
+  const upcoming = events.filter((e) => e.status === "YAYINDA" && e.startsAt > now).length;
+  const totalTickets = events.reduce((s, e) => s + e._count.tickets, 0);
+  const totalInvites = events.reduce((s, e) => s + e._count.invites, 0);
+  const acceptRate = totalInvites ? Math.round((totalTickets / totalInvites) * 100) : 0;
+
+  const rows: DataTableRow[] = events.map((e) => ({
+    id: e.id,
+    label: e.title,
+    cells: {
+      title: { display: <span className="font-medium">{e.title}</span>, sort: e.title },
+      date: { display: fmtDateTime(e.startsAt), sort: e.startsAt.getTime() },
+      visibility: e.visibility === "HERKESE_ACIK" ? "Herkese açık" : "Kapalı",
+      invites: { display: <span className="tabular-nums">{e._count.invites}</span>, sort: e._count.invites },
+      tickets: { display: <span className="tabular-nums">{e._count.tickets}</span>, sort: e._count.tickets },
+      status: { display: <StatusDot tone={tone[e.status]}>{statusTr[e.status]}</StatusDot>, sort: statusRank[e.status] ?? 9 },
+    },
+    actions: [{ label: "Yönet", href: `/marka/etkinlikler/${e.id}`, icon: "open" }],
+  }));
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Etkinlikler" description="Etkinlik oluşturun, influencer davet edin, QR'lı bilet üretin." />
+      <StatusCards
+        items={[
+          { title: "Aktif etkinlik", state: active ? "ok" : "warn", value: String(active), text: `${upcoming} yaklaşan` },
+          { title: "Toplam bilet", state: "ok", value: String(totalTickets), text: "üretilen biletler" },
+          { title: "Davet", state: "ok", value: String(totalInvites), text: "gönderilen davet" },
+          { title: "Katılım oranı", state: acceptRate >= 50 ? "ok" : "warn", value: `%${acceptRate}`, text: "davet → bilet" },
+        ]}
+      />
       <Tabs
         label="Etkinlik bölümleri"
         tabs={[
@@ -30,21 +61,18 @@ export default async function BrandEventsPage() {
               events.length === 0 ? (
                 <p className="text-sm text-fg-passive">Henüz etkinlik yok.</p>
               ) : (
-                <ul className="flex flex-col gap-3">
-                  {events.map((e) => (
-                    <li key={e.id}>
-                      <Link href={`/marka/etkinlikler/${e.id}`} className="block">
-                        <Card className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex flex-col">
-                            <CardTitle>{e.title}</CardTitle>
-                            <span className="text-[13px] text-fg-muted">{fmtDateTime(e.startsAt)} · {e._count.invites} davet · {e._count.tickets} bilet</span>
-                          </div>
-                          <StatusDot tone={tone[e.status]}>{statusTr[e.status]}</StatusDot>
-                        </Card>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <DataTable
+                  caption="Etkinliklerim"
+                  columns={[
+                    { key: "title", header: "Etkinlik", sortable: true },
+                    { key: "date", header: "Tarih", sortable: true },
+                    { key: "visibility", header: "Görünürlük" },
+                    { key: "invites", header: "Davet", sortable: true, align: "right" },
+                    { key: "tickets", header: "Bilet", sortable: true, align: "right" },
+                    { key: "status", header: "Durum", sortable: true },
+                  ]}
+                  rows={rows}
+                />
               ),
           },
           { id: "yeni", label: "Yeni etkinlik", content: <Card interactive={false}><EventForm isAdmin={false} /></Card> },
