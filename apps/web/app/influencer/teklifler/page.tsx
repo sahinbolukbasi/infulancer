@@ -13,9 +13,9 @@ import { fmtDate } from "@/lib/time";
 export const metadata: Metadata = { title: "Teklifler" };
 export const dynamic = "force-dynamic";
 
-export default async function InfluencerOffersPage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
+export default async function InfluencerOffersPage({ searchParams }: { searchParams: Promise<{ sekme?: string; sonuc?: string }> }) {
   const actor = await requireActor("INFLUENCER");
-  const { sekme } = await searchParams;
+  const { sekme, sonuc } = await searchParams;
   const id = actor.influencerId!;
   const [offers, cards] = await Promise.all([
     prisma.offer.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, take: 100 }),
@@ -71,6 +71,11 @@ export default async function InfluencerOffersPage({ searchParams }: { searchPar
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Teklifler" description={pending.length ? `${pending.length} teklif yanıtınızı bekliyor.` : "Fiyat listenizi güncel tutun, teklifleri buradan yanıtlayın."} />
+      {sonuc === "kabul" || sonuc === "red" ? (
+        <p role="status" className={`rounded-2xl border px-4 py-3 text-sm ${sonuc === "kabul" ? "border-neon-lime/50 bg-neon-lime/10" : "border-line bg-glass"}`}>
+          {sonuc === "kabul" ? "✓ Teklifi kabul ettiniz. Ajans kampanyaya ekleyince brief ve tarihler İşlerim'e düşecek." : "Teklifi reddettiniz; markaya notunuz iletildi."}
+        </p>
+      ) : null}
       <Tabs
         key={sekme ?? "gelen"}
         label="Teklif bölümleri"

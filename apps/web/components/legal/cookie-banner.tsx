@@ -53,7 +53,7 @@ export function CookieBanner() {
     setOpen(false);
   };
   return (
-    <div role="dialog" aria-modal="false" aria-labelledby="cookie-title" className="fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-2xl rounded-3xl border border-line bg-bg/95 p-5 backdrop-blur-xl animate-modal-in">
+    <div role="dialog" aria-modal="false" aria-labelledby="cookie-title" className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-line bg-bg/95 p-5 backdrop-blur-xl animate-modal-in md:right-auto md:left-6 md:bottom-6 md:max-w-md">
       <h2 id="cookie-title" className="text-[15px] font-semibold">
         Çerez tercihleri
       </h2>

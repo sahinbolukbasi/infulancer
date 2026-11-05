@@ -20,9 +20,9 @@ const FILTERS = [
 ];
 
 /** Ajans: markaların gönderdiği teklifler; kabul edilenler tek tıkla kampanyaya eklenir. */
-export default async function AdminOffersPage({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {
+export default async function AdminOffersPage({ searchParams }: { searchParams: Promise<{ durum?: string; sonuc?: string; kampanya?: string }> }) {
   await requireActor("ADMIN");
-  const { durum } = await searchParams;
+  const { durum, sonuc, kampanya } = await searchParams;
   const status = FILTERS.find((f) => f.id === (durum ?? "KABUL"))?.id ?? "KABUL";
   const [offers, counts] = await Promise.all([
     prisma.offer.findMany({ where: status ? { status } : {}, orderBy: { updatedAt: "desc" }, take: 200 }),
@@ -39,6 +39,16 @@ export default async function AdminOffersPage({ searchParams }: { searchParams: 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Teklifler" description="Kabul edilen teklifleri kampanyaya ekleyin; brief ve içerik planı oradan devam eder." />
+      {sonuc === "eklendi" ? (
+        <p role="status" className="flex flex-wrap items-center gap-3 rounded-2xl border border-neon-lime/50 bg-neon-lime/10 px-4 py-3 text-sm">
+          ✓ Kampanyaya eklendi. İçerik planı ve brief için kampanyaya geçin.
+          {kampanya ? (
+            <Link href={`/admin/kampanyalar/${kampanya}?sekme=influencerlar`} className="font-medium underline underline-offset-4">
+              Kampanyayı aç →
+            </Link>
+          ) : null}
+        </p>
+      ) : null}
       <nav aria-label="Durum" className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <Link key={f.id || "all"} href={`/admin/teklifler?durum=${f.id}`} aria-current={status === f.id ? "page" : undefined} className={cn("rounded-full border px-3 py-1 text-[13px] tabular-nums", status === f.id ? "border-fg text-fg" : "border-line text-fg-muted hover:text-fg")}>

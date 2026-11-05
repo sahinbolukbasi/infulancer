@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
@@ -89,7 +90,7 @@ export async function sendOffersAction(input: {
 
 export async function respondOfferAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("INFLUENCER");
-  return attempt(async () => {
+  const res = await attempt(async () => {
     const input = parseInput(z.object({ id: z.string().min(1).max(64), decision: z.enum(["KABUL", "RED"]), note: z.string().max(1000).nullable() }), {
       id: str(fd, "id"),
       decision: str(fd, "decision"),
@@ -105,8 +106,11 @@ export async function respondOfferAction(_p: ActionState, fd: FormData): Promise
     });
     await audit.append({ actor: toAuditActor(actor), action: input.decision === "KABUL" ? "OFFER_ACCEPTED" : "OFFER_DECLINED", entityType: "Offer", entityId: o.id, data: { note: input.note } });
     revalidateAll();
-    return { ok: true, message: input.decision === "KABUL" ? "Teklifi kabul ettiniz. Ajans kampanya ayrıntılarını paylaşacak." : "Teklifi reddettiniz." };
+    return { ok: true, message: input.decision, data: { decision: input.decision } };
   });
+  // Yanıtlanan teklif "bekleyen" listesinden düşer; sonuç sayfa üstünde gösterilsin diye yönlendirilir.
+  if (res.ok) redirect(`/influencer/teklifler?sonuc=${res.data?.decision === "KABUL" ? "kabul" : "red"}&sekme=gecmis`);
+  return res;
 }
 
 export async function withdrawOfferAction(_p: ActionState, fd: FormData): Promise<ActionState> {

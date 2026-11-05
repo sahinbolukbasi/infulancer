@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { audit } from "@infulancer/core/audit";
 import { requireRole, toAuditActor } from "@infulancer/core/access/actor";
@@ -269,7 +270,7 @@ export async function createAssignmentsBulk(input: {
  */
 export async function assignFromOfferAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN");
-  return attempt(async () => {
+  const res = await attempt(async () => {
     const offerId = str(fd, "offerId");
     const campaignId = str(fd, "campaignId");
     const commissionPct = Number(str(fd, "commissionPct").replace(",", ".") || "0");
@@ -292,6 +293,8 @@ export async function assignFromOfferAction(_p: ActionState, fd: FormData): Prom
     await prisma.offer.update({ where: { id: offer.id }, data: { status: "KAMPANYAYA_EKLENDI", campaignId, assignmentId } });
     await audit.append({ actor: toAuditActor(actor), action: "OFFER_CONVERTED", entityType: "Offer", entityId: offer.id, data: { campaignId, assignmentId } });
     revalidateAll();
-    return { ok: true, message: "Kampanyaya eklendi; içerik planlamaya geçebilirsiniz." };
+    return { ok: true, message: "Kampanyaya eklendi.", data: { campaignId } };
   });
+  if (res.ok) redirect(`/admin/teklifler?durum=KAMPANYAYA_EKLENDI&sonuc=eklendi&kampanya=${res.data?.campaignId ?? ""}`);
+  return res;
 }
