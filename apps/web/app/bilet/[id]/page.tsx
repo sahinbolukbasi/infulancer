@@ -4,7 +4,7 @@ import { prisma } from "@infulancer/core/db";
 import { buildWalletLinks } from "@infulancer/core/wallet/passes";
 import { mapLinks } from "@infulancer/core/wallet/maps";
 import { QrImage, WalletButtons } from "@/components/wallet/pass-card";
-import { mediaSrc } from "@/components/ui/image-upload";
+import { mediaSrc } from "@/lib/media";
 import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Etkinlik bileti" };

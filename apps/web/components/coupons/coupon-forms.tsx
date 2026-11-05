@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ActionForm } from "@/components/forms/action-form";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { InfluencerPicker, type PickItem } from "@/components/ui/influencer-picker";
 import { createCouponAction, setCouponStatusAction, grantCouponAction } from "@/lib/actions/coupons";
 
 /** Kupon / hediye çeki oluşturma formu (logo, görsel, kod, değer, geçerlilik, koşullar). */
@@ -74,15 +75,16 @@ export function CouponStatusButton({ id, to, label, variant = "secondary" }: { i
   );
 }
 
-/** Kuponu influencer'lara gönder: id listesi veya tümü. */
-export function GrantForm({ couponId }: { couponId: string }) {
+/** Kuponu kayıtlı influencer'lara gönder: listeden seç veya tümü. */
+export function GrantForm({ couponId, influencers }: { couponId: string; influencers: PickItem[] }) {
   return (
     <ActionForm action={grantCouponAction} submitLabel="Gönder" resetOnSuccess aria-label="Kupon gönder">
       <input type="hidden" name="couponId" value={couponId} />
-      <Field label="Influencer ID'leri (her satıra bir tane)">{(p) => <Textarea {...p} name="influencerIds" rows={2} placeholder="cmxxxx...&#10;cmyyyy..." />}</Field>
+      <span className="text-label text-fg-muted">İçerik üreticisi seç</span>
+      <InfluencerPicker items={influencers} allLabel="Tümünü seç" />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="all" value="true" className="h-4 w-4 accent-[var(--color-fg)]" />
-        Tüm aktif içerik üreticilerine gönder
+        Veya tüm aktif içerik üreticilerine gönder
       </label>
     </ActionForm>
   );

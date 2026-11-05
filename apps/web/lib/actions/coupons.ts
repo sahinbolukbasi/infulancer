@@ -6,7 +6,7 @@ import { toAuditActor } from "@infulancer/core/access/actor";
 import { createCoupon, grantCouponMany, setCouponStatus } from "@infulancer/core/coupons/service";
 import { DomainError } from "@infulancer/core/domain/errors";
 import type { ActionState } from "@/lib/action-state";
-import { attempt, lines, optStr, parseInput, revalidateAll, str, tlToKurus } from "@/lib/action-utils";
+import { attempt, optStr, parseInput, revalidateAll, str, tlToKurus } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
 import { AGENCY_TZ, isDay, zonedToUtc } from "@/lib/time";
 
@@ -92,7 +92,7 @@ export async function grantCouponAction(_p: ActionState, fd: FormData): Promise<
     const couponId = str(fd, "couponId");
     const tenantId = actor.role === "BRAND" ? actor.brandId! : (await prisma.coupon.findUnique({ where: { id: couponId }, select: { tenantId: true } }))?.tenantId;
     if (!tenantId) throw new DomainError("BULUNAMADI", "Kupon bulunamadı.");
-    let ids = lines(str(fd, "influencerIds")).concat(fd.getAll("influencerId").map(String)).filter(Boolean);
+    let ids = fd.getAll("influencerId").map(String).filter(Boolean);
     if (str(fd, "all") === "true") {
       ids = (await prisma.influencer.findMany({ where: { user: { status: "ACTIVE" } }, select: { id: true } })).map((x) => x.id);
     }

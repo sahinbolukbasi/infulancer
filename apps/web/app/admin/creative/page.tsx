@@ -9,6 +9,7 @@ import { UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
 import { DocLink } from "@/components/docs/doc-components";
 import { CreativeStudio } from "@/components/creative/creative-studio";
+import { PostBriefStudio } from "@/components/creative/post-brief-studio";
 import { getLandingContent, toVideos } from "@/lib/landing-store";
 import { TopUpForm } from "@/components/forms/operations-forms";
 import { getConfig } from "@infulancer/core/config/store";
@@ -57,6 +58,7 @@ export default async function AdminCreativePage() {
       ) : (
         <p className="text-sm text-fg-passive">Kullanılabilir model yok.</p>
       )}
+      <PostBriefStudio assets={assets.map((a) => ({ id: a.id, label: `${brandName.get(a.tenantId) ?? "Marka"} · ${a.modelKey}` }))} />
       <details className="rounded-3xl border border-line px-5 py-4">
         <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">Kredi, model kaydı ve ayrıntılar</summary>
         <div className="mt-4 flex flex-col gap-6">

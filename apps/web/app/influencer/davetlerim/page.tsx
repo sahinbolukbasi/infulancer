@@ -12,15 +12,18 @@ import { fmtDateTime, fmtDate } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Davetlerim" };
 export const dynamic = "force-dynamic";
-const inviteTr: Record<string, string> = { DAVET_EDILDI: "Yanıt bekliyor", KATILIM_TALEBI: "Talebiniz iletildi", KABUL: "Katılıyorsunuz", RED: "Reddettiniz", IPTAL: "İptal" };
+const inviteTr: Record<string, string> = { DAVET_EDILDI: "Yanıt bekliyor", KATILIM_TALEBI: "Talebiniz iletildi", KABUL: "Katılıyorum", RED: "Katılmıyorum", IPTAL: "İptal" };
 
 export default async function InfluencerInvitesPage() {
   const actor = await requireActor("INFLUENCER");
   const id = actor.influencerId!;
   const [invites, grants] = await Promise.all([
-    prisma.eventInvite.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, include: { event: { select: { id: true, title: true, startsAt: true, city: true } }, ticket: true } }),
+    prisma.eventInvite.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, include: { event: { select: { id: true, title: true, startsAt: true, endsAt: true, city: true, tenantId: true } }, ticket: true } }),
     prisma.couponGrant.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, include: { coupon: { select: { title: true, kind: true, valueType: true, value: true, validUntil: true } } } }),
   ]);
+  const orgNames = new Map(
+    (await prisma.brand.findMany({ where: { id: { in: invites.map((i) => i.event.tenantId).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((b) => [b.id, b.name]),
+  );
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Davetlerim" description="Etkinlik davetleriniz, biletleriniz ve markalardan gelen kupon/hediye çekleriniz." />
@@ -40,7 +43,7 @@ export default async function InfluencerInvitesPage() {
                       <Card interactive={false} className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex flex-col">
                           <CardTitle>{inv.event.title}</CardTitle>
-                          <span className="text-[13px] text-fg-muted">{fmtDateTime(inv.event.startsAt)}{inv.event.city ? ` · ${inv.event.city}` : ""} · {inviteTr[inv.status]}</span>
+                          <span className="text-[13px] text-fg-muted">{inv.event.tenantId ? `${orgNames.get(inv.event.tenantId) ?? "Marka"} · ` : "Ajans · "}{fmtDateTime(inv.event.startsAt)}{inv.event.endsAt ? ` – ${fmtDateTime(inv.event.endsAt)}` : ""}{inv.event.city ? ` · ${inv.event.city}` : ""} · {inviteTr[inv.status]}</span>
                         </div>
                         {inv.ticket ? (
                           <Link href={`/bilet/${inv.ticket.id}`} className="text-[13px] text-neon-pink hover:underline">Biletim →</Link>

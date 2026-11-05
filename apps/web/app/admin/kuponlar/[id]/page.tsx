@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { couponValueLabel } from "@infulancer/core/coupons/service";
 import { CouponStatusButton, GrantForm } from "@/components/coupons/coupon-forms";
-import { mediaSrc } from "@/components/ui/image-upload";
+import { mediaSrc } from "@/lib/media";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
@@ -22,6 +22,7 @@ export default async function AdminCouponDetailPage({ params }: { params: Promis
   const { id } = await params;
   const c = await prisma.coupon.findUnique({ where: { id }, include: { grants: { orderBy: { createdAt: "desc" } } } });
   if (!c) notFound();
+  const influencers = await prisma.influencer.findMany({ where: { user: { status: "ACTIVE" } }, orderBy: { name: "asc" }, select: { id: true, name: true, category: true } });
   const names = new Map(
     (await prisma.influencer.findMany({ where: { id: { in: c.grants.map((g) => g.influencerId).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((x) => [x.id, x.name]),
   );
@@ -50,7 +51,7 @@ export default async function AdminCouponDetailPage({ params }: { params: Promis
 
       <Card interactive={false} className="flex flex-col gap-3">
         <CardTitle>Influencer&apos;lara gönder</CardTitle>
-        {c.status !== "YAYINDA" ? <p className="text-[13px] text-neon-amber">Göndermek için önce yayına alın.</p> : <GrantForm couponId={c.id} />}
+        {c.status !== "YAYINDA" ? <p className="text-[13px] text-neon-amber">Göndermek için önce yayına alın.</p> : <GrantForm couponId={c.id} influencers={influencers} />}
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-3">

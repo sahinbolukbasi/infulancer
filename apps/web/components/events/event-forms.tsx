@@ -2,9 +2,11 @@
 import { ActionForm } from "@/components/forms/action-form";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { MapPicker } from "@/components/ui/map-picker";
+import { InfluencerPicker, type PickItem } from "@/components/ui/influencer-picker";
 import { createEventAction, setEventStatusAction, inviteEventAction, respondInviteAction, checkInAction } from "@/lib/actions/events";
 
-/** Etkinlik oluşturma formu. */
+/** Etkinlik oluşturma formu: harita seçici + başlangıç/bitiş tarihi + kapak. */
 export function EventForm({ isAdmin, brands, defaultTenantId }: { isAdmin: boolean; brands?: { id: string; name: string }[]; defaultTenantId?: string }) {
   return (
     <ActionForm action={createEventAction} submitLabel="Etkinlik oluştur" aria-label="Etkinlik oluştur">
@@ -14,9 +16,7 @@ export function EventForm({ isAdmin, brands, defaultTenantId }: { isAdmin: boole
             <Select {...p} name="tenantId" defaultValue={defaultTenantId ?? ""}>
               <option value="">Ajans etkinliği</option>
               {brands.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
+                <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </Select>
           )}
@@ -30,23 +30,28 @@ export function EventForm({ isAdmin, brands, defaultTenantId }: { isAdmin: boole
         <Field label="Şehir">{(p) => <Input {...p} name="city" placeholder="İstanbul" />}</Field>
       </div>
       <Field label="Adres">{(p) => <Input {...p} name="address" placeholder="Açık adres" />}</Field>
+      <MapPicker />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label="Enlem (lat, opsiyonel)" hint="Haritada göstermek için. Örn. 41.0082">{(p) => <Input {...p} name="latitude" inputMode="decimal" placeholder="41.0082" />}</Field>
-        <Field label="Boylam (lng, opsiyonel)">{(p) => <Input {...p} name="longitude" inputMode="decimal" placeholder="28.9784" />}</Field>
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Başlangıç tarihi">{(p) => <Input {...p} name="startsAtDay" type="date" required />}</Field>
+          <Field label="Başlangıç saati">{(p) => <Input {...p} name="startsAtTime" type="time" defaultValue="19:00" />}</Field>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Bitiş tarihi (ops.)">{(p) => <Input {...p} name="endsAtDay" type="date" />}</Field>
+          <Field label="Bitiş saati (ops.)">{(p) => <Input {...p} name="endsAtTime" type="time" defaultValue="23:00" />}</Field>
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Field label="Tarih">{(p) => <Input {...p} name="startsAtDay" type="date" required />}</Field>
-        <Field label="Saat">{(p) => <Input {...p} name="startsAtTime" type="time" defaultValue="19:00" />}</Field>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Kapasite (opsiyonel)">{(p) => <Input {...p} name="capacity" type="number" min={1} placeholder="100" />}</Field>
+        <Field label="Görünürlük">
+          {(p) => (
+            <Select {...p} name="visibility" defaultValue="KAPALI">
+              <option value="KAPALI">Kapalı (yalnız davetliler)</option>
+              <option value="HERKESE_ACIK">Herkese açık (katılım talebi alınabilir)</option>
+            </Select>
+          )}
+        </Field>
       </div>
-      <Field label="Görünürlük">
-        {(p) => (
-          <Select {...p} name="visibility" defaultValue="KAPALI">
-            <option value="KAPALI">Kapalı (yalnız davetliler)</option>
-            <option value="HERKESE_ACIK">Herkese açık (katılım talebi alınabilir)</option>
-          </Select>
-        )}
-      </Field>
     </ActionForm>
   );
 }
@@ -56,22 +61,19 @@ export function EventStatusButton({ id, to, label, variant = "secondary" }: { id
     <ActionForm action={setEventStatusAction} aria-label={label} className="!flex-row">
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="to" value={to} />
-      <Button type="submit" size="sm" variant={variant}>
-        {label}
-      </Button>
+      <Button type="submit" size="sm" variant={variant}>{label}</Button>
     </ActionForm>
   );
 }
 
-/** Davet formu: influencer id'leri (satır satır) veya tek misafir adı. */
-export function InviteForm({ eventId }: { eventId: string }) {
+/** Davet formu: kayıtlı influencer'lardan çoklu seçim veya tek misafir adı. */
+export function InviteForm({ eventId, influencers }: { eventId: string; influencers: PickItem[] }) {
   return (
     <ActionForm action={inviteEventAction} submitLabel="Davet gönder" resetOnSuccess aria-label="Etkinlik daveti">
       <input type="hidden" name="eventId" value={eventId} />
-      <Field label="Influencer ID'leri (her satıra bir tane)" hint="Influencer bul sayfasındaki kişilerin ID'si; birden çok satır girebilirsiniz.">
-        {(p) => <Textarea {...p} name="influencerIds" rows={2} placeholder="cmxxxx...&#10;cmyyyy..." />}
-      </Field>
-      <Field label="…veya misafir adı (sisteme kayıtsız davetli için)">{(p) => <Input {...p} name="guestName" placeholder="Ad Soyad" />}</Field>
+      <span className="text-label text-fg-muted">İçerik üreticisi seç</span>
+      <InfluencerPicker items={influencers} allLabel="Tümünü davet et" />
+      <Field label="…veya sisteme kayıtsız misafir adı">{(p) => <Input {...p} name="guestName" placeholder="Ad Soyad" />}</Field>
     </ActionForm>
   );
 }
@@ -83,16 +85,12 @@ export function InviteResponse({ inviteId }: { inviteId: string }) {
         <input type="hidden" name="inviteId" value={inviteId} />
         <input type="hidden" name="accept" value="true" />
         <Input name="holderName" placeholder="Bilet üzerindeki ad (opsiyonel)" className="h-8 text-[12px]" />
-        <Button type="submit" size="sm" variant="primary">
-          Kabul et
-        </Button>
+        <Button type="submit" size="sm" variant="primary">Kabul et</Button>
       </ActionForm>
       <ActionForm action={respondInviteAction} aria-label="Daveti reddet" className="!flex-row">
         <input type="hidden" name="inviteId" value={inviteId} />
         <input type="hidden" name="accept" value="false" />
-        <Button type="submit" size="sm" variant="ghost">
-          Reddet
-        </Button>
+        <Button type="submit" size="sm" variant="ghost">Reddet</Button>
       </ActionForm>
     </div>
   );

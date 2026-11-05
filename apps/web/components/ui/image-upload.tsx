@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { mediaSrc } from "@/lib/media";
 
 /**
  * Tek görsel yükleyici: seç → /api/media'ya presign ile yükle → gizli input'a key yaz.
@@ -8,7 +9,7 @@ import { useRef, useState } from "react";
 export function ImageUpload({ name, label, defaultKey }: { name: string; label: string; defaultKey?: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [key, setKey] = useState<string | null>(defaultKey ?? null);
-  const [preview, setPreview] = useState<string | null>(defaultKey ? `/api/media/${defaultKey.replace(/^media\//, "")}` : null);
+  const [preview, setPreview] = useState<string | null>(mediaSrc(defaultKey));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -69,7 +70,3 @@ export function ImageUpload({ name, label, defaultKey }: { name: string; label: 
   );
 }
 
-/** Verilen media key'inden görüntüleme URL'i. */
-export function mediaSrc(key: string | null | undefined): string | null {
-  return key ? `/api/media/${key.replace(/^media\//, "")}` : null;
-}

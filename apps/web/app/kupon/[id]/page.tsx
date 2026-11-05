@@ -4,7 +4,7 @@ import { prisma } from "@infulancer/core/db";
 import { couponValueLabel } from "@infulancer/core/coupons/service";
 import { buildWalletLinks } from "@infulancer/core/wallet/passes";
 import { QrImage, WalletButtons } from "@/components/wallet/pass-card";
-import { mediaSrc } from "@/components/ui/image-upload";
+import { mediaSrc } from "@/lib/media";
 import { fmtDate } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Kupon" };

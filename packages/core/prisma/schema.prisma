@@ -1658,3 +1658,60 @@ model CouponGrant {
   @@index([influencerId])
   @@map("coupon_grants")
 }
+
+// ============================================================================
+// Kampanya başvuru sistemi (açık çağrı): marka çağrı açar, influencer başvurur.
+// "Özel teklif" akışı mevcut Offer modeliyle sürer; bu, kitlesel başvuru içindir.
+// ============================================================================
+
+enum OpenCallStatus {
+  TASLAK
+  ACIK
+  KAPALI
+}
+
+enum CampaignApplicationStatus {
+  BASVURULDU
+  INCELENIYOR
+  KABUL
+  RED
+}
+
+/// Marka tarafından açılan kampanya başvuru çağrısı. Influencer'lar başvurur.
+model CampaignOpenCall {
+  id             String         @id @default(cuid())
+  tenantId       String         @map("tenant_id")
+  title          String
+  description    String
+  coverImageKey  String?        @map("cover_image_key")
+  category       String?
+  budgetMinKurus BigInt?        @map("budget_min_kurus")
+  budgetMaxKurus BigInt?        @map("budget_max_kurus")
+  platforms      String[]
+  deadline       DateTime?
+  status         OpenCallStatus @default(TASLAK)
+  createdByUserId String?       @map("created_by_user_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  applications CampaignApplication[]
+  @@index([tenantId, status])
+  @@index([status])
+  @@map("campaign_open_calls")
+}
+
+/// Bir influencer'ın bir açık çağrıya başvurusu.
+model CampaignApplication {
+  id           String                    @id @default(cuid())
+  openCallId   String                    @map("open_call_id")
+  openCall     CampaignOpenCall          @relation(fields: [openCallId], references: [id], onDelete: Cascade)
+  influencerId String                    @map("influencer_id")
+  pitch        String
+  quotedKurus  BigInt?                   @map("quoted_kurus")
+  status       CampaignApplicationStatus @default(BASVURULDU)
+  reviewNote   String?                   @map("review_note")
+  createdAt    DateTime                  @default(now()) @map("created_at")
+  updatedAt    DateTime                  @updatedAt @map("updated_at")
+  @@unique([openCallId, influencerId])
+  @@index([influencerId, status])
+  @@map("campaign_applications")
+}

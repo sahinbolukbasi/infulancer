@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { mapLinks } from "@infulancer/core/wallet/maps";
 import { CheckInForm, EventStatusButton, InviteForm, InviteResponse } from "@/components/events/event-forms";
-import { mediaSrc } from "@/components/ui/image-upload";
+import { mediaSrc } from "@/lib/media";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
@@ -28,6 +28,9 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
     },
   });
   if (!e) notFound();
+  const influencers = (await prisma.influencer.findMany({ where: { user: { status: "ACTIVE" } }, orderBy: { name: "asc" }, select: { id: true, name: true, category: true } }));
+  const organizer = e.tenantId ? await prisma.brand.findUnique({ where: { id: e.tenantId }, select: { name: true } }) : null;
+  const creator = e.createdByUserId ? await prisma.user.findUnique({ where: { id: e.createdByUserId }, select: { name: true } }) : null;
   const influencerNames = new Map(
     (await prisma.influencer.findMany({ where: { id: { in: e.invites.map((i) => i.influencerId).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((x) => [x.id, x.name]),
   );
@@ -64,11 +67,16 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
           </div>
         ) : null}
       </Card>
+      <Card interactive={false} className="flex flex-col gap-1">
+        <CardTitle>Düzenleyen</CardTitle>
+        <p className="text-sm text-fg-muted">{organizer?.name ?? "Ajans"}{creator ? ` · ${creator.name}` : ""}</p>
+        <p className="text-[12px] text-fg-passive">{e.endsAt ? `${fmtDateTime(e.startsAt)} – ${fmtDateTime(e.endsAt)}` : fmtDateTime(e.startsAt)}</p>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card interactive={false} className="flex flex-col gap-3">
           <CardTitle>Davet gönder</CardTitle>
-          <InviteForm eventId={e.id} />
+          <InviteForm eventId={e.id} influencers={influencers} />
         </Card>
         <Card interactive={false} className="flex flex-col gap-3">
           <CardTitle>Kapıda giriş (QR)</CardTitle>

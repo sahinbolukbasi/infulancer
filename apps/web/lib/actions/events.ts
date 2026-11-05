@@ -6,7 +6,7 @@ import { toAuditActor } from "@infulancer/core/access/actor";
 import { createEvent, inviteManyToEvent, inviteToEvent, respondInvite, setEventStatus } from "@infulancer/core/events/service";
 import { DomainError } from "@infulancer/core/domain/errors";
 import type { ActionState } from "@/lib/action-state";
-import { attempt, bool, lines, optStr, parseInput, revalidateAll, str } from "@/lib/action-utils";
+import { attempt, bool, optStr, parseInput, revalidateAll, str } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
 import { AGENCY_TZ, isDay } from "@/lib/time";
 import { zonedToUtc } from "@/lib/time";
@@ -25,6 +25,8 @@ const createSchema = z.object({
   longitude: z.number().min(-180).max(180).nullable(),
   startsAtDay: z.string().refine(isDay, { error: "Geçerli bir başlangıç tarihi girin." }),
   startsAtTime: z.string(),
+  endsAtDay: z.string().optional(),
+  endsAtTime: z.string().optional(),
   visibility: z.enum(["HERKESE_ACIK", "KAPALI"]),
   capacity: z.number().int().positive().nullable(),
   coverImageKey: z.string().optional(),
@@ -47,6 +49,8 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
       longitude: lngRaw ? Number(lngRaw.replace(",", ".")) : null,
       startsAtDay: str(fd, "startsAtDay"),
       startsAtTime: str(fd, "startsAtTime") || "19:00",
+      endsAtDay: str(fd, "endsAtDay") || undefined,
+      endsAtTime: str(fd, "endsAtTime") || undefined,
       visibility: str(fd, "visibility"),
       capacity: capRaw ? Number(capRaw) : null,
       coverImageKey: str(fd, "coverImageKey") || undefined,
@@ -62,6 +66,7 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
       latitude: input.latitude,
       longitude: input.longitude,
       startsAt: dayToUtc(input.startsAtDay, input.startsAtTime),
+      endsAt: input.endsAtDay && isDay(input.endsAtDay) ? dayToUtc(input.endsAtDay, input.endsAtTime || "23:59") : null,
       visibility: input.visibility,
       capacity: input.capacity,
       coverImageKey: input.coverImageKey,
@@ -93,7 +98,7 @@ export async function inviteEventAction(_p: ActionState, fd: FormData): Promise<
   const actor = await requireActor("ADMIN", "BRAND");
   return attempt(async () => {
     const eventId = str(fd, "eventId");
-    const ids = lines(str(fd, "influencerIds")).concat(fd.getAll("influencerId").map(String)).filter(Boolean);
+    const ids = fd.getAll("influencerId").map(String).filter(Boolean);
     const guestName = str(fd, "guestName");
     const ev = await prisma.event.findUnique({ where: { id: eventId }, select: { tenantId: true } });
     if (!ev) throw new DomainError("BULUNAMADI", "Etkinlik bulunamadı.");

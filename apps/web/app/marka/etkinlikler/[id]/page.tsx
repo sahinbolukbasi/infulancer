@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { mapLinks } from "@infulancer/core/wallet/maps";
 import { CheckInForm, EventStatusButton, InviteForm, InviteResponse } from "@/components/events/event-forms";
-import { mediaSrc } from "@/components/ui/image-upload";
+import { mediaSrc } from "@/lib/media";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
@@ -21,6 +21,8 @@ export default async function BrandEventDetailPage({ params }: { params: Promise
   const { id } = await params;
   const e = await prisma.event.findUnique({ where: { id }, include: { invites: { orderBy: { createdAt: "desc" }, include: { ticket: true } }, tickets: { orderBy: { createdAt: "desc" } } } });
   if (!e || e.tenantId !== actor.brandId) notFound();
+  const influencers = await prisma.influencer.findMany({ where: { user: { status: "ACTIVE" } }, orderBy: { name: "asc" }, select: { id: true, name: true, category: true } });
+  const organizer = await prisma.brand.findUnique({ where: { id: actor.brandId! }, select: { name: true } });
   const names = new Map((await prisma.influencer.findMany({ where: { id: { in: e.invites.map((i) => i.influencerId).filter((x): x is string => !!x) } }, select: { id: true, name: true } })).map((x) => [x.id, x.name]));
   const map = mapLinks({ latitude: e.latitude, longitude: e.longitude, address: e.address, venueName: e.venueName });
   const cover = mediaSrc(e.coverImageKey);
@@ -49,8 +51,13 @@ export default async function BrandEventDetailPage({ params }: { params: Promise
           </div>
         ) : null}
       </Card>
+      <Card interactive={false} className="flex flex-col gap-1">
+        <CardTitle>Düzenleyen</CardTitle>
+        <p className="text-sm text-fg-muted">{organizer?.name ?? "Marka"}</p>
+        <p className="text-[12px] text-fg-passive">{e.endsAt ? `${fmtDateTime(e.startsAt)} – ${fmtDateTime(e.endsAt)}` : fmtDateTime(e.startsAt)}</p>
+      </Card>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card interactive={false} className="flex flex-col gap-3"><CardTitle>Davet gönder</CardTitle><InviteForm eventId={e.id} /></Card>
+        <Card interactive={false} className="flex flex-col gap-3"><CardTitle>Davet gönder</CardTitle><InviteForm eventId={e.id} influencers={influencers} /></Card>
         <Card interactive={false} className="flex flex-col gap-3"><CardTitle>Kapıda giriş (QR)</CardTitle><CheckInForm /></Card>
       </div>
       <Card interactive={false} className="flex flex-col gap-3">

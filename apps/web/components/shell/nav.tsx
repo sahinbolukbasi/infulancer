@@ -53,6 +53,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   BRAND: [
     { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
     { href: "/marka/kesfet", label: "Influencer bul", icon: UsersIcon },
+    { href: "/marka/basvurular", label: "Başvurular", icon: UsersIcon },
     { href: "/marka/teklifler", label: "Teklifler", icon: WalletIcon },
     { href: "/marka/reklam", label: "Reklam", icon: MegaphoneIcon },
     { href: "/marka/etkinlikler", label: "Etkinlikler", icon: CalendarIcon },
@@ -66,6 +67,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
     { href: "/influencer/teklifler", label: "Teklifler", icon: MegaphoneIcon },
     { href: "/influencer/davetlerim", label: "Davetlerim", icon: CalendarIcon },
+    { href: "/influencer/basvurular", label: "Açık çağrılar", icon: UsersIcon },
     { href: "/influencer/odemeler", label: "Ödemeler", icon: WalletIcon },
     { href: "/profil", label: "Profilim", icon: UserIcon },
     { href: "/docs", label: "Rehber", icon: FileIcon },
