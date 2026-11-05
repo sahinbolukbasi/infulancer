@@ -39,17 +39,31 @@ export function CopilotLauncher() {
     btnRef.current?.focus();
   }, []);
 
+  // İlk ziyarette çekmece kendiliğinden açılmaz (içeriğin üstünü kapatıyordu); düğmenin yanında bir kez ipucu gösterilir.
+  const [hint, setHint] = useState(false);
+  const dismissHint = useCallback(() => {
+    setHint(false);
+    try {
+      localStorage.setItem(INTRO_KEY, "1");
+    } catch {
+      /* depolama kapalı */
+    }
+  }, []);
   useEffect(() => {
     if (HOMES.has(pathname)) return;
     try {
       if (localStorage.getItem(INTRO_KEY)) return;
-      localStorage.setItem(INTRO_KEY, "1");
     } catch {
       return;
     }
-    const t = setTimeout(show, 900);
-    return () => clearTimeout(t);
-  }, [pathname, show]);
+    const on = setTimeout(() => setHint(true), 900);
+    const off = setTimeout(() => dismissHint(), 9000);
+    return () => {
+      clearTimeout(on);
+      clearTimeout(off);
+    };
+  }, [pathname, dismissHint]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && hide();
@@ -63,7 +77,11 @@ export function CopilotLauncher() {
       <button
         ref={btnRef}
         type="button"
-        onClick={() => (open ? hide() : show())}
+        onClick={() => {
+          dismissHint();
+          if (open) hide();
+          else show();
+        }}
         aria-expanded={open}
         aria-controls="copilot-drawer"
         aria-label={open ? "Asistanı kapat" : "Asistanı aç"}
@@ -78,6 +96,14 @@ export function CopilotLauncher() {
         </span>
         <span className="hidden sm:inline">Asistan</span>
       </button>
+      {hint && !open ? (
+        <div role="status" className="fixed right-4 bottom-36 z-40 flex max-w-[260px] items-start gap-2 rounded-2xl border border-line bg-bg/95 px-3 py-2 text-[13px] shadow-none backdrop-blur animate-enter md:right-6 md:bottom-24">
+          <span>Takıldığınız yerde Asistan&apos;a sorun: “yeni kampanya başlat”, “ödemem ne zaman”…</span>
+          <button type="button" onClick={dismissHint} aria-label="İpucunu kapat" className="text-fg-passive hover:text-fg">
+            ×
+          </button>
+        </div>
+      ) : null}
       <div
         id="copilot-drawer"
         ref={panelRef}
