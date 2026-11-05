@@ -106,7 +106,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
               score: { display: score == null ? "—" : pct.format(score), sort: score },
               dates: { display: `${fmtDate(c.startsAt)} – ${fmtDate(c.endsAt)}`, sort: c.startsAt.getTime() },
               influencers: { display: c._count.assignments, sort: c._count.assignments },
-              budget: { display: formatKurus(c.budgetKurus), sort: c.budgetKurus },
+              budget: { display: formatKurus(Number(c.budgetKurus)), sort: Number(c.budgetKurus) },
               progress: {
                 display: (
                   <span className="inline-flex items-center gap-2">

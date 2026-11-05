@@ -1,27 +1,33 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { audit } from "@infulancer/core/audit";
-import { prisma } from "@infulancer/core/db";
-import { campaignStatusLabels, formatKurus, roleLabels, taxStatusLabels } from "@infulancer/core/domain/labels";
-import { computeBalances, minPayoutKurus } from "@infulancer/core/domain/ledger";
-import { PayoutRequestButton } from "@/components/finance/payout-forms";
+import { prisma, type ContentType, type Platform } from "@infulancer/core/db";
+import { campaignStatusLabels, contentTypeLabels, formatKurus, platformLabels, roleLabels, taxStatusLabels } from "@infulancer/core/domain/labels";
+import { platformRules } from "@infulancer/core/domain/platform-rules";
+import { computeBalances } from "@infulancer/core/domain/ledger";
+import { syncSourceLabels } from "@infulancer/core/social/sync";
 import { WorkHistory } from "@/components/history/work-history";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { PasswordForm, ProfileForm } from "@/components/profile/profile-forms";
+import { OwnAccountForm, SyncOwnButton } from "@/components/forms/own-account-forms";
+import { RateCardForm, type RateRow } from "@/components/offers/offer-forms";
+import { CreatorShowcase } from "@/components/showcase/creator-showcase";
+import { AddPortfolioForm, PortfolioList, ShowcaseSettingsForm } from "@/components/showcase/showcase-forms";
+import { PlatformIcon } from "@/components/platform-icon";
 import { Avatar, pickAvatar } from "@/components/ui/avatar";
 import { Card, CardTitle } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
+import { InfoNote } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
-import { maskIban } from "@/lib/format";
+import { compact, pct1 } from "@/lib/format";
 import { itemsSummary, statusLabel, statusTone } from "@/lib/offers-view";
 import { campaignTone } from "@/lib/status-tone";
 import { fmtDate, fmtDateTime } from "@/lib/time";
 export const metadata: Metadata = { title: "Profilim" };
 export const dynamic = "force-dynamic";
-
 const ACTION_TR: Record<string, string> = {
   PROFILE_UPDATED: "Profil güncellendi",
   PASSWORD_CHANGED: "Şifre değiştirildi",
@@ -46,30 +52,149 @@ const ACTION_TR: Record<string, string> = {
   REVIEW_SUBMITTED: "İçerik incelendi",
 };
 const humanize = (a: string) => ACTION_TR[a] ?? a.toLocaleLowerCase("tr").replace(/_/g, " ").replace(/^./, (c) => c.toLocaleUpperCase("tr"));
-
-/** Tüm roller için profil: bilgiler, güvenlik, yaptığım işlemler; role göre ödeme / iş birliği / teklif sekmeleri. */
+/**
+ * Tüm roller için tek profil sayfası. İçerik üreticisinde Bilgiler + Vitrin + Hesaplar +
+ * Fiyat listesi + Para çekme + İş birlikleri + İşlemler hepsi buradadır (ayrı sayfalar yok).
+ */
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
   const actor = await requireActor();
   const { sekme } = await searchParams;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: actor.userId }, select: { name: true, email: true, phone: true, role: true, createdAt: true, avatarKey: true, brand: { select: { name: true } } } });
   const activity = await audit.listByActor(actor.userId, 60).catch(() => []);
   const tabs: { id: string; label: string; content: React.ReactNode }[] = [];
-
   let avatar: string | null = user.avatarKey ? `/api/avatar/${user.avatarKey.replace(/^avatars\//, "")}` : null;
   let headline = roleLabels[user.role];
   if (actor.role === "INFLUENCER" && actor.influencerId) {
     const id = actor.influencerId;
     const now = new Date();
-    const [inf, balances, offers] = await Promise.all([
-      prisma.influencer.findUniqueOrThrow({ where: { id }, select: { iban: true, ibanHolder: true, taxStatus: true, city: true, avatarKey: true, socialAccounts: { select: { platform: true, avatarUrl: true } } } }),
+    const [inf, balances, offers, accounts, cards, portfolio, published] = await Promise.all([
+      prisma.influencer.findUniqueOrThrow({ where: { id }, select: { iban: true, ibanHolder: true, taxStatus: true, city: true, avatarKey: true, headline: true, bio: true, showcaseVisible: true, showPrices: true, showCollaborations: true, socialAccounts: { select: { platform: true, avatarUrl: true } } } }),
       computeBalances(id, now),
       prisma.offer.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, take: 30 }),
+      prisma.socialAccount.findMany({ where: { influencerId: id }, orderBy: { platform: "asc" } }),
+      prisma.rateCard.findMany({ where: { influencerId: id, active: true } }),
+      prisma.portfolioItem.findMany({ where: { influencerId: id }, orderBy: [{ sort: "asc" }, { createdAt: "desc" }] }),
+      prisma.deliverable.findMany({
+        where: { assignment: { influencerId: id }, postUrl: { not: null } },
+        orderBy: { publishedAt: "desc" },
+        take: 50,
+        select: { id: true, platform: true, contentType: true, publishedAt: true, assignment: { select: { campaign: { select: { brand: { select: { name: true } } } } } } },
+      }),
     ]);
     avatar = pickAvatar(inf.socialAccounts, inf.avatarKey);
     headline = `İçerik üreticisi${inf.city ? ` · ${inf.city}` : ""}`;
+    const tt = accounts.find((a) => a.platform === "TIKTOK");
+    const usedDeliverables = new Set(portfolio.map((i) => i.deliverableId).filter(Boolean));
+    const rateRows: RateRow[] = (Object.entries(platformRules) as [Platform, { contentTypes: readonly ContentType[] }][]).flatMap(([p, r]) =>
+      r.contentTypes.map((ct) => {
+        const c = cards.find((x) => x.platform === p && x.contentType === ct);
+        return { platform: p, platformLabel: platformLabels[p], contentType: ct, contentLabel: contentTypeLabels[ct], priceTl: c ? String(c.priceKurus / 100) : "" };
+      }),
+    );
+
+    // Vitrinim
+    tabs.push({
+      id: "vitrin",
+      label: "Vitrinim",
+      content: (
+        <div className="flex flex-col gap-4">
+          <InfoNote>{inf.showcaseVisible ? "Markalar profilinizi bu haliyle görür." : "Profiliniz şu an markalara gizli."}</InfoNote>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Card interactive={false} className="flex flex-col gap-4">
+              <CardTitle>Profil ve görünürlük</CardTitle>
+              <ShowcaseSettingsForm v={inf} />
+            </Card>
+            <Card interactive={false} className="flex flex-col gap-4">
+              <CardTitle>Öne çıkan işler ({portfolio.length}/24)</CardTitle>
+              <AddPortfolioForm published={published.filter((d) => !usedDeliverables.has(d.id)).map((d) => ({ id: d.id, label: `${d.assignment.campaign.brand.name} · ${platformLabels[d.platform]} ${contentTypeLabels[d.contentType]}${d.publishedAt ? ` · ${fmtDate(d.publishedAt)}` : ""}` }))} />
+              <PortfolioList items={portfolio.map((i) => ({ id: i.id, title: i.title, url: i.url, platformLabel: platformLabels[i.platform], brandName: i.brandName }))} />
+            </Card>
+          </div>
+          <details className="rounded-3xl border border-line px-5 py-4">
+            <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">Markaların gördüğü önizleme</summary>
+            <div className="mt-4">
+              <CreatorShowcase influencerId={id} />
+            </div>
+          </details>
+        </div>
+      ),
+    });
+
+    // Hesaplarım
+    tabs.push({
+      id: "hesaplar",
+      label: `Hesaplarım (${accounts.length})`,
+      content: (
+        <div className="flex flex-col gap-4">
+          <Card interactive={false} className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle>Hesap bağla</CardTitle>
+              {accounts.length ? <SyncOwnButton /> : null}
+            </div>
+            <p className="text-[13px] text-fg-muted">Kullanıcı adını ekle; takipçi ve profil fotoğrafın otomatik gelsin.</p>
+            <OwnAccountForm />
+          </Card>
+          {accounts.length ? (
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Sosyal medya hesapları">
+              {accounts.map((a) => (
+                <Card key={a.id} interactive={false} className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar name={a.handle} src={a.avatarUrl} size={40} />
+                    <span className="flex items-center gap-2">
+                      <PlatformIcon platform={a.platform} size={14} aria-hidden />
+                      <CardTitle>{platformLabels[a.platform]}</CardTitle>
+                    </span>
+                  </div>
+                  <p className="text-sm text-fg-muted">@{a.handle.replace(/^@/, "")}</p>
+                  <dl className="grid grid-cols-2 gap-2">
+                    <div>
+                      <dt className="text-label text-fg-muted">Takipçi</dt>
+                      <dd className="text-xl font-semibold tabular-nums">{compact.format(a.followers)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-label text-fg-muted">ER</dt>
+                      <dd className="text-xl font-semibold tabular-nums">{pct1.format(Number(a.engagementRate))}</dd>
+                    </div>
+                  </dl>
+                  <p className="text-[12px] text-fg-passive">
+                    {syncSourceLabels[a.syncSource] ?? a.syncSource}
+                    {a.lastSyncedAt ? ` · son güncelleme ${fmtDate(a.lastSyncedAt)}` : ""}
+                  </p>
+                  {a.syncError ? <span className="text-[12px] text-critical">{a.syncError}</span> : null}
+                </Card>
+              ))}
+            </section>
+          ) : (
+            <p className="text-sm text-fg-passive">Henüz hesap yok. Yukarıdan kullanıcı adını ekle.</p>
+          )}
+          <Card interactive={false} className="flex flex-col gap-3">
+            <CardTitle>TikTok hesabını bağla</CardTitle>
+            <p className="text-sm text-fg-muted">TikTok istatistikleri yalnız senin onayınla, TikTok&apos;un resmî giriş ekranı üzerinden alınır. Şifren bizimle paylaşılmaz.</p>
+            <ButtonLink href="/api/tiktok/oauth/start" variant={tt?.tokenRef ? "secondary" : "primary"} className="w-fit">
+              {tt?.tokenRef ? "Bağlantıyı yenile" : "TikTok ile bağlan"}
+            </ButtonLink>
+          </Card>
+        </div>
+      ),
+    });
+
+    // Fiyat listem
+    tabs.push({
+      id: "fiyat",
+      label: `Fiyat listem (${cards.length})`,
+      content: (
+        <Card interactive={false} className="flex flex-col gap-4">
+          <CardTitle>İçerik fiyatlarım</CardTitle>
+          <p className="text-[13px] text-fg-muted">Fiyatlarınız markalara yalnız vitrininizde &quot;fiyatları göster&quot; açıksa görünür. Teklifleri &quot;Teklifler&quot; sayfasından yanıtlarsınız.</p>
+          <RateCardForm rows={rateRows} />
+        </Card>
+      ),
+    });
+
+    // Bakiye özeti (detaylı çekim ve geçmiş "Ödemeler" sayfasında; burada yalnız özet + kısayol).
     tabs.push({
       id: "odeme",
-      label: "Para çekme",
+      label: "Bakiye",
       content: (
         <div className="flex flex-col gap-4">
           <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -85,13 +210,9 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               </div>
             ))}
           </dl>
-          <Card interactive={false} className="flex flex-col gap-3">
-            <CardTitle>Yeni çekim talebi</CardTitle>
-            <p className="text-[13px] text-fg-muted">
-              IBAN: {maskIban(inf.iban) || "tanımlı değil"} · {inf.ibanHolder || "—"}. IBAN değişikliği için ajansınıza yazın.
-            </p>
-            <PayoutRequestButton cekilebilirKurus={balances.cekilebilir} minKurus={minPayoutKurus()} maskedIban={maskIban(inf.iban)} holder={inf.ibanHolder} />
-          </Card>
+          <ButtonLink href="/influencer/odemeler" variant="primary" size="sm" className="w-fit">
+            Çekim talebi ve ödeme geçmişi →
+          </ButtonLink>
         </div>
       ),
     });
@@ -102,7 +223,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       content: (
         <div className="flex flex-col gap-3">
           <ButtonLink href="/influencer/teklifler" variant="secondary" size="sm" className="w-fit">
-            Teklifleri yanıtla / fiyat listem →
+            Teklifleri yanıtla →
           </ButtonLink>
           <OfferRows offers={offers} />
         </div>
@@ -126,7 +247,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                 {c.name}
               </Link>
               <span className="flex items-center gap-4 text-[13px] text-fg-muted tabular-nums">
-                {fmtDate(c.startsAt)} – {fmtDate(c.endsAt)} · {c._count.assignments} influencer · {formatKurus(c.brandTotalFeeKurus)}
+                {fmtDate(c.startsAt)} – {fmtDate(c.endsAt)} · {c._count.assignments} influencer · {formatKurus(Number(c.brandTotalFeeKurus))}
                 <StatusDot tone={campaignTone(c.status)}>{campaignStatusLabels[c.status]}</StatusDot>
               </span>
             </li>
@@ -194,7 +315,6 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       </div>
     ),
   });
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-4 rounded-3xl border border-line bg-glass p-5">
@@ -207,7 +327,6 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     </div>
   );
 }
-
 function OfferRows({ offers }: { offers: { id: string; title: string; totalKurus: number; status: string; createdAt: Date; items: unknown }[] }) {
   if (!offers.length) return <p className="text-sm text-fg-passive">Henüz teklif yok.</p>;
   return (

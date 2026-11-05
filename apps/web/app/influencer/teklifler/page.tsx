@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { prisma, type ContentType, type Platform } from "@infulancer/core/db";
-import { contentTypeLabels, formatKurus, platformLabels } from "@infulancer/core/domain/labels";
-import { platformRules } from "@infulancer/core/domain/platform-rules";
-import { RateCardForm, RespondOffer, type RateRow } from "@/components/offers/offer-forms";
-import { Card, CardTitle } from "@/components/ui/card";
+import { prisma } from "@infulancer/core/db";
+import { formatKurus } from "@infulancer/core/domain/labels";
+import { RespondOffer } from "@/components/offers/offer-forms";
+import { Card } from "@/components/ui/card";
+import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
@@ -17,21 +17,14 @@ export default async function InfluencerOffersPage({ searchParams }: { searchPar
   const actor = await requireActor("INFLUENCER");
   const { sekme, sonuc } = await searchParams;
   const id = actor.influencerId!;
-  const [offers, cards] = await Promise.all([
-    prisma.offer.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, take: 100 }),
-    prisma.rateCard.findMany({ where: { influencerId: id, active: true } }),
-  ]);
+  const offers = await prisma.offer.findMany({ where: { influencerId: id }, orderBy: { createdAt: "desc" }, take: 100 });
   const brands = new Map((await prisma.brand.findMany({ where: { id: { in: [...new Set(offers.map((o) => o.brandId))] } }, select: { id: true, name: true } })).map((b) => [b.id, b.name]));
   const pending = offers.filter((o) => o.status === "GONDERILDI" && o.expiresAt > new Date());
-  const rows: RateRow[] = (Object.entries(platformRules) as [Platform, { contentTypes: readonly ContentType[] }][]).flatMap(([p, r]) =>
-    r.contentTypes.map((ct) => {
-      const c = cards.find((x) => x.platform === p && x.contentType === ct);
-      return { platform: p, platformLabel: platformLabels[p], contentType: ct, contentLabel: contentTypeLabels[ct], priceTl: c ? String(c.priceKurus / 100) : "" };
-    }),
-  );
   const list = (items: typeof offers, actionable: boolean) =>
     items.length === 0 ? (
-      <p className="rounded-2xl border border-dashed border-line p-8 text-center text-sm text-fg-passive">{actionable ? "Yanıt bekleyen teklif yok. Fiyat listenizi doldurun; markalar sizi bulsun." : "Henüz teklif yok."}</p>
+      <p className="rounded-2xl border border-dashed border-line p-8 text-center text-sm text-fg-passive">
+        {actionable ? "Yanıt bekleyen teklif yok. Fiyat listenizi Profilim&apos;den doldurun; markalar sizi bulsun." : "Henüz teklif yok."}
+      </p>
     ) : (
       <ul className="flex flex-col gap-3">
         {items.map((o) => (
@@ -70,7 +63,15 @@ export default async function InfluencerOffersPage({ searchParams }: { searchPar
     );
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Teklifler" description={pending.length ? `${pending.length} teklif yanıtınızı bekliyor.` : "Fiyat listenizi güncel tutun, teklifleri buradan yanıtlayın."} />
+      <PageHeader
+        title="Teklifler"
+        description={pending.length ? `${pending.length} teklif yanıtınızı bekliyor.` : "Gelen teklifleri buradan yanıtlayın."}
+        actions={
+          <ButtonLink href="/profil?sekme=fiyat" variant="secondary" size="sm">
+            Fiyat listem →
+          </ButtonLink>
+        }
+      />
       {sonuc === "kabul" || sonuc === "red" ? (
         <p role="status" className={`rounded-2xl border px-4 py-3 text-sm ${sonuc === "kabul" ? "border-neon-lime/50 bg-neon-lime/10" : "border-line bg-glass"}`}>
           {sonuc === "kabul" ? "✓ Teklifi kabul ettiniz. Ajans kampanyaya ekleyince brief ve tarihler İşlerim'e düşecek." : "Teklifi reddettiniz; markaya notunuz iletildi."}
@@ -82,12 +83,6 @@ export default async function InfluencerOffersPage({ searchParams }: { searchPar
         defaultTab={sekme}
         tabs={[
           { id: "gelen", label: `Yanıt bekleyen (${pending.length})`, content: list(pending, true) },
-          { id: "fiyat", label: `Fiyat listem (${cards.length})`, content: (
-            <Card interactive={false} className="flex flex-col gap-4">
-              <CardTitle>İçerik fiyatlarım</CardTitle>
-              <RateCardForm rows={rows} />
-            </Card>
-          ) },
           { id: "gecmis", label: `Tüm teklifler (${offers.length})`, content: list(offers, false) },
         ]}
       />

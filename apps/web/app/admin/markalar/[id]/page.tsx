@@ -190,9 +190,9 @@ export default async function BrandProfilePage({
   ].sort((a, b) => b.at.getTime() - a.at.getTime());
   // ── Finans ──
   const billable = brand.campaigns.filter((c) => c.status !== "IPTAL" && c.status !== "TASLAK");
-  const collected = billable.filter((c) => c.brandPaymentReceivedAt).reduce((s, c) => s + c.brandTotalFeeKurus, 0);
+  const collected = billable.filter((c) => c.brandPaymentReceivedAt).reduce((s, c) => s + Number(c.brandTotalFeeKurus), 0);
   const overdueCampaigns = billable.filter((c) => !c.brandPaymentReceivedAt && c.status === "KAPANDI");
-  const receivable = billable.filter((c) => !c.brandPaymentReceivedAt).reduce((s, c) => s + c.brandTotalFeeKurus, 0);
+  const receivable = billable.filter((c) => !c.brandPaymentReceivedAt).reduce((s, c) => s + Number(c.brandTotalFeeKurus), 0);
   const liveAssignments = assignments.filter((a) => a.contractStatus !== "RED");
   const influencerCost = liveAssignments.reduce((s, a) => s + a.feeKurus, 0);
   const commission = liveAssignments.reduce((s, a) => s + a.commissionKurus, 0);
@@ -220,7 +220,7 @@ export default async function BrandProfilePage({
     prisma.agentConfig.count({ where: { tenantId: id, enabled: true } }),
   ]);
   const active = brand.campaigns.filter((c) => c.status === "AKTIF").length;
-  const totalFee = brand.campaigns.filter((c) => c.status !== "IPTAL").reduce((s, c) => s + c.brandTotalFeeKurus, 0);
+  const totalFee = brand.campaigns.filter((c) => c.status !== "IPTAL").reduce((s, c) => s + Number(c.brandTotalFeeKurus), 0);
 
   const general = <div className="flex flex-col gap-6">
       <div className="grid-12">
@@ -351,7 +351,7 @@ export default async function BrandProfilePage({
             people: { display: live.length, sort: live.length },
             done: { display: `${done} / ${ds.length}`, sort: done },
             score: { display: sc == null ? "—" : pct.format(sc), sort: sc },
-            fee: { display: formatKurus(c.brandTotalFeeKurus), sort: c.brandTotalFeeKurus },
+            fee: { display: formatKurus(Number(c.brandTotalFeeKurus)), sort: Number(c.brandTotalFeeKurus) },
             paid: {
               display:
                 c.status === "IPTAL" ? "—" : c.brandPaymentReceivedAt ? (
@@ -406,13 +406,13 @@ export default async function BrandProfilePage({
               const live = c.assignments.filter((a) => a.contractStatus !== "RED");
               const cost = live.reduce((s, a) => s + a.feeKurus, 0);
               const earnedC = live.flatMap((a) => a.deliverables).reduce((s, d) => s + (earnedBy.get(d.id) ?? 0), 0);
-              const margin = c.brandTotalFeeKurus - cost;
+              const margin = Number(c.brandTotalFeeKurus) - cost;
               return {
                 id: c.id,
                 label: c.name,
                 cells: {
                   name: { display: <Link href={`/admin/kampanyalar/${c.id}`} className="hover:underline">{c.name}</Link>, sort: c.name },
-                  fee: { display: formatKurus(c.brandTotalFeeKurus), sort: c.brandTotalFeeKurus },
+                  fee: { display: formatKurus(Number(c.brandTotalFeeKurus)), sort: Number(c.brandTotalFeeKurus) },
                   cost: { display: formatKurus(cost), sort: cost },
                   earned: { display: formatKurus(earnedC), sort: earnedC },
                   margin: { display: <span className={margin < 0 ? "text-critical" : undefined}>{formatKurus(margin)}</span>, sort: margin },

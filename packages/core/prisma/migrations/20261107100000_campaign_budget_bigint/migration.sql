@@ -1,0 +1,6 @@
+
+
+-- AlterTable
+ALTER TABLE "Campaign" ALTER COLUMN "budgetKurus" SET DATA TYPE BIGINT,
+ALTER COLUMN "brandTotalFeeKurus" SET DATA TYPE BIGINT;
+

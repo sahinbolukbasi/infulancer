@@ -86,7 +86,7 @@ export function toBrandCampaignView(c: BrandCampaignInput): BrandCampaignView {
     startsAt: c.startsAt,
     endsAt: c.endsAt,
     targets: c.targets,
-    brandTotalFeeKurus: c.brandTotalFeeKurus,
+    brandTotalFeeKurus: Number(c.brandTotalFeeKurus),
     closedAt: c.closedAt,
     reportSummary: c.reportSummary,
     influencers: (c.assignments ?? [])

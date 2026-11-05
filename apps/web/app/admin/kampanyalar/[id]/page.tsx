@@ -178,9 +178,9 @@ export default async function CampaignDetailPage({
               {fmtDate(campaign.startsAt)} – {fmtDate(campaign.endsAt)}
             </dd>
             <dt className="text-fg-passive">Bütçe</dt>
-            <dd className="tabular-nums">{formatKurus(campaign.budgetKurus)}</dd>
+            <dd className="tabular-nums">{formatKurus(Number(campaign.budgetKurus))}</dd>
             <dt className="text-fg-passive">Marka bedeli</dt>
-            <dd className="tabular-nums">{formatKurus(campaign.brandTotalFeeKurus)}</dd>
+            <dd className="tabular-nums">{formatKurus(Number(campaign.brandTotalFeeKurus))}</dd>
             <dt className="text-fg-passive">UTM</dt>
             <dd className="font-mono text-[13px]">{campaign.slug}</dd>
             <dt className="text-fg-passive">Kapanış</dt>

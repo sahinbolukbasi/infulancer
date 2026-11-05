@@ -324,8 +324,8 @@ model Campaign {
   brand                  Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
   name                   String
   slug                   String         @unique
-  budgetKurus            Int
-  brandTotalFeeKurus     Int
+  budgetKurus            BigInt
+  brandTotalFeeKurus     BigInt
   startsAt               DateTime
   endsAt                 DateTime
   /// [{kpi, target, weight, windowDays}] — zod ile doğrulanır (domain/campaign-score.ts)

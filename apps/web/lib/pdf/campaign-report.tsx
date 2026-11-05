@@ -126,7 +126,7 @@ function CampaignReportDocument({ report, generatedAt }: { report: BrandCampaign
       <Page size="A4" style={s.page}>
         <Text style={[s.h2, { marginTop: 0 }]}>Özet</Text>
         <View style={s.stats}>
-          {stat("Toplam ödenen", money(campaign.brandTotalFeeKurus))}
+          {stat("Toplam ödenen", money(Number(campaign.brandTotalFeeKurus)))}
           {stat("Erişim", num.format(totals.reach))}
           {stat("Gösterim", num.format(totals.impressions))}
           {stat("Tıklama", num.format(totals.clicks))}

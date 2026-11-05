@@ -84,7 +84,7 @@ export default async function BrandCampaignPage({
             {fmtDate(campaign.startsAt)} – {fmtDate(campaign.endsAt)}
           </dd>
           <dt className="text-fg-passive">Toplam ödenen</dt>
-          <dd className="tabular-nums">{formatKurus(campaign.brandTotalFeeKurus)}</dd>
+          <dd className="tabular-nums">{formatKurus(Number(campaign.brandTotalFeeKurus))}</dd>
           <dt className="text-fg-passive">Erişim</dt>
           <dd className="tabular-nums">{num.format(report.totals.reach)}</dd>
           <dt className="text-fg-passive">Tıklama</dt>

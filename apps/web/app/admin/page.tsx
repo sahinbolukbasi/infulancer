@@ -270,15 +270,15 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
       name: b.name,
       active: b.campaigns.filter((c) => c.status === "AKTIF").length,
       total: b.campaigns.length,
-      fee: b.campaigns.reduce((s, c) => s + c.brandTotalFeeKurus, 0),
-      due: b.campaigns.filter((c) => c.status === "KAPANDI" && !c.brandPaymentReceivedAt).reduce((s, c) => s + c.brandTotalFeeKurus, 0),
+      fee: b.campaigns.reduce((s, c) => s + Number(c.brandTotalFeeKurus), 0),
+      due: b.campaigns.filter((c) => c.status === "KAPANDI" && !c.brandPaymentReceivedAt).reduce((s, c) => s + Number(c.brandTotalFeeKurus), 0),
     }))
     .filter((b) => b.total > 0)
     .sort((a, b) => b.active - a.active || b.fee - a.fee)
     .slice(0, 6);
   const requested = payouts.filter((p) => p.status === "TALEP_EDILDI");
   const requestedSum = requested.reduce((s, p) => s + p.amountKurus, 0);
-  const unpaidSum = unpaidClosed.reduce((s, c) => s + c.brandTotalFeeKurus, 0);
+  const unpaidSum = unpaidClosed.reduce((s, c) => s + Number(c.brandTotalFeeKurus), 0);
   const content: Record<(typeof DASHBOARD_WIDGETS)[number]["id"], ReactNode> = {
     copilot: <CopilotHome actor={actor} />,
     kpi: (
@@ -437,7 +437,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
                 <Link href={`/admin/kampanyalar/${c.id}`} className="hover:underline">
                   {c.brand.name} · {c.name}
                 </Link>
-                <span className="tabular-nums text-fg-muted">{formatKurus(c.brandTotalFeeKurus)}</span>
+                <span className="tabular-nums text-fg-muted">{formatKurus(Number(c.brandTotalFeeKurus))}</span>
               </li>
             ))}
           </ul>
