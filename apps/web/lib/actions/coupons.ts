@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import { redirect } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
@@ -32,7 +33,8 @@ function resolveTenant(actor: { role: string; brandId?: string | null }, fd: For
 /** Kupon / hediye çeki oluşturur (marka veya admin). Taslak olarak başlar. */
 export async function createCouponAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN", "BRAND");
-  return attempt(async () => {
+  const created: { id?: string; brand?: boolean } = { brand: actor.role === "BRAND" };
+  const res = await attempt(async () => {
     const valueType = str(fd, "valueType") as "YUZDE" | "TUTAR";
     const rawValue = str(fd, "value");
     const value = valueType === "TUTAR" ? tlToKurus(rawValue) : Number(rawValue);
@@ -51,7 +53,7 @@ export async function createCouponAction(_p: ActionState, fd: FormData): Promise
       validUntilDay: validDay || undefined,
     });
     const tenantId = resolveTenant(actor, fd);
-    const c = await createCoupon({
+    const c: { id: string } = await createCoupon({
       tenantId,
       kind: input.kind,
       title: input.title,
@@ -67,9 +69,12 @@ export async function createCouponAction(_p: ActionState, fd: FormData): Promise
       createdByUserId: actor.userId,
     });
     await audit.append({ actor: toAuditActor(actor), action: "COUPON_CREATED", entityType: "Coupon", entityId: c.id, data: { kind: input.kind, title: input.title } });
+    created.id = c.id;
     revalidateAll();
     return { ok: true, message: `${input.kind === "HEDIYE_CEKI" ? "Hediye çeki" : "Kupon"} oluşturuldu.` };
   });
+  if (res.ok && created.id) redirect(`${created.brand ? "/marka" : "/admin"}/kuponlar/${created.id}`);
+  return res;
 }
 
 export async function setCouponStatusAction(_p: ActionState, fd: FormData): Promise<ActionState> {

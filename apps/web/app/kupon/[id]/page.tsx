@@ -4,6 +4,7 @@ import { prisma } from "@infulancer/core/db";
 import { couponValueLabel } from "@infulancer/core/coupons/service";
 import { buildWalletLinks } from "@infulancer/core/wallet/passes";
 import { QrImage, WalletButtons } from "@/components/wallet/pass-card";
+import { CopyCode } from "@/components/wallet/copy-code";
 import { mediaSrc } from "@/lib/media";
 import { fmtDate } from "@/lib/time";
 
@@ -64,10 +65,7 @@ export default async function CouponPage({ params }: { params: Promise<{ id: str
           {/* QR + kod */}
           <div className="flex flex-col items-center gap-3 px-5 pb-6 pt-3">
             <QrImage dataUrl={links.qrDataUrl} alt={`Kupon kodu ${code}`} />
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] uppercase tracking-wide text-white/40">Kupon kodu</span>
-              <span className="rounded-xl border border-white/15 bg-white/5 px-4 py-1.5 font-mono text-lg tracking-[0.3em] text-white">{code}</span>
-            </div>
+            <CopyCode code={code} label="Kupon kodu" />
             {coupon.validUntil ? <span className={`text-[12px] ${expired ? "text-critical" : "text-white/50"}`}>{expired ? "Süresi doldu" : `Son kullanım: ${fmtDate(coupon.validUntil)}`}</span> : null}
           </div>
         </div>

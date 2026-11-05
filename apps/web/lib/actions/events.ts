@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import { redirect } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
@@ -37,7 +38,8 @@ const createSchema = z.object({
 /** Etkinlik oluşturur (admin veya marka). Taslak olarak başlar. */
 export async function createEventAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN", "BRAND");
-  return attempt(async () => {
+  const created: { id?: string; brand?: boolean } = { brand: actor.role === "BRAND" };
+  const res = await attempt(async () => {
     const latRaw = str(fd, "latitude");
     const lngRaw = str(fd, "longitude");
     const capRaw = str(fd, "capacity");
@@ -58,7 +60,7 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
       coverImageKey: str(fd, "coverImageKey") || undefined,
     });
     const tenantId = actor.role === "BRAND" ? actor.brandId! : optStr(fd, "tenantId");
-    const e = await createEvent({
+    const e: { id: string } = await createEvent({
       tenantId,
       title: input.title,
       description: input.description,
@@ -75,9 +77,12 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
       createdByUserId: actor.userId,
     });
     await audit.append({ actor: toAuditActor(actor), action: "EVENT_CREATED", entityType: "Event", entityId: e.id, data: { title: input.title } });
+    created.id = e.id;
     revalidateAll();
     return { ok: true, message: "Etkinlik taslağı oluşturuldu." };
   });
+  if (res.ok && created.id) redirect(`${created.brand ? "/marka" : "/admin"}/etkinlikler/${created.id}`);
+  return res;
 }
 
 export async function setEventStatusAction(_p: ActionState, fd: FormData): Promise<ActionState> {

@@ -106,6 +106,7 @@ export async function respondInvite(inviteId: string, accept: boolean, holderNam
     where: { id: inviteId },
     include: { event: { select: { id: true, title: true, capacity: true, status: true } }, ticket: true },
   });
+  const influencerName = invite?.influencerId ? (await prisma.influencer.findUnique({ where: { id: invite.influencerId }, select: { name: true } }))?.name : null;
   if (!invite) throw new DomainError("BULUNAMADI", "Davet bulunamadı.");
 
   // Katılmıyorum: varsa bileti iptal et, daveti RED yap. (Fikir değiştirmeye izin verilir.)
@@ -126,7 +127,7 @@ export async function respondInvite(inviteId: string, accept: boolean, holderNam
     const issued = await prisma.eventTicket.count({ where: { eventId: invite.event.id, status: { not: "IPTAL" } } });
     if (issued >= invite.event.capacity) throw new DomainError("KURAL_IHLALI", "Etkinlik kapasitesi doldu.");
   }
-  const name = holderName?.trim() || invite.guestName?.trim() || "Katılımcı";
+  const name = holderName?.trim() || influencerName?.trim() || invite.guestName?.trim() || "Katılımcı";
   return prisma.$transaction(async (tx) => {
     await tx.eventInvite.update({ where: { id: inviteId }, data: { status: "KABUL", respondedAt: new Date() } });
     // Daha önce iptal edilmiş bir bilet varsa yeniden geçerli kıl; yoksa yeni üret.

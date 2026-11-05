@@ -5,6 +5,8 @@ import { buildWalletLinks } from "@infulancer/core/wallet/passes";
 import { mapLinks } from "@infulancer/core/wallet/maps";
 import { googleCalendarUrl } from "@infulancer/core/wallet/ical";
 import { QrImage, WalletButtons } from "@/components/wallet/pass-card";
+import { CopyCode } from "@/components/wallet/copy-code";
+import { prisma as db } from "@infulancer/core/db";
 import { mediaSrc } from "@/lib/media";
 import { fmtDateTime } from "@/lib/time";
 
@@ -23,6 +25,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
   const links = await buildWalletLinks("ticket", ticket.id, ticket.code);
   const map = mapLinks({ latitude: e.latitude, longitude: e.longitude, address: e.address, venueName: e.venueName });
   const cover = mediaSrc(e.coverImageKey);
+  const organizer = e.tenantId ? (await db.brand.findUnique({ where: { id: e.tenantId }, select: { name: true } }))?.name : null;
   const gcal = googleCalendarUrl({ uid: e.id, title: e.title, description: e.description, location: [e.venueName, e.address, e.city].filter(Boolean).join(", ") || null, startsAt: e.startsAt, endsAt: e.endsAt });
 
   return (
@@ -66,6 +69,10 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
               <span className="text-[11px] uppercase tracking-wide text-white/50">Durum</span>
               <p className={`font-medium ${statusColor[ticket.status]}`}>{statusTr[ticket.status]}</p>
             </div>
+            <div className="col-span-2 bg-black/30 p-4">
+              <span className="text-[11px] uppercase tracking-wide text-white/50">Düzenleyen</span>
+              <p className="font-medium text-white">{organizer ?? "Infulancer"}</p>
+            </div>
           </div>
 
           {/* Perfore ayraç */}
@@ -78,8 +85,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           {/* QR */}
           <div className="flex flex-col items-center gap-2 px-5 pb-6 pt-2">
             <QrImage dataUrl={links.qrDataUrl} alt={`Bilet kodu ${ticket.code}`} />
-            <span className="font-mono text-[13px] tracking-[0.2em] text-white/70">{ticket.code}</span>
-            <span className="text-[11px] text-white/40">Girişte bu kodu okutun</span>
+            <CopyCode code={ticket.code} label="Bilet kodu" />
+            <span className="text-[11px] text-white/40">Girişte bu QR&apos;ı okutun</span>
           </div>
         </div>
 

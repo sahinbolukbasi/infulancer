@@ -33,6 +33,7 @@ export default async function BrandEventDetailPage({ params }: { params: Promise
         {e.status === "TASLAK" ? <EventStatusButton id={e.id} to="YAYINDA" label="Yayına al" variant="primary" /> : null}
         {e.status === "YAYINDA" ? <EventStatusButton id={e.id} to="TAMAMLANDI" label="Tamamlandı" /> : null}
         {e.status !== "IPTAL" && e.status !== "TAMAMLANDI" ? <EventStatusButton id={e.id} to="IPTAL" label="İptal et" variant="ghost" /> : null}
+        <a href={`/etkinlik/${e.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-[8px] border border-line px-3 py-1.5 text-[13px] hover:border-neon-pink">Herkese açık sayfa →</a>
       </div>
       {cover ? (
         <div className="overflow-hidden rounded-3xl border border-line">

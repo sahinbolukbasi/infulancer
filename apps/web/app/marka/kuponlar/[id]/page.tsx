@@ -43,7 +43,10 @@ export default async function BrandCouponDetailPage({ params }: { params: Promis
         {c.status !== "YAYINDA" ? <p className="text-[13px] text-neon-amber">Göndermek için önce yayına alın.</p> : <GrantForm couponId={c.id} influencers={influencers} />}
       </Card>
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Gönderimler ({c.grants.length})</CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Gönderimler ({c.grants.length})</CardTitle>
+          {c.grants.length ? <a href={`/api/kupon/${c.id}/csv`} className="rounded-full border border-line px-3 py-1 text-[12px] hover:border-neon-pink">CSV indir</a> : null}
+        </div>
         {c.grants.length === 0 ? <p className="text-sm text-fg-passive">Henüz gönderim yok.</p> : (
           <ul className="flex flex-col divide-y divide-line">
             {c.grants.map((g) => (

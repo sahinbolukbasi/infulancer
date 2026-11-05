@@ -55,7 +55,10 @@ export default async function AdminCouponDetailPage({ params }: { params: Promis
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Gönderimler ({c.grants.length})</CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Gönderimler ({c.grants.length})</CardTitle>
+          {c.grants.length ? <a href={`/api/kupon/${c.id}/csv`} className="rounded-full border border-line px-3 py-1 text-[12px] hover:border-neon-pink">CSV indir</a> : null}
+        </div>
         {c.grants.length === 0 ? (
           <p className="text-sm text-fg-passive">Henüz gönderim yok.</p>
         ) : (
