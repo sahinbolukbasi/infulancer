@@ -251,6 +251,11 @@ model Influencer {
   audienceTimezone String    @default("Europe/Istanbul")
   city             String?
   bio              String?
+  /// Vitrin: markalara görünen kısa başlık ve görünürlük tercihleri (influencer yönetir)
+  headline           String?
+  showcaseVisible    Boolean   @default(true)
+  showCollaborations Boolean   @default(true)
+  showPrices         Boolean   @default(true)
   riskScore        Int?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -1433,4 +1438,21 @@ model Offer {
   @@index([influencerId, status])
   @@index([brandId, status])
   @@map("offers")
+}
+
+// ═════════════ Vitrin: öne çıkan işler (influencer yönetir) ═════════════
+model PortfolioItem {
+  id            String    @id @default(cuid())
+  influencerId  String
+  title         String
+  url           String
+  platform      Platform
+  /// Platformdaki bir işten eklendiyse (marka adı ve tarih oradan gelir)
+  deliverableId String?
+  brandName     String?
+  note          String?
+  sort          Int       @default(0)
+  createdAt     DateTime  @default(now())
+  @@index([influencerId, sort])
+  @@map("portfolio_items")
 }

@@ -44,6 +44,7 @@ export const COPILOT_ACTIONS: Record<CopilotRole, CopilotAction[]> = {
   INFLUENCER: [
     { id: "jobs", label: "İşlerim", href: "/influencer" },
     { id: "offers", label: "Teklifler ve fiyat listem", href: "/influencer/teklifler" },
+    { id: "showcase", label: "Vitrinim (markaların gördüğü profil)", href: "/influencer/vitrin" },
     { id: "payouts", label: "Ödemeler", href: "/influencer/odemeler" },
     { id: "accounts", label: "Sosyal hesaplarım", href: "/influencer/hesaplar" },
     { id: "invite", label: "Davet et", href: "/influencer/davet" },
@@ -74,11 +75,11 @@ type Rule = { intent: string; when: string[]; reply: Partial<Record<CopilotRole,
 const RULES: Rule[] = [
   {
     intent: "offers",
-    when: ["teklif gonder", "teklif", "fiyat listesi", "fiyatim", "ucret", "influencer sec"],
+    when: ["teklif gonder", "teklif", "fiyat listesi", "fiyatim", "ucret", "influencer sec", "vitrin", "portfolyo", "profilim markalar"],
     reply: {
       ADMIN: { reply: "Markaların gönderdiği teklifler Teklifler sayfasında. Kabul edilenleri tek tıkla kampanyaya ekleyin.", actions: ["offers", "campaigns"] },
       BRAND: { reply: "Influencer bul sayfasında içerik üreticilerini filtreleyip seçin, içerikleri belirleyin ve tek tıkla teklif gönderin. Yanıtlar Tekliflerim'e düşer.", actions: ["discover", "offers"] },
-      INFLUENCER: { reply: "Teklifler sayfasında gelen teklifleri kabul veya reddedebilir, Fiyat listem sekmesinde içerik ücretlerinizi girebilirsiniz.", actions: ["offers"] },
+      INFLUENCER: { reply: "Teklifler sayfasında gelen teklifleri yanıtlayın, Fiyat listem sekmesinde ücretlerinizi girin. Vitrinim'de markaların gördüğü profili, öne çıkan işlerinizi ve görünürlük tercihlerinizi yönetin.", actions: ["offers", "showcase"] },
     },
   },
   {

@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Platform } from "@infulancer/core/enums";
 import { CheckIcon, SearchIcon, XIcon } from "@/components/icons";
@@ -19,6 +20,7 @@ export type DiscoverCreator = {
   accounts: { platform: Platform; handle: string; followers: number; er: number }[];
   totalFollowers: number;
   rates: { platform: Platform; contentType: string; label: string; priceKurus: number }[];
+  headline?: string | null;
 };
 export type ContentOption = { platform: Platform; contentType: string; label: string };
 type Item = { platform: Platform; contentType: string; qty: number; priceTl: string };
@@ -29,13 +31,13 @@ const tl = (k: number) => `${(k / 100).toLocaleString("tr-TR")} TL`;
 const num = (v: string) => Number(v.replace(/\./g, "").replace(",", ".")) || 0;
 
 /** Marka: içerik üreticisi keşfi → seç → tek formla teklif gönder (her birine ayrı teklif ve bildirim). */
-export function BrandDiscover({ creators, options, campaigns }: { creators: DiscoverCreator[]; options: ContentOption[]; campaigns: { id: string; name: string }[] }) {
+export function BrandDiscover({ creators, options, campaigns, initialSelected = [] }: { creators: DiscoverCreator[]; options: ContentOption[]; campaigns: { id: string; name: string }[]; initialSelected?: string[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [platform, setPlatform] = useState<"" | Platform>("");
   const [priced, setPriced] = useState(false);
-  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [sel, setSel] = useState<Set<string>>(new Set(initialSelected));
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [publishBy, setPublishBy] = useState("");
@@ -117,8 +119,8 @@ export function BrandDiscover({ creators, options, campaigns }: { creators: Disc
             const on = sel.has(c.id);
             const from = c.rates.length ? Math.min(...c.rates.map((r) => r.priceKurus)) : null;
             return (
-              <li key={c.id}>
-                <button type="button" onClick={() => toggle(c.id)} aria-pressed={on} className={cn("flex h-full w-full flex-col gap-3 rounded-3xl border p-4 text-left transition-standard", on ? "border-neon-pink bg-surface ring-1 ring-neon-pink/40" : "border-line bg-glass hover:border-line-strong")}>
+              <li key={c.id} className={cn("flex h-full flex-col overflow-hidden rounded-3xl border transition-standard", on ? "border-neon-pink bg-surface ring-1 ring-neon-pink/40" : "border-line bg-glass hover:border-line-strong")}>
+                <button type="button" onClick={() => toggle(c.id)} aria-pressed={on} aria-label={`${c.name}: ${on ? "seçimi kaldır" : "teklif için seç"}`} className="flex flex-1 flex-col gap-3 p-4 text-left">
                   <span className="flex items-center gap-3">
                     <Avatar name={c.name} src={c.avatarUrl} size={48} />
                     <span className="flex min-w-0 flex-1 flex-col">
@@ -127,6 +129,7 @@ export function BrandDiscover({ creators, options, campaigns }: { creators: Disc
                         {c.primaryCategory}
                         {c.city ? ` · ${c.city}` : ""}
                       </span>
+                      {c.headline ? <span className="line-clamp-1 text-[12px] text-fg">{c.headline}</span> : null}
                     </span>
                     <span className={cn("inline-flex h-6 w-6 items-center justify-center rounded-md border", on ? "border-neon-pink bg-neon-pink text-black" : "border-line-strong")} aria-hidden>
                       {on ? <CheckIcon size={14} /> : null}
@@ -144,6 +147,9 @@ export function BrandDiscover({ creators, options, campaigns }: { creators: Disc
                     {from != null ? <span className="font-semibold text-fg">{tl(from)}&apos;den başlayan</span> : null}
                   </span>
                 </button>
+                <Link href={`/marka/kesfet/${c.id}`} className="flex items-center justify-between border-t border-line px-4 py-2 text-[13px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg">
+                  Detaylı profil, iş birlikleri ve işler <span aria-hidden>→</span>
+                </Link>
               </li>
             );
           })}

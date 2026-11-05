@@ -59,6 +59,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   INFLUENCER: [
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
     { href: "/influencer/teklifler", label: "Teklifler", icon: MegaphoneIcon },
+    { href: "/influencer/vitrin", label: "Vitrinim", icon: SparkleIcon },
     { href: "/influencer/odemeler", label: "Ödemeler", icon: WalletIcon },
     { href: "/influencer/hesaplar", label: "Hesaplar", icon: LinkIcon },
     { href: "/influencer/davet", label: "Davet et", icon: UserIcon },
