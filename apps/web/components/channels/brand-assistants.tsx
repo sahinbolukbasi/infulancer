@@ -1,6 +1,7 @@
 import { prisma } from "@infulancer/core/db";
 import { handoffReasonLabels, type HandoffReason } from "@infulancer/core/assistant/runtime";
 import { AssistantForm } from "@/components/agent/agent-forms";
+import { AssistantTester, QuickSetup } from "@/components/channels/assistant-test";
 import { KnowledgeForm } from "@/components/inbox/inbox-forms";
 import { Card, CardTitle } from "@/components/ui/card";
 import { StatusDot } from "@/components/ui/status";
@@ -14,9 +15,15 @@ export async function BrandAssistants({ tenantId: t }: { tenantId: string }) {
     prisma.knowledgeSource.findMany({ where: { tenantId: t, type: { not: "message" } }, orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.knowledgeChunk.count({ where: { tenantId: t } }),
   ]);
+  const options = items.map((a) => ({ key: a.template.key, name: a.template.name }));
   return (
     <div className="flex flex-col gap-6">
       <p className="text-[13px] text-fg-muted">Müşteri yazar → asistan bilgi tabanınızdan cevaplar → emin değilse Gelen kutusu&apos;ndaki temsilciye aktarır (aktarılanlarda AI ücreti yok).</p>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <QuickSetup options={options} />
+        <AssistantTester options={options} />
+      </div>
 
       <section className="flex flex-col gap-4" aria-label="Asistanlar">
         {items.map((a) => (
