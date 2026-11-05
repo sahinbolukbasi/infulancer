@@ -36,6 +36,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/reklam", label: "Reklam", icon: MegaphoneIcon, section: "İçerik ve AI" },
     { href: "/admin/creative", label: "Creative", icon: SparkleIcon, section: "İçerik ve AI" },
     { href: "/admin/ai", label: "AI sağlayıcıları", icon: SparkleIcon, section: "İçerik ve AI" },
+    { href: "/admin/bildirimler", label: "Bildirimler", icon: BellIcon, section: "İçerik ve AI" },
     { href: "/admin/etkinlikler", label: "Etkinlikler", icon: CalendarIcon, section: "İçerik ve AI" },
     { href: "/admin/kuponlar", label: "Kuponlar", icon: WalletIcon, section: "İçerik ve AI" },
     { href: "/admin/finans", label: "Finans", icon: WalletIcon, section: "Para ve uyum" },

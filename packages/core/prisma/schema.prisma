@@ -1715,3 +1715,75 @@ model CampaignApplication {
   @@index([influencerId, status])
   @@map("campaign_applications")
 }
+
+// ============================================================================
+// Çok kanallı bildirim sistemi (sistem içi + e-posta + WhatsApp + Instagram)
+// + link kısaltma/tıklama ölçümü. Kanallar anahtar gelene kadar mock modda çalışır.
+// ============================================================================
+
+enum NotifChannel {
+  INAPP
+  EMAIL
+  WHATSAPP
+  INSTAGRAM
+}
+
+enum NotifDeliveryStatus {
+  QUEUED
+  SENT
+  MOCKED
+  FAILED
+  SKIPPED
+}
+
+/// Bir olay için kanal bazlı kural: hangi olay hangi kanallardan gönderilsin.
+model NotificationRule {
+  id        String         @id @default(cuid())
+  eventKey  String         @unique @map("event_key")
+  channels  NotifChannel[]
+  enabled   Boolean        @default(true)
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  @@map("notification_rules")
+}
+
+/// Olay + kanal başına metin şablonu (yer tutucular: {{ad}}, {{baslik}} vb.).
+model NotificationTemplate {
+  id        String       @id @default(cuid())
+  eventKey  String       @map("event_key")
+  channel   NotifChannel
+  subject   String?
+  body      String
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  @@unique([eventKey, channel])
+  @@map("notification_templates")
+}
+
+/// Gönderim kaydı (denetim + mock görünürlüğü).
+model NotificationLog {
+  id         String              @id @default(cuid())
+  eventKey   String              @map("event_key")
+  channel    NotifChannel
+  userId     String?             @map("user_id")
+  toAddress  String?             @map("to_address")
+  subject    String?
+  body       String
+  status     NotifDeliveryStatus @default(QUEUED)
+  error      String?
+  createdAt  DateTime            @default(now()) @map("created_at")
+  @@index([eventKey, createdAt])
+  @@index([userId])
+  @@map("notification_logs")
+}
+
+/// Kısa link + tıklama sayacı.
+model ShortLink {
+  id         String    @id @default(cuid())
+  slug       String    @unique
+  targetUrl  String    @map("target_url")
+  label      String?
+  clicks     Int       @default(0)
+  createdByUserId String? @map("created_by_user_id")
+  lastClickAt DateTime? @map("last_click_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  @@map("short_links")
+}

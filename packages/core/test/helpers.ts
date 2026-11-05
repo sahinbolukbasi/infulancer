@@ -17,6 +17,8 @@ const TABLES = [
   "consents", "iys_brands", "cross_border_filings", "influencer_tax_profile", "message_cost_ledger", "country_rates",
   "ad_object_mutations", "ad_budget_changes", "partnership_ad_codes", "model_registry", "credit_accounts", "credit_holds",
   "creative_jobs", "generated_assets", "disclosure_checks", "AgentJobRun",
+  "event_tickets", "event_invites", "events", "coupon_grants", "coupons", "campaign_applications", "campaign_open_calls",
+  "notification_logs", "notification_templates", "notification_rules", "short_links", "ad_drafts",
 ];
 
 export async function resetDb() {

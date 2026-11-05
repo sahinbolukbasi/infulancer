@@ -4,6 +4,8 @@ import { prisma } from "@infulancer/core/db";
 import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
 import { createEvent, inviteManyToEvent, inviteToEvent, respondInvite, setEventStatus } from "@infulancer/core/events/service";
+import { dispatchNotification } from "@infulancer/core/notify/dispatch";
+import { fmtDateTime } from "@/lib/time";
 import { DomainError } from "@infulancer/core/domain/errors";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, bool, optStr, parseInput, revalidateAll, str } from "@/lib/action-utils";
@@ -106,6 +108,13 @@ export async function inviteEventAction(_p: ActionState, fd: FormData): Promise<
     if (ids.length) {
       const r = await inviteManyToEvent(eventId, ids);
       await audit.append({ actor: toAuditActor(actor), action: "EVENT_INVITED", entityType: "Event", entityId: eventId, data: { count: r.length } });
+      // Davet edilenlere çok kanallı bildirim.
+      try {
+        const full = await prisma.event.findUnique({ where: { id: eventId }, select: { title: true, startsAt: true } });
+        const invited = await prisma.influencer.findMany({ where: { id: { in: r.map((x) => x.influencerId).filter((y): y is string => !!y) } }, select: { id: true, name: true, socialAccounts: { select: { platform: true, handle: true }, take: 1 }, user: { select: { id: true, email: true, phone: true } } } });
+        const recipients = invited.filter((i) => i.user).map((i) => ({ userId: i.user!.id, email: i.user!.email, phone: i.user!.phone, instagram: i.socialAccounts[0]?.handle ?? null, vars: { ad: i.name, baslik: full?.title ?? "", tarih: full ? fmtDateTime(full.startsAt) : "", link: `/influencer/davetlerim` } }));
+        if (recipients.length) await dispatchNotification("EVENT_INVITED", recipients);
+      } catch { /* bildirim hatası daveti bozmasın */ }
       revalidateAll();
       return { ok: true, message: `${r.length} davet gönderildi.` };
     }

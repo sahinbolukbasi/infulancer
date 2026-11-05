@@ -3,7 +3,8 @@ import { z } from "zod";
 import { prisma } from "@infulancer/core/db";
 import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
-import { createCoupon, grantCouponMany, setCouponStatus } from "@infulancer/core/coupons/service";
+import { createCoupon, couponValueLabel, grantCouponMany, setCouponStatus } from "@infulancer/core/coupons/service";
+import { dispatchNotification } from "@infulancer/core/notify/dispatch";
 import { DomainError } from "@infulancer/core/domain/errors";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, optStr, parseInput, revalidateAll, str, tlToKurus } from "@/lib/action-utils";
@@ -99,6 +100,13 @@ export async function grantCouponAction(_p: ActionState, fd: FormData): Promise<
     if (!ids.length) throw new DomainError("DOGRULAMA", "En az bir influencer seçin veya 'tümü'nü işaretleyin.");
     const r = await grantCouponMany(couponId, ids);
     await audit.append({ actor: toAuditActor(actor), action: "COUPON_GRANTED", entityType: "Coupon", entityId: couponId, data: { count: r.length } });
+    try {
+      const coupon = await prisma.coupon.findUnique({ where: { id: couponId }, select: { title: true, valueType: true, value: true } });
+      const infs = await prisma.influencer.findMany({ where: { id: { in: r.map((g) => g.influencerId).filter((y): y is string => !!y) } }, select: { id: true, name: true, socialAccounts: { select: { handle: true }, take: 1 }, user: { select: { id: true, email: true, phone: true } } } });
+      const byInf = new Map(r.map((g) => [g.influencerId, g.code]));
+      const recipients = infs.filter((i) => i.user).map((i) => ({ userId: i.user!.id, email: i.user!.email, phone: i.user!.phone, instagram: i.socialAccounts[0]?.handle ?? null, vars: { ad: i.name, baslik: coupon?.title ?? "", deger: coupon ? couponValueLabel(coupon.valueType, coupon.value) : "", kod: byInf.get(i.id) ?? "", link: `/influencer/davetlerim` } }));
+      if (recipients.length) await dispatchNotification("COUPON_GRANTED", recipients);
+    } catch { /* bildirim hatası gönderimi bozmasın */ }
     revalidateAll();
     return { ok: true, message: `${r.length} kişiye gönderildi.` };
   });
