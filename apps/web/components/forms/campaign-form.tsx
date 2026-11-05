@@ -181,25 +181,29 @@ export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { r
       </Section>
 
       <details className="rounded-3xl border border-line px-5 py-4">
-        <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">Gelişmiş: KPI ağırlıkları, kısa ad, durum</summary>
+        <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">Gelişmiş: KPI ağırlıkları ve kısa ad</summary>
         <div className="mt-4 flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Kısa ad (UTM)" hint="Boşsa addan üretilir.">
               {(p) => <Input {...p} name="slug" defaultValue={campaign?.slug} pattern="[a-z0-9\-]*" />}
             </Field>
-            <Field label="Durum">
-              {(p) =>
-                campaign?.status === "KAPANDI" ? (
-                  <Input {...p} value="Kapandı" disabled readOnly />
-                ) : (
-                  <Select {...p} name="status" defaultValue={campaign?.status ?? "TASLAK"}>
-                    <option value="TASLAK">Taslak</option>
-                    <option value="AKTIF">Aktif</option>
-                    <option value="IPTAL">İptal</option>
-                  </Select>
-                )
-              }
-            </Field>
+            {campaign ? (
+              <Field label="Durum" hint="Kampanya, içerik kontrolünden sonra kampanya sayfasından yayına alınır.">
+                {(p) =>
+                  campaign.status === "KAPANDI" ? (
+                    <Input {...p} value="Kapandı" disabled readOnly />
+                  ) : (
+                    <Select {...p} name="status" defaultValue={campaign.status}>
+                      <option value="TASLAK">Taslak</option>
+                      <option value="AKTIF">Aktif</option>
+                      <option value="IPTAL">İptal</option>
+                    </Select>
+                  )
+                }
+              </Field>
+            ) : (
+              <input type="hidden" name="status" value="TASLAK" />
+            )}
           </div>
           <fieldset className="flex flex-col gap-3">
             <legend className="mb-2 text-label text-fg-muted">Hedefler (ağırlıklı skor)</legend>

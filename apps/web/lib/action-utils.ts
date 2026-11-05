@@ -79,7 +79,15 @@ export function tags(v: string): string[] {
 export function tlToKurus(v: string): number {
   const cleaned = v.replace(/\s|₺|TL/gi, "");
   if (cleaned === "") return NaN;
-  const normalized = cleaned.includes(",") ? cleaned.replace(/\./g, "").replace(",", ".") : cleaned;
+  // Türkçe gösterim: nokta binlik, virgül ondalık ayraç. Hem "2.500.000" hem "2500000,50" kabul edilir.
+  let normalized: string;
+  if (cleaned.includes(",")) {
+    normalized = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(cleaned)) {
+    normalized = cleaned.replace(/\./g, ""); // yalnız binlik ayracı olan noktalar
+  } else {
+    normalized = cleaned;
+  }
   if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return NaN;
   return Math.round(Number(normalized) * 100);
 }
