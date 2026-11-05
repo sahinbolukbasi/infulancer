@@ -1,34 +1,63 @@
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { getConfig } from "@infulancer/core/config/store";
+import { objectivesFor } from "@infulancer/core/ads/drafts";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
+import { Tabs } from "@/components/ui/tabs";
 import { requireActor } from "@/lib/auth-guard";
 import { DocLink } from "@/components/docs/doc-components";
 import { PageGuide } from "@/components/ui/page-guide";
 import { BudgetRequestForm, RunJobButton } from "@/components/forms/operations-forms";
+import { AdDraftForm, BulkAdDraftForm } from "@/components/ads/ad-draft-forms";
+import { AdDraftList } from "@/components/ads/ad-draft-list";
+import { InfoNote } from "@/components/ui/unverified";
 import { fmtDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Reklam" };
 
 export default async function AdminAdsPage() {
   await requireActor("ADMIN");
-  const [limits, quota, changes, codes, brands] = await Promise.all([
+  const [limits, quota, changes, codes, brands, assets, pendingAds] = await Promise.all([
     getConfig("meta.ads.writeLimits"),
     getConfig("meta.ads.quota"),
     prisma.adBudgetChange.findMany({ orderBy: { requestedAt: "desc" }, take: 40 }),
     prisma.partnershipAdCode.findMany({ orderBy: { createdAt: "desc" }, take: 40 }),
     prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.generatedAsset.findMany({ orderBy: { createdAt: "desc" }, take: 20, select: { id: true, modelKey: true, tenantId: true, createdAt: true } }),
+    prisma.adDraft.count({ where: { status: "ONAY_BEKLIYOR" } }),
   ]);
   const queued = changes.filter((c) => c.status === "queued").length;
+  const metaObjectives = objectivesFor("META").map((o) => ({ key: o.key, label: o.label }));
+  const tiktokObjectives = objectivesFor("TIKTOK").map((o) => ({ key: o.key, label: o.label }));
+  const assetOptions = assets.map((a) => ({ id: a.id, label: `${a.modelKey} · ${fmtDateTime(a.createdAt)}` }));
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Reklam"
-        description="Meta Marketing API yazma limitleri, saatlik bütçe optimizasyonu, Partnership Ads kodları ve TikTok yayın kısıtları."
+        description="Meta ve TikTok reklam taslakları, onay akışı, bütçe optimizasyonu ve Partnership Ads kodları."
         actions={<RunJobButton job="ads-budget-batch" label="Bekleyenleri şimdi uygula" />}
       />
+
+      <Card interactive={false} className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Reklam kampanyaları</CardTitle>
+          {pendingAds > 0 ? <StatusDot tone="passive">{pendingAds} taslak onay bekliyor</StatusDot> : null}
+        </div>
+        <InfoNote>
+          Reklam taslakları onay akışında ilerler (Taslak → Onay bekliyor → Onaylandı). Onay <strong>gerçek harcama başlatmaz</strong>; canlı Meta/TikTok yayını, reklam hesabı anahtarları eklendiğinde ayrı adımda açılacaktır.
+        </InfoNote>
+        <Tabs
+          label="Reklam oluşturma"
+          tabs={[
+            { id: "tek", label: "Tek reklam", content: <AdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin /> },
+            { id: "toplu", label: "Toplu kampanya", content: <BulkAdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin /> },
+          ]}
+        />
+        <AdDraftList isAdmin />
+      </Card>
+
       <PageGuide
         what="Influencer içeriklerini reklama dönüştürme ve reklam bütçelerini yönetme alanı. Bütçe değişikliklerini buradan istersiniz; sistem Meta’nın yazma limitlerine (saatte 4 bütçe değişikliği, aynı nesneye 30 saniyede bir düzenleme) uyarak uygular."
         why="Limit aşılırsa Meta hesabı 1 saat bloklar. Bu yüzden fazla istekler reddedilmez, sıradaki uygun saate ötelenir ve aşağıdaki kuyrukta görünür."

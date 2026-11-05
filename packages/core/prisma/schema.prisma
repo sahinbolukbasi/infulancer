@@ -1460,3 +1460,39 @@ model PortfolioItem {
   @@index([influencerId, sort])
   @@map("portfolio_items")
 }
+
+enum AdPlatform {
+  META
+  TIKTOK
+}
+
+enum AdDraftStatus {
+  TASLAK
+  ONAY_BEKLIYOR
+  ONAYLANDI
+  REDDEDILDI
+}
+
+/// Reklam taslağı (mock): Creative çıktısı veya metinden reklam hazırlanır, onay kuyruğuna
+/// düşer. GERÇEK YAYIN/HARCAMA YOK — yalnız onay akışı; canlı Meta/TikTok yayını anahtarlar
+/// eklendiğinde ayrı adımda devreye girer.
+model AdDraft {
+  id            String        @id @default(cuid())
+  tenantId      String        @map("tenant_id")
+  platform      AdPlatform
+  name          String
+  objective     String
+  dailyBudgetKurus Int        @map("daily_budget_kurus")
+  primaryText   String        @map("primary_text")
+  assetId       String?       @map("asset_id")
+  campaignId    String?       @map("campaign_id")
+  status        AdDraftStatus @default(TASLAK)
+  reviewNote    String?       @map("review_note")
+  batchId       String?       @map("batch_id")
+  createdByUserId String?     @map("created_by_user_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  @@index([tenantId, status])
+  @@index([batchId])
+  @@map("ad_drafts")
+}
