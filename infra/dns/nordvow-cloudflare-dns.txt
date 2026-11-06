@@ -1,0 +1,91 @@
+================================================================================
+ NORDVOW.COM — CLOUDFLARE DNS KURULUM TALİMATLARI
+================================================================================
+Hedef: nordvow.com ve www.nordvow.com -> AWS CloudFront (d226kw9nfbh4rs.cloudfront.net)
+Durum: ACM sertifikası oluşturuldu, DNS doğrulaması bekleniyor (PENDING_VALIDATION)
+Sertifika ARN: arn:aws:acm:us-east-1:865369794421:certificate/d59be12b-621e-4ca1-ae8f-b7c9d43cc5bb
+Bölge: us-east-1 (CloudFront için zorunlu)
+Oluşturulma: iki aşamalı kurulum
+
+Cloudflare paneli: nordvow.com  ->  DNS  ->  Records  ->  Add record
+
+
+================================================================================
+ ADIM 1 — ACM SERTİFİKA DOĞRULAMASI  (ŞİMDİ EKLE — 2 adet CNAME)
+================================================================================
+Bu iki kaydı ekleyin. İKİSİ DE "DNS only" (gri bulut / proxy KAPALI) olmalı.
+Turuncu bulut (proxy açık) doğrulamayı BOZAR.
+
+Not: Cloudflare "Name" alanına zone adını (.nordvow.com) kendisi ekler.
+Bu yüzden aşağıdaki "Name" değerlerini AYNEN, son ek olmadan yazın.
+
+--- Kayıt 1 (nordvow.com doğrulaması) ---
+Type   : CNAME
+Name   : _85e3556ab20e21723ff6d33abc9a8452
+Target : _addd225e253840d5d28a275eb6fad8ac.wzccmgtwzk.acm-validations.aws
+Proxy  : DNS only (gri bulut)
+TTL    : Auto
+
+--- Kayıt 2 (www.nordvow.com doğrulaması) ---
+Type   : CNAME
+Name   : _840345a765fc8cc91a06714bdf98a965.www
+Target : _fb7b8b3afc679b8249c72c96b035edcb.wzccmgtwzk.acm-validations.aws
+Proxy  : DNS only (gri bulut)
+TTL    : Auto
+
+>> Bu iki kayıt girildikten sonra sertifika genelde 5-30 dakikada "Issued" olur.
+>> "Girdim" dediğinizde doğrulamayı kontrol edip ADIM 2'yi uygulayacağım.
+
+
+================================================================================
+ ADIM 2 — ALAN ADINI CLOUDFRONT'A YÖNLENDİRME  (sertifika "Issued" olunca)
+================================================================================
+Sertifika doğrulandıktan ve CloudFront'a bağlandıktan sonra bu iki kaydı ekleyin.
+Önerilen başlangıç: İKİSİ DE "DNS only" (gri bulut). İstenirse sonra proxy açılır.
+
+--- Kayıt 3 (kök alan) ---
+Type   : CNAME
+Name   : @            (veya "nordvow.com")
+Target : d226kw9nfbh4rs.cloudfront.net
+Proxy  : DNS only (gri bulut) — başlangıç için
+TTL    : Auto
+Not    : Kök alanda CNAME; Cloudflare "CNAME flattening" ile bunu otomatik çözer.
+
+--- Kayıt 4 (www) ---
+Type   : CNAME
+Name   : www
+Target : d226kw9nfbh4rs.cloudfront.net
+Proxy  : DNS only (gri bulut) — başlangıç için
+TTL    : Auto
+
+
+================================================================================
+ PROXY (TURUNCU BULUT) KULLANMAK İSTERSENİZ
+================================================================================
+ADIM 2 kayıtlarını turuncu bulut (proxy açık) yaparsanız:
+  - Cloudflare SSL/TLS modunu "Full (strict)" yapın.
+    (Flexible veya Full-strict-değil yönlendirme döngüsüne yol açar.)
+  - CloudFront zaten geçerli sertifika sunduğu için Full (strict) uyumludur.
+Başlangıçta DNS only ile doğrulayıp, her şey çalışınca proxy'ye geçmek en güvenlisidir.
+
+
+================================================================================
+ KONTROL (ADIM 2 sonrası)
+================================================================================
+  dig +short nordvow.com
+  dig +short www.nordvow.com
+  curl -I https://nordvow.com/giris        (200 beklenir)
+
+DNS yayılması Cloudflare'de genelde hızlıdır (dakikalar). CloudFront dağıtım
+güncellemesi 5-15 dakika sürebilir.
+
+
+================================================================================
+ ÖZET TABLO
+================================================================================
+Aşama  Type   Name                                        Target                                                         Proxy
+1      CNAME  _85e3556ab20e21723ff6d33abc9a8452           _addd225e253840d5d28a275eb6fad8ac.wzccmgtwzk.acm-validations.aws   DNS only
+1      CNAME  _840345a765fc8cc91a06714bdf98a965.www       _fb7b8b3afc679b8249c72c96b035edcb.wzccmgtwzk.acm-validations.aws   DNS only
+2      CNAME  @ (nordvow.com)                             d226kw9nfbh4rs.cloudfront.net                                   DNS only
+2      CNAME  www                                         d226kw9nfbh4rs.cloudfront.net                                   DNS only
+================================================================================

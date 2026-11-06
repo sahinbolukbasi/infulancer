@@ -17,12 +17,13 @@ export function instagramNotifyConfigured(): boolean {
   return envStr("INSTAGRAM_ACCESS_TOKEN", "").trim().length > 0 || envStr("META_IG_TOKEN", "").trim().length > 0;
 }
 
-export async function sendEmail(to: string, subject: string, body: string): Promise<ChannelSendResult> {
+export async function sendEmail(to: string, subject: string, body: string, html?: string): Promise<ChannelSendResult> {
   if (!emailConfigured()) return { status: "MOCKED" };
   try {
-    // Gerçek gönderim (SES/SMTP) anahtar eklenince burada yapılır.
-    // Örn: await ses.send(new SendEmailCommand({...}))
-    void to; void subject; void body;
+    // Gerçek gönderim (SES/SMTP) anahtar eklenince burada yapılır. HTML gövde markalı
+    // şablondan gelir; düz metin (body) fallback olarak gönderilir.
+    // Örn: await ses.send(new SendEmailCommand({ ... Body: { Html: { Data: html }, Text: { Data: body } } }))
+    void to; void subject; void body; void html;
     return { status: "SENT" };
   } catch (e) {
     return { status: "FAILED", error: (e as Error).message };

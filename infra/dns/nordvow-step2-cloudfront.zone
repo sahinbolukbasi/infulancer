@@ -1,0 +1,10 @@
+;; NORDVOW.COM - ADIM 2: Alan adini CloudFront'a yonlendirme
+;; SADECE sertifika "Issued" olduktan ve CloudFront'a baglandiktan sonra yukleyin.
+;; Cloudflare > DNS > Import and Export > Import DNS records
+;; Baslangic icin Proxy "DNS only" (gri bulut) onerilir.
+;;
+;; NOT: Kok alan (nordvow.com) icin CNAME; bazi import araclari kok CNAME'i
+;; reddedebilir. Reddederse kok kaydi elle ekleyin:
+;;   Type=CNAME, Name=@, Target=d226kw9nfbh4rs.cloudfront.net
+nordvow.com.     300 IN CNAME d226kw9nfbh4rs.cloudfront.net.
+www.nordvow.com. 300 IN CNAME d226kw9nfbh4rs.cloudfront.net.

@@ -1,6 +1,7 @@
 import { prisma } from "../db";
 import { NOTIF_EVENT_MAP, renderTemplate, type NotifChannel } from "./catalog";
 import { sendEmail, sendInstagramNotify, sendWhatsAppNotify } from "./channels";
+import { renderBrandedEmail } from "./email-template";
 
 /**
  * Bir bildirim olayını alıcıya/alıcılara gönderir. Kural (NotificationRule) hangi kanalların
@@ -55,7 +56,7 @@ export async function dispatchNotification(eventKey: string, recipients: Recipie
             status = "SKIPPED";
           }
         } else if (channel === "EMAIL") {
-          if (r.email) { toAddress = r.email; const res = await sendEmail(r.email, subject ?? "Bildirim", body); status = res.status; error = res.error ?? null; }
+          if (r.email) { toAddress = r.email; const html = renderBrandedEmail({ subject: subject ?? "Bildirim", body, ctaUrl: vars.link ?? null }); const res = await sendEmail(r.email, subject ?? "Bildirim", body, html); status = res.status; error = res.error ?? null; }
           else status = "SKIPPED";
         } else if (channel === "WHATSAPP") {
           if (r.phone) { toAddress = r.phone; const res = await sendWhatsAppNotify(r.phone, body); status = res.status; error = res.error ?? null; }

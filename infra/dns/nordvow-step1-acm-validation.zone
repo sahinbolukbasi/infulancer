@@ -1,0 +1,5 @@
+;; NORDVOW.COM - ADIM 1: ACM sertifika dogrulama kayitlari
+;; Cloudflare > DNS > Import and Export > Import DNS records ile yukleyin.
+;; Yukledikten SONRA bu iki kaydin Proxy durumunu "DNS only" (gri bulut) yapin.
+_85e3556ab20e21723ff6d33abc9a8452.nordvow.com. 300 IN CNAME _addd225e253840d5d28a275eb6fad8ac.wzccmgtwzk.acm-validations.aws.
+_840345a765fc8cc91a06714bdf98a965.www.nordvow.com. 300 IN CNAME _fb7b8b3afc679b8249c72c96b035edcb.wzccmgtwzk.acm-validations.aws.
