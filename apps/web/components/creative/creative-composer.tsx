@@ -6,7 +6,7 @@ import { generateCreative } from "@/lib/actions/operations";
 import { idleState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
 import { KindIcon } from "@/components/creative/kind-icon";
-import { fmtCredits, KIND_LABEL, modelHint, modelName, unitLabel, type CreativeKind } from "@/lib/creative-models";
+import { fmtTl, KIND_LABEL, modelHint, modelName, unitLabel, type CreativeKind } from "@/lib/creative-models";
 
 export type ComposerModel = { key: string; kind: CreativeKind; unit: string; creditsPerUnit: number; maxUnits: number | null };
 export type ComposerTenant = { id: string; name: string; group: "Markalar" | "Influencerlar"; available: number };
@@ -40,7 +40,7 @@ const KIND_DESC: Record<CreativeKind, string> = { image: "Afiş, ürün, story",
 
 /**
  * Creative besteci: tür → istek → format/stil → model ve miktar → üret.
- * Marka/influencer kendi kredisiyle üretir; yönetici "kimin adına" seçer.
+ * Marka/influencer kendi TL bakiyesiyle üretir; yönetici "kimin adına" seçer.
  */
 export function CreativeComposer({
   models,
@@ -52,7 +52,7 @@ export function CreativeComposer({
   models: ComposerModel[];
   tenants: ComposerTenant[];
   isAdmin: boolean;
-  /** Marka/influencer için kullanılabilir kredi (yönetici için seçili hesaptan okunur). */
+  /** Marka/influencer için kullanılabilir bakiye TL (yönetici için seçili hesaptan okunur). */
   available: number;
   initialPrompt?: string;
 }) {
@@ -199,7 +199,7 @@ export function CreativeComposer({
             {inKind.map((x) => (
               <option key={x.key} value={x.key}>
                 {modelName(x.key)}
-                {modelHint(x.key) ? ` · ${modelHint(x.key)}` : ""} · {fmtCredits(x.creditsPerUnit)} kr/{unitLabel(x.unit)}
+                {modelHint(x.key) ? ` · ${modelHint(x.key)}` : ""} · {fmtTl(x.creditsPerUnit)}/{unitLabel(x.unit)}
               </option>
             ))}
           </select>
@@ -218,7 +218,7 @@ export function CreativeComposer({
                   <optgroup key={g} label={g}>
                     {list.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.name} · {fmtCredits(t.available)} kr
+                        {t.name} · {fmtTl(t.available)}
                       </option>
                     ))}
                   </optgroup>
@@ -235,8 +235,8 @@ export function CreativeComposer({
         </label>
         <div className="flex items-center gap-4 sm:ml-auto">
           <div className="flex flex-col text-right leading-tight">
-            <span className="text-[15px] font-semibold tabular-nums text-fg">{fmtCredits(cost)} kredi</span>
-            <span className={cn("text-[11px] tabular-nums", short ? "text-critical" : "text-fg-passive")}>{short ? `Bakiye yetersiz (${fmtCredits(balance)} kr)` : `Kalan: ${fmtCredits(Math.max(0, balance - cost))} kr`}</span>
+            <span className="text-[15px] font-semibold tabular-nums text-fg">{fmtTl(cost)}</span>
+            <span className={cn("text-[11px] tabular-nums", short ? "text-critical" : "text-fg-passive")}>{short ? `Bakiye yetersiz (${fmtTl(balance)})` : `Kalan: ${fmtTl(Math.max(0, balance - cost))}`}</span>
           </div>
           <button type="submit" disabled={pending || !ready} className="inline-flex h-11 items-center gap-2 rounded-full bg-fg px-6 text-[14px] font-semibold text-bg transition-standard hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
             {pending ? (
@@ -264,7 +264,7 @@ export function CreativeComposer({
           </p>
         ) : null}
       </div>
-      <p className="border-t border-line px-4 py-3 text-[11px] text-fg-passive">Gerçek kişinin adı, yüzü veya sesiyle üretim otomatik reddedilir. Başarısız üretimde kredi düşülmez. Her çıktıya &quot;AI ile üretildi&quot; etiketi (C2PA) gömülür.</p>
+      <p className="border-t border-line px-4 py-3 text-[11px] text-fg-passive">Gerçek kişinin adı, yüzü veya sesiyle üretim otomatik reddedilir. Başarısız üretimde ücret alınmaz. Her çıktıya &quot;AI ile üretildi&quot; etiketi (C2PA) gömülür.</p>
     </form>
   );
 }

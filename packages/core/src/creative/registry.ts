@@ -1,4 +1,5 @@
 import { prisma } from "../db";
+import { priceTry } from "./pricing";
 import { getConfig } from "../config/store";
 import { notifyAdmins } from "../agents/common";
 
@@ -72,7 +73,6 @@ export const MODEL_SEEDS: Seed[] = [
 ];
 
 export async function seedModelRegistry() {
-  const { creditUsd } = await getConfig("pricing.markup");
   for (const s of MODEL_SEEDS) {
     const data = {
       provider: s.provider,
@@ -80,7 +80,8 @@ export async function seedModelRegistry() {
       kind: s.kind,
       unit: s.unit,
       unitPriceUsd: s.unitPriceUsd,
-      creditsPerUnit: Math.ceil((s.unitPriceUsd / creditUsd) * 1000) / 1000,
+      // Fiyat doğrudan TL (1 kredi = 1 TL).
+      creditsPerUnit: priceTry(s.key, s.kind),
       deterministic: s.deterministic ?? true,
       maxUnits: s.maxUnits ?? null,
       status: s.status ?? "active",
@@ -89,6 +90,10 @@ export async function seedModelRegistry() {
       licenseStatus: s.licenseStatus ?? "pending",
       featureFlag: s.featureFlag ?? null,
     };
-    await prisma.modelRegistry.upsert({ where: { key: s.key }, create: { key: s.key, ...data }, update: {} });
+    await prisma.modelRegistry.upsert({
+      where: { key: s.key },
+      create: { key: s.key, ...data },
+      update: { provider: data.provider, modelId: data.modelId, kind: data.kind, unit: data.unit, unitPriceUsd: data.unitPriceUsd, creditsPerUnit: data.creditsPerUnit, maxUnits: data.maxUnits, status: data.status, replacementKey: data.replacementKey, licenseStatus: data.licenseStatus, featureFlag: data.featureFlag },
+    });
   }
 }

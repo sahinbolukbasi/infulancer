@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
 import { aiDisclosureChecklist } from "@infulancer/core/creative/c2pa";
 import { ensureStarterCredits } from "@infulancer/core/creative/credits";
+import { CreditRequestForm } from "@/components/creative/credit-request-form";
 import { getConfig } from "@infulancer/core/config/store";
 import { withUnverified } from "@infulancer/core/unverified";
 import { CreativeComposer, type ComposerModel, type ComposerTenant } from "@/components/creative/creative-composer";
@@ -14,7 +15,7 @@ import { FilterTabs, Pill, SectionHead, StatStrip, type PillTone } from "@/compo
 import { DocLink } from "@/components/docs/doc-components";
 import { UnverifiedBadge } from "@/components/ui/unverified";
 import { requireActor } from "@/lib/auth-guard";
-import { asKind, fmtCredits, KIND_LABEL, modelName, needsReference, toneFor, type CreativeKind } from "@/lib/creative-models";
+import { asKind, fmtTl, KIND_LABEL, modelName, needsReference, toneFor, type CreativeKind } from "@/lib/creative-models";
 import { getLandingContent, toVideos } from "@/lib/landing-store";
 import { fmtDateTime } from "@/lib/time";
 import { cn } from "@/lib/cn";
@@ -41,9 +42,10 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const isAdmin = actor.role === "ADMIN";
   const own = actor.role === "BRAND" ? actor.brandId! : actor.role === "INFLUENCER" ? actor.influencerId! : null;
-  // İlk kez açan marka/influencer'a tek seferlik hoş geldin kredisi (idempotent).
+  // İlk kez açan marka/influencer'a tek seferlik hoş geldin bakiyesi (idempotent).
   if (own) await ensureStarterCredits(own);
   const scope = own ? { tenantId: own } : {};
+  const pendingCreditReq = own ? !!(await prisma.creditRequest.findFirst({ where: { tenantId: own, status: "BEKLIYOR" }, select: { id: true } })) : false;
 
   const [models, flags, brands, influencers, accounts, jobs, assets] = await Promise.all([
     prisma.modelRegistry.findMany({ orderBy: [{ kind: "asc" }, { creditsPerUnit: "asc" }] }),
@@ -82,7 +84,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
       ? "Kampanyalarınız için görsel, video ve seslendirme üretin; tek tıkla post metni veya reklama dönüştürün."
       : actor.role === "INFLUENCER"
         ? "İçerikleriniz için görsel, video ve ses üretin; gönderi metnini de birlikte hazırlayalım."
-        : "Marka ve influencerlar adına üretin; kredi ve modelleri tek yerden yönetin.";
+        : "Marka ve influencerlar adına üretin; bakiye ve modelleri tek yerden yönetin.";
 
   const tabs = [
     { id: "uret", label: "Üret", href: "/creative" },
@@ -102,13 +104,14 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
             <p className="text-sm text-fg-muted">{description}</p>
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
-            <span className="text-[12px] text-fg-muted">{isAdmin ? "Tüm hesaplarda kullanılabilir" : "Kullanılabilir krediniz"}</span>
-            <span className="text-3xl font-semibold tabular-nums text-fg">{fmtCredits(available)}</span>
-            {!isAdmin ? <span className="text-[11px] text-fg-passive">Kredi yüklemek için ajansınızla iletişime geçin.</span> : null}
+            <span className="text-[12px] text-fg-muted">{isAdmin ? "Tüm hesaplarda kullanılabilir" : "Kullanılabilir bakiyeniz"}</span>
+            <span className="text-3xl font-semibold tabular-nums text-fg">{fmtTl(available)}</span>
+            {!isAdmin ? <span className="text-[11px] text-fg-passive">Bakiye yüklemek için &quot;Bakiye talebi&quot; gönderin.</span> : null}
           </div>
         </div>
       </header>
 
+      {!isAdmin && own ? <CreditRequestForm pending={pendingCreditReq} /> : null}
       <FilterTabs items={tabs} active={tab} />
 
       {tab === "uret" ? (
@@ -179,9 +182,9 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
         <div className="flex flex-col gap-6">
           <StatStrip
             stats={[
-              { label: "Kredi hesabı", value: String(accounts.length) },
-              { label: "Toplam bakiye", value: fmtCredits(accounts.reduce((s, a) => s + Number(a.balanceCredits), 0)) },
-              { label: "Blokede", value: fmtCredits(accounts.reduce((s, a) => s + Number(a.heldCredits), 0)) },
+              { label: "Hesap", value: String(accounts.length) },
+              { label: "Toplam bakiye", value: fmtTl(accounts.reduce((s, a) => s + Number(a.balanceCredits), 0)) },
+              { label: "Blokede", value: fmtTl(accounts.reduce((s, a) => s + Number(a.heldCredits), 0)) },
               { label: "Son işler", value: String(jobs.length) },
               { label: "Tamamlanan", value: String(completed) },
               { label: "Aktif model", value: String(usable.length) },
@@ -189,19 +192,19 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           />
           <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-              <SectionHead title="Kredi yükle" />
+              <SectionHead title="Bakiye yükle" />
               <TopUpForm label="Hesap" brands={tenants.map((t) => ({ id: t.id, name: `${t.group === "Markalar" ? "Marka" : "Influencer"} · ${t.name}` }))} />
-              <p className="text-[12px] text-fg-passive">1 kredi ≈ 0,05 $ ham maliyet. Yeni marka/influencer ilk girişte {process.env.CREATIVE_STARTER_CREDITS ?? "30"} hoş geldin kredisi alır.</p>
+              <p className="text-[12px] text-fg-passive">Tutarlar TL cinsindendir. Yeni marka/influencer ilk girişte {fmtTl(Number(process.env.CREATIVE_STARTER_CREDITS ?? "5000"))} hoş geldin bakiyesi alır.</p>
             </div>
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-              <SectionHead title="Kredi bakiyeleri" />
+              <SectionHead title="Bakiyeler" />
               <ul className="flex max-h-72 flex-col divide-y divide-line overflow-y-auto text-sm">
                 {accounts.length === 0 ? <li className="py-2 text-fg-muted">Henüz hesap yok.</li> : null}
                 {accounts.map((a) => (
                   <li key={a.tenantId} className="flex justify-between gap-2 py-2">
                     <span className="truncate">{nameOf.get(a.tenantId) ?? a.tenantId.slice(-6)}</span>
                     <span className="shrink-0 tabular-nums text-fg-muted">
-                      {fmtCredits(Number(a.balanceCredits))} kr{Number(a.heldCredits) ? ` · ${fmtCredits(Number(a.heldCredits))} blokede` : ""}
+                      {fmtTl(Number(a.balanceCredits))}{Number(a.heldCredits) ? ` · ${fmtTl(Number(a.heldCredits))} blokede` : ""}
                     </span>
                   </li>
                 ))}
@@ -219,7 +222,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
                     <th className="px-4 py-2 font-medium">Model</th>
                     <th className="px-4 py-2 font-medium">Tür</th>
                     <th className="px-4 py-2 font-medium">Birim fiyat</th>
-                    <th className="px-4 py-2 font-medium">Kredi</th>
+                    <th className="px-4 py-2 font-medium">Fiyat</th>
                     <th className="px-4 py-2 font-medium">Lisans</th>
                     <th className="px-4 py-2 font-medium">Durum</th>
                   </tr>
@@ -233,7 +236,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
                       </td>
                       <td className="px-4 py-2">{m.kind}</td>
                       <td className="px-4 py-2 tabular-nums">{withUnverified(`${usd.format(Number(m.unitPriceUsd))} / ${m.unit}`, m.priceVerified)}</td>
-                      <td className="px-4 py-2 tabular-nums">{fmtCredits(Number(m.creditsPerUnit))}</td>
+                      <td className="px-4 py-2 tabular-nums">{fmtTl(Number(m.creditsPerUnit))}</td>
                       <td className="px-4 py-2">
                         <Pill tone={m.licenseStatus === "cleared" ? "green" : "amber"}>{m.licenseStatus === "cleared" ? "Onaylı" : "Bekliyor"}</Pill>
                       </td>

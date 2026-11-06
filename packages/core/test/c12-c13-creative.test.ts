@@ -12,7 +12,7 @@ describe("creative üretimi", () => {
   beforeAll(async () => {
     await resetDb();
     T = await makeTenant("Creative");
-    await topUp(T.tenantId, 100);
+    await topUp(T.tenantId, 1000);
   });
 
   // Kriter 12
@@ -21,8 +21,8 @@ describe("creative üretimi", () => {
       const job = await submitCreative({ tenantId: T.tenantId, modelKey: "nano-banana-pro", prompt: "Pastel arka planda ruj ürün fotoğrafı", units: 2 });
       expect(job.status).toBe("IN_QUEUE");
       let acc = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: T.tenantId } });
-      expect(Number(acc.heldCredits)).toBe(6);
-      expect(Number(acc.balanceCredits)).toBe(100);
+      expect(Number(acc.heldCredits)).toBe(80);
+      expect(Number(acc.balanceCredits)).toBe(1000);
 
       const r = await handleFalWebhook({ request_id: job.requestId!, status: "OK", payload: { images: [{ url: "https://fal.media/x.png" }] }, metrics: { inference_time: 2.5 } });
       expect(r.status).toBe("COMPLETED");
@@ -32,7 +32,7 @@ describe("creative üretimi", () => {
       expect(await memoryStore.has(`${asset.s3Key}.c2pa.json`)).toBe(true);
       acc = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: T.tenantId } });
       expect(Number(acc.heldCredits)).toBe(0);
-      expect(Number(acc.balanceCredits)).toBe(94);
+      expect(Number(acc.balanceCredits)).toBe(920);
     });
 
     it("webhook retry'ı ikinci varlık ve ikinci tahsilat üretmez", async () => {

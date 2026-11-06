@@ -312,9 +312,9 @@ export default async function BrandProfilePage({
           </Link>
         </Card>
         <Card interactive={false} className="flex flex-col gap-2">
-          <CardTitle>Creative kredisi</CardTitle>
+          <CardTitle>Creative bakiyesi</CardTitle>
           <p className="text-[24px] font-semibold tabular-nums">{credits ? Number(credits.balanceCredits) : 0}</p>
-          <p className="text-[13px] text-fg-muted">{credits ? `${Number(credits.heldCredits)} kredi devam eden işlerde bloke` : "Kredi hesabı yok"}</p>
+          <p className="text-[13px] text-fg-muted">{credits ? `${Number(credits.balanceCredits)} TL bakiye · ${Number(credits.heldCredits)} TL blokede` : "Bakiye hesabı yok"}</p>
           <Link href="/creative" className="text-[13px] underline-offset-4 hover:underline">
             Creative sayfası →
           </Link>

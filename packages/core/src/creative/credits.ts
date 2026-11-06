@@ -55,9 +55,9 @@ export async function topUp(tenantId: string, credits: number) {
 }
 
 /**
- * Hoş geldin kredisi: hesabı hiç olmayan (ilk kez Creative açan) marka/influencer için
- * tek seferlik başlangıç bakiyesi açar. Hesap zaten varsa hiçbir şey yapmaz (idempotent).
+ * Hoş geldin bakiyesi (TL): hesabı hiç olmayan (ilk kez Creative açan) marka/influencer için
+ * tek seferlik başlangıç bakiyesi açar (varsayılan 5000 TL). Hesap zaten varsa hiçbir şey yapmaz.
  */
-export async function ensureStarterCredits(tenantId: string, credits = envInt("CREATIVE_STARTER_CREDITS", 30)) {
+export async function ensureStarterCredits(tenantId: string, credits = envInt("CREATIVE_STARTER_CREDITS", 5000)) {
   return prisma.creditAccount.upsert({ where: { tenantId }, create: { tenantId, balanceCredits: D(credits) }, update: {} });
 }

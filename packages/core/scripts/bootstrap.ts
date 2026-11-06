@@ -32,6 +32,12 @@ async function ensureAuditDb() {
   }
 }
 
+/** Model kaydı fiyatlarını (TL) her başlangıçta güncel tutar. Idempotent. */
+async function syncModels() {
+  const { seedModelRegistry } = await import("../src/creative/registry");
+  await seedModelRegistry();
+  console.log("bootstrap: model kaydı (fiyatlar) güncellendi");
+}
 async function seedIfEmpty() {
   const client = new pg.Client({ connectionString: requireEnv("DATABASE_URL") });
   await client.connect();
@@ -64,9 +70,9 @@ async function seedIfEmpty() {
 }
 
 const cmd = process.argv[2];
-const run = cmd === "ensure-audit-db" ? ensureAuditDb : cmd === "seed-if-empty" ? seedIfEmpty : null;
+const run = cmd === "ensure-audit-db" ? ensureAuditDb : cmd === "seed-if-empty" ? seedIfEmpty : cmd === "sync-models" ? syncModels : null;
 if (!run) {
-  console.error("Kullanım: bootstrap.ts ensure-audit-db | seed-if-empty");
+  console.error("Kullanım: bootstrap.ts ensure-audit-db | seed-if-empty | sync-models");
   process.exit(1);
 }
 run().catch((err) => {

@@ -53,3 +53,5 @@ export function toneFor(kind: CreativeKind, seed: string): string {
   return list[h % list.length]!;
 }
 export const fmtCredits = (n: number) => new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(n);
+/** TL para biçimi (1 kredi = 1 TL). Üretim maliyeti ve bakiye bu birimle gösterilir. */
+export const fmtTl = (n: number) => `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(Math.round(n))} TL`;

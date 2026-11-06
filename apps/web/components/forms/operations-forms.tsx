@@ -80,17 +80,17 @@ export function CreativeForm({ brands, models }: { brands: Brand[]; models: Mode
         <input type="checkbox" name="portrait" className="h-4 w-4 accent-[var(--color-fg)]" />
         Referans görsel tanınabilir bir kişinin portresi
       </label>
-      <p className="text-sm text-fg">Tahmini maliyet: {cost} kredi (başarısız üretimde ücret alınmaz)</p>
+      <p className="text-sm text-fg">Tahmini maliyet: {cost} TL (başarısız üretimde ücret alınmaz)</p>
     </ActionForm>
   );
 }
 
 export function TopUpForm({ brands, label }: { brands: Brand[]; label?: string }) {
   return (
-    <ActionForm action={topUpCredits} resetOnSuccess submitLabel="Kredi yükle" submitSize="sm" aria-label="Kredi yükle">
+    <ActionForm action={topUpCredits} resetOnSuccess submitLabel="Bakiye yükle" submitSize="sm" aria-label="Bakiye yükle">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <BrandSelect brands={brands} label={label} />
-        <Field label="Kredi">{(p) => <Input {...p} name="credits" type="number" min={1} required defaultValue={100} />}</Field>
+        <Field label="Tutar (TL)">{(p) => <Input {...p} name="credits" type="number" min={1} required defaultValue={1000} />}</Field>
       </div>
     </ActionForm>
   );
