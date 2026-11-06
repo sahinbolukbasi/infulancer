@@ -11,6 +11,7 @@ import { mediaSrc } from "@/lib/media";
 import { fmtDate } from "@/lib/time";
 import { CouponTile, couponStatusView } from "./list-items";
 import { CouponCard } from "./pass-cards";
+import { ListToolbar, type ToolbarSelect } from "./list-toolbar";
 import { BackLink, FilterTabs, Pill, SectionHead, StatStrip, TagIcon, type PillTone } from "./primitives";
 
 const FILTERS = [
@@ -26,21 +27,61 @@ function kindLabel(kind: string) {
 }
 
 /** Kupon listesi (admin: tümü; marka: kendi). Kart ızgarası + analitik şeridi. */
-export async function CouponsIndex({ basePath, tenantId, filter, title, description }: { basePath: string; tenantId?: string; filter?: string; title: string; description: string }) {
+export async function CouponsIndex({
+  basePath,
+  tenantId,
+  filter,
+  query,
+  brandFilter,
+  kindFilter,
+  title,
+  description,
+}: {
+  basePath: string;
+  tenantId?: string;
+  filter?: string;
+  query?: string;
+  brandFilter?: string;
+  kindFilter?: string;
+  title: string;
+  description: string;
+}) {
   const coupons = await prisma.coupon.findMany({ where: tenantId ? { tenantId } : {}, orderBy: { createdAt: "desc" }, take: 300, include: { grants: { select: { status: true } } } });
   const brands = new Map((await prisma.brand.findMany({ where: { id: { in: [...new Set(coupons.map((c) => c.tenantId))] } }, select: { id: true, name: true } })).map((b) => [b.id, b.name]));
   const now = new Date().getTime();
+  const brandName = (c: (typeof coupons)[number]) => brands.get(c.tenantId) ?? "Marka";
+  // Arama (başlık, marka, kod, açıklama), marka ve tür filtreleri bucket'lardan ÖNCE uygulanır.
+  const q = (query ?? "").trim().toLocaleLowerCase("tr");
+  const canFilterBrand = !tenantId;
+  const filtered = coupons.filter((c) => {
+    if (canFilterBrand && brandFilter && c.tenantId !== brandFilter) return false;
+    if (kindFilter && c.kind !== kindFilter) return false;
+    if (q) {
+      const hay = `${c.title} ${brandName(c)} ${c.sharedCode ?? ""} ${c.description ?? ""}`.toLocaleLowerCase("tr");
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const searching = !!q || (canFilterBrand && !!brandFilter) || !!kindFilter;
   const buckets = {
-    tumu: coupons,
-    yayinda: coupons.filter((c) => c.status === "YAYINDA"),
-    taslak: coupons.filter((c) => c.status === "TASLAK"),
-    pasif: coupons.filter((c) => c.status === "PASIF"),
+    tumu: filtered,
+    yayinda: filtered.filter((c) => c.status === "YAYINDA"),
+    taslak: filtered.filter((c) => c.status === "TASLAK"),
+    pasif: filtered.filter((c) => c.status === "PASIF"),
   };
   const active = (FILTERS.some((f) => f.id === filter) ? filter : "tumu") as keyof typeof buckets;
   const list = buckets[active];
   const grants = coupons.flatMap((c) => c.grants);
   const used = grants.filter((g) => g.status === "KULLANILDI").length;
   const expiringSoon = coupons.filter((c) => c.status === "YAYINDA" && c.validUntil && c.validUntil.getTime() > now && c.validUntil.getTime() - now < 7 * DAY).length;
+  const keep = (id: string) => `${basePath}?filtre=${id}${q ? `&ara=${encodeURIComponent(q)}` : ""}${canFilterBrand && brandFilter ? `&marka=${brandFilter}` : ""}${kindFilter ? `&tur=${kindFilter}` : ""}`;
+  const brandOptions = canFilterBrand
+    ? [...brands.entries()].map(([id, name]) => ({ value: id, label: name })).sort((a, b) => a.label.localeCompare(b.label, "tr"))
+    : [];
+  const selects: ToolbarSelect[] = [
+    ...(brandOptions.length ? [{ param: "marka", label: "Tüm markalar", options: brandOptions }] : []),
+    { param: "tur", label: "Tüm türler", options: [{ value: "KUPON", label: "Kupon" }, { value: "HEDIYE_CEKI", label: "Hediye çeki" }] },
+  ];
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -65,14 +106,24 @@ export async function CouponsIndex({ basePath, tenantId, filter, title, descript
         />
       ) : null}
 
-      <FilterTabs active={active} items={FILTERS.map((f) => ({ id: f.id, label: f.label, href: `${basePath}?filtre=${f.id}`, count: buckets[f.id].length }))} />
+      {coupons.length ? (
+        <ListToolbar
+          searchPlaceholder="Kupon, marka veya kod ara"
+          selects={selects}
+          initialQuery={query ?? ""}
+          resultLabel={searching ? `${filtered.length} sonuç${q ? ` · “${query}”` : ""}` : undefined}
+        />
+      ) : null}
+      <FilterTabs active={active} items={FILTERS.map((f) => ({ id: f.id, label: f.label, href: keep(f.id), count: buckets[f.id].length }))} />
 
       {list.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line px-6 py-14 text-center">
           <span className="text-fg-muted"><TagIcon /></span>
-          <p className="font-medium text-fg">{coupons.length ? "Bu görünümde kupon yok" : "Henüz kupon yok"}</p>
-          <p className="max-w-sm text-[13px] text-fg-muted">Logolu indirim kuponu veya hediye çeki tasarlayın, içerik üreticilerine gönderin; kartlar cüzdana eklenebilir.</p>
-          <ButtonLink href={`${basePath}/yeni`} size="sm">Kupon oluştur</ButtonLink>
+          <p className="font-medium text-fg">{searching ? "Aramanıza uyan kupon yok" : coupons.length ? "Bu görünümde kupon yok" : "Henüz kupon yok"}</p>
+          <p className="max-w-sm text-[13px] text-fg-muted">
+            {searching ? "Farklı bir anahtar kelime deneyin veya filtreyi temizleyin." : "Logolu indirim kuponu veya hediye çeki tasarlayın, içerik üreticilerine gönderin; kartlar cüzdana eklenebilir."}
+          </p>
+          {!searching ? <ButtonLink href={`${basePath}/yeni`} size="sm">Kupon oluştur</ButtonLink> : null}
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -85,7 +136,7 @@ export async function CouponsIndex({ basePath, tenantId, filter, title, descript
                   id: c.id,
                   href: `${basePath}/${c.id}`,
                   title: c.title,
-                  brandName: brands.get(c.tenantId) ?? "Marka",
+                  brandName: brandName(c),
                   kindLabel: kindLabel(c.kind),
                   valueLabel: couponValueLabel(c.valueType, c.value),
                   status: c.status,
