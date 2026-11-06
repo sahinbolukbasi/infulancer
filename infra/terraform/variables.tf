@@ -97,3 +97,15 @@ variable "integration_secret_keys" {
   type        = list(string)
   default     = ["YOUTUBE_API_KEY"]
 }
+
+variable "domain_name" {
+  description = "Özel alan adı (kök), örn. nordvow.com. Boşsa yalnız *.cloudfront.net kullanılır."
+  type        = string
+  default     = ""
+}
+
+variable "domain_validated" {
+  description = "ACM DNS doğrulaması Cloudflare'de tamamlandıysa true yapın; CloudFront alias + sertifikaya o zaman geçer."
+  type        = bool
+  default     = false
+}

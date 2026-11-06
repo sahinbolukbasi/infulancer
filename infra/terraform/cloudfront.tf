@@ -18,6 +18,8 @@ resource "aws_cloudfront_distribution" "app" {
   price_class     = "PriceClass_100"
   http_version    = "http2and3"
   is_ipv6_enabled = true
+  # Özel alan adları yalnız sertifika doğrulandıktan sonra bağlanır (aksi halde dağıtım hata verir).
+  aliases         = var.domain_validated ? local.domain_aliases : []
 
   origin {
     origin_id   = "alb"
@@ -59,6 +61,11 @@ resource "aws_cloudfront_distribution" "app" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.domain_validated ? null : true
+    acm_certificate_arn            = var.domain_validated ? aws_acm_certificate.app[0].arn : null
+    ssl_support_method             = var.domain_validated ? "sni-only" : null
+    minimum_protocol_version       = var.domain_validated ? "TLSv1.2_2021" : null
   }
+  # Sertifika doğrulanmadan alias bağlanmasın diye doğrulama kaynağına bağımlılık.
+  depends_on = [aws_acm_certificate_validation.app]
 }

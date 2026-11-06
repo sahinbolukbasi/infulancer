@@ -20,5 +20,6 @@ locals {
   name       = "${var.project}-${var.environment}"
   account_id = data.aws_caller_identity.current.account_id
   azs        = slice(data.aws_availability_zones.available.names, 0, 2)
-  app_url    = "https://${aws_cloudfront_distribution.app.domain_name}"
+  # Alan adı doğrulanıp bağlandıysa kök domain; değilse CloudFront varsayılan adı.
+  app_url    = var.domain_validated ? "https://${var.domain_name}" : "https://${aws_cloudfront_distribution.app.domain_name}"
 }

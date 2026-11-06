@@ -27,3 +27,28 @@ output "app_secret_arn" {
 output "resource_group" {
   value = aws_resourcegroups_group.project.name
 }
+
+# --- Alan adı kurulumu (Cloudflare'e elle girilecek kayıtlar) ---
+
+# 1. Adım: ACM doğrulama kayıtları. Cloudflare'de bu CNAME'leri oluşturun (Proxy KAPALI / "DNS only").
+output "acm_validation_records" {
+  description = "Cloudflare'e eklenecek ACM DNS doğrulama CNAME'leri (name -> value). Proxy kapalı olmalı."
+  value = local.domain_enabled ? {
+    for o in aws_acm_certificate.app[0].domain_validation_options :
+    o.domain_name => { name = o.resource_record_name, type = o.resource_record_type, value = o.resource_record_value }
+  } : {}
+}
+
+# 2. Adım: Doğrulandıktan sonra alan adını CloudFront'a yönlendiren kayıtlar.
+output "cloudflare_dns_records" {
+  description = "Alan adını CloudFront'a yönlendirmek için Cloudflare CNAME kayıtları (hedef = CloudFront domaini)."
+  value = local.domain_enabled ? {
+    root = { name = var.domain_name, type = "CNAME", value = aws_cloudfront_distribution.app.domain_name, note = "Kök alan: CNAME flattening gerektirir; Cloudflare bunu destekler. Proxy açık/kapalı tercihe bağlı." }
+    www  = { name = "www.${var.domain_name}", type = "CNAME", value = aws_cloudfront_distribution.app.domain_name }
+  } : {}
+}
+
+output "cloudfront_domain" {
+  description = "CloudFront dağıtım alan adı (DNS hedefi)."
+  value       = aws_cloudfront_distribution.app.domain_name
+}
