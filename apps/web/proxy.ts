@@ -24,7 +24,7 @@ export default auth((req) => {
 
   if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/webhooks/")) return NextResponse.next();
   // Herkese açık bilet/kupon kartları ve görsel uçları (davetlilere gönderilen bağlantılar).
-  if (pathname.startsWith("/bilet/") || pathname.startsWith("/kupon/") || pathname.startsWith("/etkinlik/") || pathname.startsWith("/api/media/") || pathname.startsWith("/api/bilet/") || pathname.startsWith("/api/kupon/") || pathname.startsWith("/api/etkinlik/") || pathname.startsWith("/api/wallet/") || pathname.startsWith("/l/")) return NextResponse.next();
+  if (pathname.startsWith("/bilet/") || pathname.startsWith("/kupon/") || pathname.startsWith("/etkinlik/") || pathname.startsWith("/api/media/") || pathname.startsWith("/api/bilet/") || pathname.startsWith("/api/kupon/") || pathname.startsWith("/api/etkinlik/") || pathname.startsWith("/api/wallet/") || pathname.startsWith("/l/") || pathname.startsWith("/brand/") || pathname === "/opengraph-image" || pathname === "/icon.svg" || pathname === "/apple-icon") return NextResponse.next();
   if (pathname === LANDING && !user?.role) return NextResponse.next();
   const pending = !!user?.role && user.status && user.status !== "ACTIVE";
   if (pathname === "/onay-bekliyor") return user?.role ? NextResponse.next() : NextResponse.redirect(new URL("/giris", req.nextUrl));

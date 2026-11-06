@@ -1,0 +1,13 @@
+<svg width="520" height="128" viewBox="0 0 520 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nordvow">
+  <defs>
+    <linearGradient id="g" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9d4dff"/>
+      <stop offset="0.5" stop-color="#ff2bd6"/>
+      <stop offset="1" stop-color="#00e5ff"/>
+    </linearGradient>
+  </defs>
+  <!-- açık zemin için (koyu yazı) -->
+  <rect x="16" y="24" width="80" height="80" rx="20" fill="url(#g)"/>
+  <path d="M38 90V38h9.8l24.4 24.7V38H82v52h-9.8L48 65.4V90H38Z" fill="#ffffff"/>
+  <text x="120" y="82" font-family="Geist, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="56" font-weight="600" letter-spacing="-1.5" fill="#0b0b14">Nordvow</text>
+</svg>

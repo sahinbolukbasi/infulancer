@@ -14,6 +14,14 @@ export const metadata: Metadata = {
   description: `${BRAND_NAME} — influencer pazarlama ve ajans operasyon platformu`,
   applicationName: BRAND_NAME,
   icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
+  openGraph: {
+    type: "website",
+    siteName: BRAND_NAME,
+    title: BRAND_NAME,
+    description: `${BRAND_NAME} — influencer pazarlama ve ajans operasyon platformu`,
+    locale: "tr_TR",
+  },
+  twitter: { card: "summary_large_image", title: BRAND_NAME, description: `${BRAND_NAME} — influencer pazarlama platformu` },
 };
 
 export const viewport: Viewport = {

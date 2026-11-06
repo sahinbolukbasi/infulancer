@@ -1,0 +1,49 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nordvow — İçerik üreticileriyle ölçülebilir büyüme">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b0b14"/>
+      <stop offset="1" stop-color="#14101f"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9d4dff"/>
+      <stop offset="0.5" stop-color="#ff2bd6"/>
+      <stop offset="1" stop-color="#00e5ff"/>
+    </linearGradient>
+    <linearGradient id="markg" x1="96" y1="200" x2="236" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9d4dff"/>
+      <stop offset="0.5" stop-color="#ff2bd6"/>
+      <stop offset="1" stop-color="#00e5ff"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientTransform="translate(1040 120) rotate(120) scale(420)">
+      <stop stop-color="#ff2bd6" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ff2bd6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientTransform="translate(160 600) rotate(-60) scale(460)">
+      <stop stop-color="#00e5ff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glowA)"/>
+  <rect width="1200" height="630" fill="url(#glowB)"/>
+
+  <!-- Logo monogram -->
+  <rect x="96" y="200" width="140" height="140" rx="36" fill="url(#markg)"/>
+  <path d="M135 300V228h13l44 44.4V228h14v72h-13l-44-44.4V300H135Z" fill="#ffffff"/>
+
+  <!-- Marka adı -->
+  <text x="264" y="300" font-family="Geist, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="96" font-weight="700" letter-spacing="-3" fill="#fafafa">Nordvow</text>
+
+  <!-- Slogan -->
+  <text x="100" y="420" font-family="Geist, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="40" font-weight="600" letter-spacing="-0.5" fill="#fafafa">İçerik üreticileriyle ölçülebilir büyüme</text>
+  <text x="100" y="474" font-family="Geist, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="26" font-weight="400" fill="#a1a1a1">Kampanya, içerik, etkinlik, kupon ve ödeme — tek platformda.</text>
+
+  <!-- Alt marka şeridi -->
+  <rect x="100" y="534" width="520" height="6" rx="3" fill="url(#brand)"/>
+  <text x="1100" y="560" text-anchor="end" font-family="Geist, Inter, system-ui, sans-serif" font-size="24" font-weight="500" fill="#8a8a8f">nordvow.com</text>
+</svg>
