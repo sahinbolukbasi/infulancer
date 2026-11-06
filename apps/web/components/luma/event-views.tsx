@@ -10,6 +10,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { CopyCode } from "@/components/wallet/copy-code";
 import { dateLong, pctOf, rangeLabel, timeShort } from "@/lib/event-format";
 import { mediaSrc } from "@/lib/media";
+import { BRAND_NAME } from "@/lib/brand";
 import { fmtDateTime } from "@/lib/time";
 import { EventListItem, eventStatusView } from "./list-items";
 import { ListToolbar, type ToolbarSelect } from "./list-toolbar";
@@ -49,7 +50,7 @@ export async function EventsIndex({
   const brands = new Map((await prisma.brand.findMany({ where: { id: { in: [...new Set(events.map((e) => e.tenantId).filter((x): x is string => !!x))] } }, select: { id: true, name: true } })).map((b) => [b.id, b.name]));
   const now = new Date();
   const isPast = (e: (typeof events)[number]) => (e.endsAt ?? e.startsAt) < now || e.status === "TAMAMLANDI";
-  const orgName = (e: (typeof events)[number]) => (e.tenantId ? (brands.get(e.tenantId) ?? "Marka") : "Infulancer");
+  const orgName = (e: (typeof events)[number]) => (e.tenantId ? (brands.get(e.tenantId) ?? "Marka") : BRAND_NAME);
   // Arama (başlık, mekan, şehir, düzenleyen) ve marka filtresi bucket'lardan ÖNCE uygulanır;
   // böylece sekme sayıları da filtrelenmiş sonucu yansıtır.
   const q = (query ?? "").trim().toLocaleLowerCase("tr");
@@ -180,7 +181,7 @@ export async function EventManage({ id, basePath, tenantId, tab }: { id: string;
     prisma.influencer.findMany({ where: { id: { in: e.invites.map((i) => i.influencerId).filter((x): x is string => !!x) } }, select: { id: true, name: true } }),
   ]);
   const names = new Map(invitedNames.map((x) => [x.id, x.name]));
-  const orgName = organizer?.name ?? "Infulancer";
+  const orgName = organizer?.name ?? BRAND_NAME;
   const invitedIds = new Set(e.invites.map((i) => i.influencerId).filter(Boolean));
   const pickable = influencers.filter((i) => !invitedIds.has(i.id));
   const going = e.invites.filter((i) => i.status === "KABUL").length;

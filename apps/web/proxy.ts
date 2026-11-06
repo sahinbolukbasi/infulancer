@@ -4,7 +4,7 @@ import { authConfig } from "./auth.config";
 import { isAdminOnlyPath, requiredRoleForPath, roleHome } from "./lib/roles";
 
 const { auth } = NextAuth(authConfig);
-const PUBLIC_PATHS = new Set(["/gizlilik", "/kullanim-kosullari", "/kvkk", "/cerez-politikasi"]);
+const PUBLIC_PATHS = new Set(["/gizlilik", "/kullanim-kosullari", "/kvkk", "/cerez-politikasi", "/destek"]);
 /** Tanıtım sayfası: ziyaretçiye açık; girişli kullanıcıyı sayfa kendi rol ana sayfasına yönlendirir. */
 const LANDING = "/";
 
@@ -14,13 +14,17 @@ const LANDING = "/";
  * doğrulanan webhook uçları (/api/webhooks/*).
  * Her sayfa/aksiyon ayrıca lib/auth-guard ile rolü yeniden doğrular (derinlemesine savunma).
  */
+function withPath(res: NextResponse, pathname: string): NextResponse {
+  res.headers.set("x-pathname", pathname);
+  return res;
+}
 export default auth((req) => {
   const { pathname, search } = req.nextUrl;
   const user = req.auth?.user;
 
   if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/webhooks/")) return NextResponse.next();
   // Herkese açık bilet/kupon kartları ve görsel uçları (davetlilere gönderilen bağlantılar).
-  if (pathname.startsWith("/bilet/") || pathname.startsWith("/kupon/") || pathname.startsWith("/etkinlik/") || pathname.startsWith("/api/media/") || pathname.startsWith("/api/etkinlik/") || pathname.startsWith("/api/wallet/") || pathname.startsWith("/l/")) return NextResponse.next();
+  if (pathname.startsWith("/bilet/") || pathname.startsWith("/kupon/") || pathname.startsWith("/etkinlik/") || pathname.startsWith("/api/media/") || pathname.startsWith("/api/bilet/") || pathname.startsWith("/api/kupon/") || pathname.startsWith("/api/etkinlik/") || pathname.startsWith("/api/wallet/") || pathname.startsWith("/l/")) return NextResponse.next();
   if (pathname === LANDING && !user?.role) return NextResponse.next();
   const pending = !!user?.role && user.status && user.status !== "ACTIVE";
   if (pathname === "/onay-bekliyor") return user?.role ? NextResponse.next() : NextResponse.redirect(new URL("/giris", req.nextUrl));
@@ -54,7 +58,7 @@ export default auth((req) => {
   if (required && required !== effective) {
     return NextResponse.redirect(new URL(roleHome[user.role], req.nextUrl));
   }
-  return NextResponse.next();
+  return withPath(NextResponse.next(), pathname);
 });
 
 export const config = {

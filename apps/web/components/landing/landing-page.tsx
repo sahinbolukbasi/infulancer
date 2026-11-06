@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { BrandBadge, BrandLogo, type BrandLogoName } from "@/components/icons/brand-logos";
 import { LANDING_FEATURES, type LandingReference, type LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
+import { BRAND_NAME } from "@/lib/brand";
 
 export type LandingStats = { influencers: number; followers: number; campaigns: number; published: number };
 
@@ -224,7 +225,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-line bg-glass-strong py-2 pr-2 pl-5 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
             <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] animate-spin-slow" />
-            Infulancer
+            {BRAND_NAME}
           </Link>
           <nav aria-label="Tanıtım" className="hidden gap-7 text-sm text-fg-muted md:flex">
             {[
@@ -532,7 +533,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
         {/* Karşılaştırma */}
         <section className="mx-auto max-w-5xl px-6 py-28">
-          <SectionTitle eyebrow="Neden Infulancer" title="Kampanyanın her adımı tek yerde" />
+          <SectionTitle eyebrow={`Neden ${BRAND_NAME}`} title="Kampanyanın her adımı tek yerde" />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Reveal className="rounded-3xl border border-line bg-glass p-7">
               <h3 className="mb-4 text-sm tracking-wide text-fg-passive uppercase">Platform olmadan</h3>
@@ -546,7 +547,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
               </ul>
             </Reveal>
             <Reveal delay={120} className="relative overflow-hidden rounded-3xl border border-neon-pink/30 bg-gradient-to-br from-fuchsia-500/15 via-indigo-500/10 to-transparent p-7">
-              <h3 className="mb-4 text-sm tracking-wide text-fuchsia-200 uppercase">Infulancer ile</h3>
+              <h3 className="mb-4 text-sm tracking-wide text-fuchsia-200 uppercase">{BRAND_NAME} ile</h3>
               <ul className="flex flex-col gap-3">
                 {["Filtreyle doğru profil, tek tıkla teklif", "Brief, onay ve takvim tek panelde", "Metrikler resmî API'lerden otomatik", "Hakediş, ödeme listesi ve marka raporu hazır"].map((t, i) => (
                   <li key={t} className="flex items-start gap-3">
@@ -610,7 +611,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-[13px] text-fg-passive">
-          <span>© {new Date().getFullYear()} Infulancer</span>
+          <span>© {new Date().getFullYear()} {BRAND_NAME}</span>
           <nav aria-label="Yasal" className="flex gap-6">
             <Link href="/gizlilik" className="hover:text-fg">
               Gizlilik

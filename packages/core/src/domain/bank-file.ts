@@ -1,4 +1,5 @@
 import { envStr } from "../env";
+import { BRAND_NAME } from "../brand";
 
 /**
  * Banka ödeme talimatı dosyaları. Platform para göndermez; bu dosyalar
@@ -21,7 +22,7 @@ export type Debtor = { name: string; iban: string; bic: string };
 
 export function agencyDebtor(): Debtor {
   return {
-    name: envStr("AGENCY_NAME", "Infulancer Ajans"),
+    name: envStr("AGENCY_NAME", `${BRAND_NAME} Ajans`),
     iban: envStr("AGENCY_IBAN", "TR000000000000000000000000"),
     bic: envStr("AGENCY_BIC", "NOTPROVIDED"),
   };

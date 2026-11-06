@@ -3,12 +3,13 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { themeInitScript } from "@/lib/theme";
 import { CookieBanner } from "@/components/legal/cookie-banner";
+import { BRAND_NAME } from "@/lib/brand";
 
 const geistSans = Geist({ subsets: ["latin", "latin-ext"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: { default: "Infulancer", template: "%s · Infulancer" },
+  title: { default: BRAND_NAME, template: `%s · ${BRAND_NAME}` },
   description: "Influencer ajansı operasyon paneli",
 };
 

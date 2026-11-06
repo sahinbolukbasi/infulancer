@@ -8,6 +8,10 @@ import { PanelIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { Tooltip } from "@/components/ui/tooltip";
 import { isActive, navByRole } from "./nav";
+import { isPathHidden, type PagePermissionRow } from "@infulancer/core/access/page-visibility";
+import type { Role as CoreRole } from "@infulancer/core/enums";
+export type PermCtx = { perms: PagePermissionRow[]; role: CoreRole; userId: string };
+import { BRAND_NAME } from "@/lib/brand";
 
 const STORAGE_KEY = "infulancer.sidebar.collapsed";
 const EVENT = "infulancer:sidebar";
@@ -39,10 +43,10 @@ function setCollapsed(value: boolean) {
 }
 
 /** Sol sabit kenar çubuğu: 240px, 64px'e daraltılabilir (durum localStorage'da). md altında gizli. */
-export function Sidebar({ role }: { role: Role }) {
+export function Sidebar({ role, perm }: { role: Role; perm?: PermCtx }) {
   const pathname = usePathname();
   const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
-  const items = navByRole[role];
+  const items = navByRole[role].filter((i) => !perm?.perms.length || !isPathHidden(perm.perms, perm.role, perm.userId, i.href));
 
   return (
     <aside
@@ -54,7 +58,7 @@ export function Sidebar({ role }: { role: Role }) {
       <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center" : "justify-between px-4")}>
         {collapsed ? null : (
           <Link href={items[0]?.href ?? "/"} className="text-[15px] font-semibold tracking-tight text-fg">
-            Infulancer
+            {BRAND_NAME}
           </Link>
         )}
         <button

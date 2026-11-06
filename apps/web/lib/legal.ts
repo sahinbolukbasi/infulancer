@@ -1,4 +1,6 @@
+
 import { z } from "zod";
+import { BRAND_NAME, LEGAL_NAME } from "@infulancer/core/brand";
 import { prisma } from "@infulancer/core/db";
 
 /** Yasal metinlerde kullanılan veri sorumlusu bilgileri. Admin → Tanıtım sayfası → "Şirket bilgileri"nden düzenlenir. */
@@ -18,8 +20,8 @@ export const legalEntitySchema = z.object({
 export type LegalEntity = z.infer<typeof legalEntitySchema>;
 const KEY = "legal.entity";
 export const LEGAL_DEFAULTS: LegalEntity = {
-  title: "Infulancer Teknoloji ve Danışmanlık A.Ş.",
-  shortName: "Infulancer",
+  title: LEGAL_NAME,
+  shortName: BRAND_NAME,
   mersis: "",
   taxOffice: "",
   taxNumber: "",

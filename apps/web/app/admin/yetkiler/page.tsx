@@ -6,6 +6,8 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { requireAdmin } from "@/lib/auth-guard";
+import type { PagePermissionRow } from "@infulancer/core/access/page-visibility";
+import { PageVisibilityManager } from "@/components/admin/page-visibility-manager";
 export const metadata: Metadata = { title: "Rol ve yetkiler" };
 
 type Access = "full" | "own" | "read" | "none";
@@ -47,6 +49,7 @@ function Cell({ a }: { a: Access }) {
 export default async function PermissionsPage() {
   await requireAdmin();
   const counts = await prisma.user.groupBy({ by: ["role", "status"], _count: true });
+  const perms: PagePermissionRow[] = await prisma.pagePermission.findMany({ where: { scopeType: "ROLE" }, select: { id: true, scopeType: true, scopeId: true, pathPrefix: true, allowed: true } });
   const n = (role: string, status?: string) => counts.filter((c) => c.role === role && (!status || c.status === status)).reduce((s, c) => s + c._count, 0);
   const roles = [
     { id: "ADMIN", title: "Admin", text: "Platform sahibi: tüm modüller, kullanıcılar, roller, finans, tanıtım sayfası." },
@@ -120,6 +123,13 @@ export default async function PermissionsPage() {
         </Link>
         .
       </p>
+      <section className="flex flex-col gap-3 border-t border-border pt-6" aria-label="Sayfa görünürlüğü">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-fg">Sayfa görünürlüğü</h2>
+          <p className="text-sm text-fg-muted">Rollere göre menü sayfalarını açıp kapatın. Kapatılan sayfa o rolde menüden kalkar ve erişim engellenir. Bu ayar koddaki rol kurallarını gevşetmez, yalnızca daraltır.</p>
+        </div>
+        <PageVisibilityManager perms={perms} />
+      </section>
     </div>
   );
 }

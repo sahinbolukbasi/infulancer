@@ -37,6 +37,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/creative", label: "Creative", icon: SparkleIcon, section: "İçerik ve AI" },
     { href: "/admin/ai", label: "AI sağlayıcıları", icon: SparkleIcon, section: "İçerik ve AI" },
     { href: "/admin/bildirimler", label: "Bildirimler", icon: BellIcon, section: "İçerik ve AI" },
+    { href: "/admin/linkler", label: "Linkler", icon: LinkIcon, section: "İçerik ve AI" },
     { href: "/admin/etkinlikler", label: "Etkinlikler", icon: CalendarIcon, section: "İçerik ve AI" },
     { href: "/admin/kuponlar", label: "Kuponlar", icon: WalletIcon, section: "İçerik ve AI" },
     { href: "/admin/finans", label: "Finans", icon: WalletIcon, section: "Para ve uyum" },
@@ -48,6 +49,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/admin/agent", label: "Agent merkezi", icon: SparkleIcon, section: "Yönetim" },
     { href: "/admin/tanitim", label: "Tanıtım sayfası", icon: GridIcon, section: "Yönetim" },
     { href: "/docs", label: "Dokümantasyon", icon: FileIcon, section: "Yönetim" },
+    { href: "/admin/destek", label: "Destek talepleri", icon: AlertIcon, section: "Yönetim" },
   ],
   // Ajans çalışanı: yönetici ekranları (kullanıcılar, yetkiler, finans, tanıtım, AI sağlayıcıları) hariç.
   AGENCY: [],
@@ -63,6 +65,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/marka/kanallar", label: "Kanallar ve asistan", icon: LinkIcon },
     { href: "/profil", label: "Profilim", icon: UserIcon },
     { href: "/docs", label: "Yardım", icon: FileIcon },
+    { href: "/destek", label: "Destek", icon: AlertIcon },
   ],
   INFLUENCER: [
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
@@ -72,6 +75,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/influencer/odemeler", label: "Ödemeler", icon: WalletIcon },
     { href: "/profil", label: "Profilim", icon: UserIcon },
     { href: "/docs", label: "Rehber", icon: FileIcon },
+    { href: "/destek", label: "Destek", icon: AlertIcon },
   ],
 };
 navByRole.AGENCY = navByRole.ADMIN.filter((i) => !["/admin/kullanicilar", "/admin/yetkiler", "/admin/tanitim", "/admin/finans", "/admin/ai"].includes(i.href));

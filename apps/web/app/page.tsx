@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BRAND_NAME } from "@/lib/brand";
 import { redirect } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { LandingPage, type LandingStats } from "@/components/landing/landing-page";
@@ -6,7 +7,7 @@ import { getActor } from "@/lib/auth-guard";
 import { getLandingContent, toReferences, toVideos } from "@/lib/landing-store";
 import { roleHome } from "@/lib/roles";
 export const metadata: Metadata = {
-  title: { absolute: "Infulancer · Influencer marketing platformu" },
+  title: { absolute: `${BRAND_NAME} · Influencer marketing platformu` },
   description: "Influencer kampanyalarını brief'ten ödemeye kadar tek panelden yönetin: doğru içerik üreticisi, ölçülebilir sonuç.",
 };
 export const dynamic = "force-dynamic";

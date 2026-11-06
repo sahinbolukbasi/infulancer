@@ -1,4 +1,5 @@
 import { envStr } from "../env";
+import { BRAND_NAME } from "../brand";
 import { appleWalletConfigured, type PassData } from "./passes";
 
 /**
@@ -17,7 +18,7 @@ export function applePassJson(data: PassData, serial: string): Record<string, un
     formatVersion: 1,
     passTypeIdentifier: passTypeId,
     teamIdentifier: teamId,
-    organizationName: "Infulancer",
+    organizationName: BRAND_NAME,
     description: data.title,
     serialNumber: serial,
     backgroundColor: data.accentColor ?? "rgb(255,43,214)",

@@ -32,3 +32,8 @@ export async function resolveAndCount(slug: string): Promise<string | null> {
   await prisma.shortLink.update({ where: { id: link.id }, data: { clicks: { increment: 1 }, lastClickAt: new Date() } });
   return link.targetUrl;
 }
+
+/** Kısa linki siler (yönetici). */
+export async function deleteShortLink(id: string): Promise<void> {
+  await prisma.shortLink.deleteMany({ where: { id } });
+}

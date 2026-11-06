@@ -2,6 +2,7 @@
  * iCalendar (.ics) üretimi — Apple/Google/Outlook takvimlerine "etkinliği ekle" için.
  * Harici bağımlılık yok; RFC 5545 temel alanları. Dosya indirilince kullanıcının takvimine düşer.
  */
+import { BRAND_NAME } from "../brand";
 export type IcsEvent = {
   uid: string;
   title: string;
@@ -25,7 +26,7 @@ export function buildIcs(e: IcsEvent): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Infulancer//Etkinlik//TR",
+    `PRODID:-//${BRAND_NAME}//Etkinlik//TR`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

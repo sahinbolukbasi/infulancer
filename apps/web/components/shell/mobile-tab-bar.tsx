@@ -5,12 +5,14 @@ import { usePathname } from "next/navigation";
 import type { Role } from "@infulancer/core/enums";
 import { cn } from "@/lib/cn";
 import { isActive, navByRole } from "./nav";
+import { isPathHidden } from "@infulancer/core/access/page-visibility";
+import type { PermCtx } from "./sidebar";
 
 /** Mobilde (< md) kenar çubuğunun yerini alan alt sekme çubuğu. */
-export function MobileTabBar({ role }: { role: Role }) {
+export function MobileTabBar({ role, perm }: { role: Role; perm?: PermCtx }) {
   const pathname = usePathname();
   // Admin'de öğe çok: alt çubukta ilk 5, gerisi kenar çubuğu/arama ile.
-  const items = navByRole[role].slice(0, 5);
+  const items = navByRole[role].filter((i) => !perm?.perms.length || !isPathHidden(perm.perms, perm.role, perm.userId, i.href)).slice(0, 5);
   return (
     <nav
       aria-label="Alt gezinme"

@@ -5,7 +5,7 @@ import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
 import { NOTIF_EVENT_MAP } from "@infulancer/core/notify/catalog";
 import { dispatchNotification, recipientsFromUserIds } from "@infulancer/core/notify/dispatch";
-import { createShortLink } from "@infulancer/core/notify/shortlink";
+import { createShortLink, deleteShortLink } from "@infulancer/core/notify/shortlink";
 import { DomainError } from "@infulancer/core/domain/errors";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, revalidateAll, str } from "@/lib/action-utils";
@@ -83,5 +83,15 @@ export async function createShortLinkAction(_p: ActionState, fd: FormData): Prom
     const link = await createShortLink(url, { label, createdByUserId: actor.userId });
     revalidateAll();
     return { ok: true, message: `Kısa link hazır: ${link.shortUrl}` };
+  });
+}
+
+/** Kısa linki siler. */
+export async function deleteShortLinkAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  await requireActor("ADMIN");
+  return attempt(async () => {
+    await deleteShortLink(str(fd, "id"));
+    revalidateAll();
+    return { ok: true, message: "Link silindi." };
   });
 }

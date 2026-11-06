@@ -8,6 +8,7 @@ import { askCopilot, requestCampaignAction } from "@/lib/actions/copilot";
 import { saveCampaign } from "@/lib/actions/campaigns";
 import type { CopilotAnswer, CopilotWelcome, NextStep } from "@/lib/copilot";
 import { cn } from "@/lib/cn";
+import { BRAND_NAME } from "@/lib/brand";
 
 type Msg =
   | { id: string; from: "user"; text: string }
@@ -178,7 +179,7 @@ export function CopilotChat({ welcome, compact = false, onClose }: { welcome: Co
             <SparkleIcon size={18} />
           </span>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold">Infulancer Asistan</span>
+            <span className="text-sm font-semibold">{BRAND_NAME} Asistan</span>
             <span className="text-[11px] text-fg-passive">{welcome.role === "ADMIN" ? "Ajans" : welcome.role === "BRAND" ? "Marka" : "İçerik üreticisi"} modu · yönlendirme ve hızlı başlatma</span>
           </div>
         </div>

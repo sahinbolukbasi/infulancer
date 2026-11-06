@@ -9,6 +9,8 @@ import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CopilotLauncher } from "@/components/copilot/copilot-launcher";
 import { Sidebar } from "./sidebar";
+import { loadPagePermissions, type PagePermissionRow } from "@infulancer/core/access/page-permissions";
+import { BRAND_NAME } from "@/lib/brand";
 
 /**
  * Uygulama iskeleti: kenar çubuğu (md+) / alt sekme çubuğu (mobil), 64px başlık
@@ -18,6 +20,9 @@ export async function AppShell({ role, children }: { role: Role; children: React
   const actor = await requireActor(role);
   const user = await getSessionUser();
   const navRole: Role = actor.staffRole ?? role;
+  // Yöneticinin gizlediği menü öğelerini client tarafta sakla (daraltıcı katman; kod kuralları değişmez).
+  const perms: PagePermissionRow[] = await loadPagePermissions(actor.role, actor.userId);
+  const permCtx = { perms, role: actor.role, userId: actor.userId };
 
   return (
     <div className="relative isolate flex min-h-dvh bg-bg text-fg">
@@ -32,10 +37,10 @@ export async function AppShell({ role, children }: { role: Role; children: React
       >
         İçeriğe geç
       </a>
-      <Sidebar role={navRole} />
+      <Sidebar role={navRole} perm={permCtx} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line bg-bg/70 px-4 backdrop-blur-xl md:px-8">
-          <span className="text-[15px] font-semibold tracking-tight md:hidden">Infulancer</span>
+          <span className="text-[15px] font-semibold tracking-tight md:hidden">{BRAND_NAME}</span>
           {role === "ADMIN" ? (
             <form action="/admin/ara" method="get" role="search" className="hidden max-w-md flex-1 sm:block">
               <label htmlFor="global-search" className="sr-only">
@@ -64,7 +69,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
           {children}
         </main>
       </div>
-      <MobileTabBar role={navRole} />
+      <MobileTabBar role={navRole} perm={permCtx} />
       <CopilotLauncher />
     </div>
   );

@@ -1,4 +1,5 @@
 import type { Actor } from "@infulancer/core/access/actor";
+import { BRAND_NAME } from "@/lib/brand";
 import { CopilotChat } from "@/components/copilot/copilot-chat";
 import { copilotWelcome } from "@/lib/copilot";
 
@@ -6,7 +7,7 @@ import { copilotWelcome } from "@/lib/copilot";
 export async function CopilotHome({ actor }: { actor: Actor }) {
   const welcome = await copilotWelcome(actor);
   return (
-    <section aria-label="Infulancer Asistan" className="relative overflow-hidden rounded-3xl border border-line bg-surface">
+    <section aria-label={`${BRAND_NAME} Asistan`} className="relative overflow-hidden rounded-3xl border border-line bg-surface">
       <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-neon-pink/20 blur-3xl" />
       <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-neon-cyan/15 blur-3xl" />
       <div className="relative">

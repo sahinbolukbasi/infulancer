@@ -9,6 +9,7 @@ import { TicketCard } from "@/components/luma/pass-cards";
 import { QrImage, WalletButtons } from "@/components/wallet/pass-card";
 import { rangeLabel } from "@/lib/event-format";
 import { mediaSrc } from "@/lib/media";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Etkinlik bileti" };
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     ticket.invite?.influencerId ? prisma.influencer.findUnique({ where: { id: ticket.invite.influencerId }, select: { name: true } }) : null,
   ]);
   const holder = influencer?.name ?? ticket.holderName;
-  const organizer = brand?.name ?? "Infulancer";
+  const organizer = brand?.name ?? BRAND_NAME;
   const links = await buildWalletLinks("ticket", ticket.id, ticket.code);
   const map = mapLinks({ latitude: e.latitude, longitude: e.longitude, address: e.address, venueName: e.venueName });
   const location = [e.venueName, e.address, e.city].filter(Boolean).join(", ");
@@ -56,6 +57,9 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
         <section className="w-full rounded-2xl border border-line bg-surface p-4" aria-label="Cüzdana ekle">
           <WalletButtons appleUrl={links.appleUrl} googleUrl={links.googleUrl} live={links.live} />
+          <a href={`/api/bilet/${ticket.id}/pdf`} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-[13px] font-medium text-fg hover:border-line-strong">
+            PDF olarak indir
+          </a>
         </section>
 
         <section className="flex w-full flex-col gap-3 rounded-2xl border border-line bg-surface p-4" aria-label="Takvim ve konum">

@@ -6,6 +6,7 @@ import { SparkleIcon } from "@/components/icons";
 import { getCopilotWelcome } from "@/lib/actions/copilot";
 import type { CopilotWelcome } from "@/lib/copilot";
 import { cn } from "@/lib/cn";
+import { BRAND_NAME } from "@/lib/brand";
 
 const INTRO_KEY = "infl-copilot-intro";
 const HOMES = new Set(["/admin", "/marka", "/influencer"]);
@@ -109,7 +110,7 @@ export function CopilotLauncher() {
         ref={panelRef}
         role="dialog"
         aria-modal="false"
-        aria-label="Infulancer Asistan"
+        aria-label={`${BRAND_NAME} Asistan`}
         hidden={!open}
         className="fixed inset-x-2 bottom-2 z-50 flex h-[min(720px,calc(100dvh-16px))] flex-col overflow-hidden rounded-3xl border border-line bg-bg/95 backdrop-blur-xl animate-modal-in md:inset-x-auto md:right-6 md:bottom-6 md:w-[440px]"
       >

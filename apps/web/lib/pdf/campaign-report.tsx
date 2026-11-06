@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Document, Font, Link, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { BrandCampaignReport } from "@infulancer/core/access/brand-report";
 import { kpiLabels, kpiStatusLabels } from "@infulancer/core/domain/campaign-score";
+import { BRAND_NAME } from "@infulancer/core/brand";
 import {
   campaignStatusLabels,
   contentTypeLabels,
@@ -106,7 +107,7 @@ function CampaignReportDocument({ report, generatedAt }: { report: BrandCampaign
   );
 
   return (
-    <Document title={`${campaign.name} – Kampanya raporu`} author="Infulancer" language="tr">
+    <Document title={`${campaign.name} – Kampanya raporu`} author={BRAND_NAME} language="tr">
       <Page size="A4" style={s.cover}>
         <View>
           <Text style={s.coverKicker}>KAMPANYA RAPORU</Text>

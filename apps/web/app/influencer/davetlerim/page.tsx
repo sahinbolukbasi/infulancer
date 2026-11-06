@@ -7,6 +7,7 @@ import { CouponTile } from "@/components/luma/list-items";
 import { DateBadge, Pill, type PillTone } from "@/components/luma/primitives";
 import { Tabs } from "@/components/ui/tabs";
 import { requireActor } from "@/lib/auth-guard";
+import { BRAND_NAME } from "@/lib/brand";
 import { rangeLabel } from "@/lib/event-format";
 import { mediaSrc } from "@/lib/media";
 import { fmtDate } from "@/lib/time";
@@ -65,7 +66,7 @@ export default async function InfluencerInvitesPage({ searchParams }: { searchPa
                 </div>
                 <Link href={`/etkinlik/${e.id}`} className="text-[17px] font-semibold leading-snug text-fg underline-offset-4 hover:underline">{e.title}</Link>
                 <span className="text-[13px] text-fg-muted">{rangeLabel(e.startsAt, e.endsAt)}</span>
-                <span className="truncate text-[13px] text-fg-muted">{e.tenantId ? (brands.get(e.tenantId) ?? "Marka") : "Infulancer"}{e.venueName || e.city ? ` · ${[e.venueName, e.city].filter(Boolean).join(", ")}` : ""}</span>
+                <span className="truncate text-[13px] text-fg-muted">{e.tenantId ? (brands.get(e.tenantId) ?? "Marka") : BRAND_NAME}{e.venueName || e.city ? ` · ${[e.venueName, e.city].filter(Boolean).join(", ")}` : ""}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   {!isPast && e.status !== "IPTAL" && inv.status !== "IPTAL" ? <AttendanceToggle inviteId={inv.id} current={inv.status} /> : null}
                   {ticket ? (

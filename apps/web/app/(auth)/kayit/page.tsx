@@ -4,6 +4,7 @@ import { checkInvite } from "@infulancer/core/access/invites";
 import { categoryTree } from "@infulancer/core/domain/categories";
 import { SignupForm } from "@/components/signup/signup-form";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { BRAND_NAME } from "@/lib/brand";
 import { getLandingContent, toVideos } from "@/lib/landing-store";
 
 export const metadata: Metadata = { title: "Davetli kayıt" };
@@ -22,7 +23,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
       videos={videos}
       wide={ok}
       title={ok ? "Başvurunuzu tamamlayın" : "Davetli kayıt"}
-      subtitle="Infulancer’a yalnız davetle katılınır. Başvurunuz ajans tarafından incelenir; onaylanınca panelinize erişebilirsiniz."
+      subtitle={`${BRAND_NAME}’a yalnız davetle katılınır. Başvurunuz ajans tarafından incelenir; onaylanınca panelinize erişebilirsiniz.`}
       footer={
         <>
           Hesabınız var mı?{" "}

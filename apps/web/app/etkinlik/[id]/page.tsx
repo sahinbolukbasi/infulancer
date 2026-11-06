@@ -8,6 +8,7 @@ import { DateBadge, InfoRow, PersonIcon, PinIcon, Pill } from "@/components/luma
 import { dateLong, rangeLabel } from "@/lib/event-format";
 import { getActor } from "@/lib/auth-guard";
 import { mediaSrc } from "@/lib/media";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -23,7 +24,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ id
   if (!e) notFound();
   const [brand, actor] = await Promise.all([e.tenantId ? prisma.brand.findUnique({ where: { id: e.tenantId }, select: { name: true } }) : null, getActor().catch(() => null)]);
   const myInvite = actor?.influencerId ? await prisma.eventInvite.findFirst({ where: { eventId: e.id, influencerId: actor.influencerId }, include: { ticket: true } }) : null;
-  const organizer = brand?.name ?? "Infulancer";
+  const organizer = brand?.name ?? BRAND_NAME;
   const cover = mediaSrc(e.coverImageKey);
   const gallery = (e.imageKeys ?? []).map((k) => mediaSrc(k)).filter((x): x is string => !!x);
   const map = mapLinks({ latitude: e.latitude, longitude: e.longitude, address: e.address, venueName: e.venueName });

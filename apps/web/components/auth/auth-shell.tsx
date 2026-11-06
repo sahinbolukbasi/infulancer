@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ReelCard } from "@/components/landing/reel-card";
 import type { LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
+import { BRAND_NAME } from "@/lib/brand";
 
 /**
  * Giriş / kayıt / onay ekranlarının ortak çerçevesi: solda animasyonlu marka paneli,
@@ -38,7 +39,7 @@ export function AuthShell({
       <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line p-12 lg:flex">
         <Link href="/" className="flex w-fit items-center gap-2 text-lg font-semibold tracking-tight">
           <span aria-hidden className="h-7 w-7 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] animate-spin-slow" />
-          Infulancer
+          {BRAND_NAME}
         </Link>
         <div className="relative mx-auto flex h-[420px] w-full max-w-[380px] items-center justify-center">
           <div aria-hidden className="absolute inset-6 rounded-full bg-[conic-gradient(from_0deg,#ff2bd633,#00e5ff33,#a3ff1233,#ff2bd633)] blur-2xl animate-spin-slow" />
@@ -69,7 +70,7 @@ export function AuthShell({
           <div className="flex items-center justify-between gap-3">
             <Link href="/" className="flex w-fit items-center gap-2 text-lg font-semibold tracking-tight lg:invisible">
               <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)]" />
-              Infulancer
+              {BRAND_NAME}
             </Link>
             <ThemeToggle />
           </div>

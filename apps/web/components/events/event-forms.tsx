@@ -2,6 +2,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { ActionForm } from "@/components/forms/action-form";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui/form";
+import { BRAND_NAME } from "@/lib/brand";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { MapPicker } from "@/components/ui/map-picker";
 import { InfluencerPicker, type PickItem } from "@/components/ui/influencer-picker";
@@ -65,7 +66,7 @@ export function EventCreateForm({ isAdmin, brands, organizerName }: { isAdmin: b
             <Field label="Düzenleyen">
               {(p) => (
                 <Select {...p} name="tenantId" defaultValue="" onChange={(e) => setOrg(brands.find((b) => b.id === e.target.value)?.name ?? organizerName)}>
-                  <option value="">Ajans (Infulancer)</option>
+                  <option value="">Ajans ({BRAND_NAME})</option>
                   {brands.map((b) => (
                     <option key={b.id} value={b.id}>{b.name}</option>
                   ))}

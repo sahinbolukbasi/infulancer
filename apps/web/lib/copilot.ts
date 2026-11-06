@@ -4,6 +4,7 @@ import { formatKurus } from "@infulancer/core/domain/labels";
 import { getLlm } from "@infulancer/core/llm/index";
 import { parseJsonObject } from "@infulancer/core/llm/bedrock";
 import { envStr } from "@infulancer/core/env";
+import { BRAND_NAME } from "@infulancer/core/brand";
 import { allowedActions, COPILOT_ACTIONS, COPILOT_SUGGESTIONS, matchIntent, type CopilotAction, type CopilotForm, type CopilotRole } from "@infulancer/core/copilot/intents";
 
 export type NextStep = { title: string; detail: string; href: string; tone: "critical" | "warn" | "info" | "ok" };
@@ -144,7 +145,7 @@ export async function copilotAnswer(actor: Actor, message: string, history: { ro
     const res = await getLlm().completeText({
       promptVersion: "copilot-v1",
       system:
-        `Sen Infulancer influencer marketing platformunun Türkçe asistanısın. Kullanıcı bir ${ROLE_TR[role]}. ` +
+        `Sen ${BRAND_NAME} influencer marketing platformunun Türkçe asistanısın. Kullanıcı bir ${ROLE_TR[role]}. ` +
         "Kısa, net ve adım adım yanıt ver (en fazla 6 cümle). Yalnız platformdaki özellikleri anlat; bilmediğin bir şeyi uydurma; hukuki/mali tavsiye verme. " +
         "Yanıtı yalnız şu JSON olarak döndür: {\"reply\": string, \"actions\": string[] (en fazla 3, yalnız listedeki kimlikler), \"form\": \"campaign-start\" | \"campaign-request\" | null}. " +
         `campaign-start yalnız ajans yöneticisi, campaign-request yalnız marka için geçerlidir.`,

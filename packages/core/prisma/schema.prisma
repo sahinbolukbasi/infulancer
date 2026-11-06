@@ -1789,3 +1789,54 @@ model ShortLink {
   createdAt  DateTime  @default(now()) @map("created_at")
   @@map("short_links")
 }
+
+/// Kullanıcı destek talebi (hata bildirimi, soru, istek). Admin gelen kutusunda yönetilir.
+model SupportTicket {
+  id         String              @id @default(cuid())
+  userId     String?             @map("user_id")
+  role       String?
+  name       String
+  email      String
+  category   SupportCategory     @default(SORU)
+  subject    String
+  message    String
+  pageUrl    String?             @map("page_url")
+  status     SupportStatus       @default(ACIK)
+  adminNote  String?             @map("admin_note")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("support_tickets")
+}
+
+enum SupportCategory {
+  HATA
+  SORU
+  ISTEK
+  DIGER
+}
+
+enum SupportStatus {
+  ACIK
+  INCELEMEDE
+  COZULDU
+  KAPANDI
+}
+
+/// Rol veya kişi bazlı sayfa görünürlüğü. Yalnız DARALTIR: koddaki rol kuralları üstte kalır.
+/// scopeType=ROLE ise scopeId bir Role değeri; scopeType=USER ise scopeId bir user id.
+/// allowed=false bir yolu gizler/engeller; allowed=true bir kişiye özel istisnayı geri açar.
+model PagePermission {
+  id         String   @id @default(cuid())
+  scopeType  String   @map("scope_type")
+  scopeId    String   @map("scope_id")
+  pathPrefix String   @map("path_prefix")
+  allowed    Boolean  @default(false)
+  updatedByUserId String? @map("updated_by_user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  @@unique([scopeType, scopeId, pathPrefix])
+  @@index([scopeType, scopeId])
+  @@map("page_permissions")
+}

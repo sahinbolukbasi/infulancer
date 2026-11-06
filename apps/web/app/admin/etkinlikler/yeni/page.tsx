@@ -3,6 +3,7 @@ import { prisma } from "@infulancer/core/db";
 import { EventCreateForm } from "@/components/events/event-forms";
 import { BackLink } from "@/components/luma/primitives";
 import { requireActor } from "@/lib/auth-guard";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Yeni etkinlik" };
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export default async function AdminNewEventPage() {
         <h1 className="text-title text-fg">Yeni etkinlik</h1>
         <p className="text-[14px] text-fg-muted">Taslak olarak oluşturulur; yayınlayıp misafir davet etmek için yönetim sayfasına geçersiniz.</p>
       </div>
-      <EventCreateForm isAdmin brands={brands} organizerName="Infulancer" />
+      <EventCreateForm isAdmin brands={brands} organizerName={BRAND_NAME} />
     </div>
   );
 }
