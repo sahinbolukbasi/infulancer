@@ -6,6 +6,13 @@ image_tag         = "latest"
 app_desired_count = 1
 seed_on_start     = true
 
-# Bedrock: konsolda model erişimi açıldıktan sonra "bedrock" yapın.
-llm_provider          = "mock"
+# AI (Bedrock): model erişimi açık; canlıda "bedrock" kullanılır.
+llm_provider          = "bedrock"
 bedrock_text_model_id = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+
+# Özel alan adı (nordvow.com) — CloudFront + ACM (us-east-1) + Cloudflare DNS.
+# ACM sertifikası doğrulandıktan (ISSUED) sonra domain_validated=true yapılır.
+# ÖNEMLİ: Sonraki deploy'larda bu üç değeri geçmeyi unutmayın, yoksa domain/Bedrock düşer:
+#   -var domain_name=nordvow.com -var domain_validated=true -var llm_provider=bedrock
+domain_name      = "nordvow.com"
+domain_validated = true

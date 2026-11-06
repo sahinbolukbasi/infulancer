@@ -1,91 +1,40 @@
 ================================================================================
- NORDVOW.COM — CLOUDFLARE DNS KURULUM TALİMATLARI
+ NORDVOW.COM — DURUM: YAYINDA (CloudFront + ACM + Cloudflare)
 ================================================================================
-Hedef: nordvow.com ve www.nordvow.com -> AWS CloudFront (d226kw9nfbh4rs.cloudfront.net)
-Durum: ACM sertifikası oluşturuldu, DNS doğrulaması bekleniyor (PENDING_VALIDATION)
-Sertifika ARN: arn:aws:acm:us-east-1:865369794421:certificate/d59be12b-621e-4ca1-ae8f-b7c9d43cc5bb
-Bölge: us-east-1 (CloudFront için zorunlu)
-Oluşturulma: iki aşamalı kurulum
+nordvow.com ve www.nordvow.com  ->  AWS CloudFront (d226kw9nfbh4rs.cloudfront.net)
+ACM sertifikası: ISSUED (us-east-1), CloudFront'a bağlı.
+Uygulama APP_URL: https://nordvow.com
 
-Cloudflare paneli: nordvow.com  ->  DNS  ->  Records  ->  Add record
+Bu dosya artık referans/denetim içindir. Kurulum tamamlandı; tüm adresler HTTP 200.
 
 
 ================================================================================
- ADIM 1 — ACM SERTİFİKA DOĞRULAMASI  (ŞİMDİ EKLE — 2 adet CNAME)
+ AKTİF DNS KAYITLARI (Cloudflare)
 ================================================================================
-Bu iki kaydı ekleyin. İKİSİ DE "DNS only" (gri bulut / proxy KAPALI) olmalı.
-Turuncu bulut (proxy açık) doğrulamayı BOZAR.
+Tür    Ad                                          Hedef                              Proxy
+CNAME  _85e3556ab20e21723ff6d33abc9a8452           ...acm-validations.aws             DNS only  (ACM doğrulama)
+CNAME  _840345a765fc8cc91a06714bdf98a965.www       ...acm-validations.aws             DNS only  (ACM doğrulama)
+CNAME  @ (nordvow.com)                             d226kw9nfbh4rs.cloudfront.net       Proxied
+CNAME  www                                         d226kw9nfbh4rs.cloudfront.net       Proxied
 
-Not: Cloudflare "Name" alanına zone adını (.nordvow.com) kendisi ekler.
-Bu yüzden aşağıdaki "Name" değerlerini AYNEN, son ek olmadan yazın.
-
---- Kayıt 1 (nordvow.com doğrulaması) ---
-Type   : CNAME
-Name   : _85e3556ab20e21723ff6d33abc9a8452
-Target : _addd225e253840d5d28a275eb6fad8ac.wzccmgtwzk.acm-validations.aws
-Proxy  : DNS only (gri bulut)
-TTL    : Auto
-
---- Kayıt 2 (www.nordvow.com doğrulaması) ---
-Type   : CNAME
-Name   : _840345a765fc8cc91a06714bdf98a965.www
-Target : _fb7b8b3afc679b8249c72c96b035edcb.wzccmgtwzk.acm-validations.aws
-Proxy  : DNS only (gri bulut)
-TTL    : Auto
-
->> Bu iki kayıt girildikten sonra sertifika genelde 5-30 dakikada "Issued" olur.
->> "Girdim" dediğinizde doğrulamayı kontrol edip ADIM 2'yi uygulayacağım.
+Not: Kök ve www kayıtları Cloudflare proxy (turuncu bulut) üzerinden geçiyor ve
+çalışıyor. Proxy açıkken Cloudflare SSL/TLS modu "Full (strict)" olmalıdır
+(CloudFront geçerli sertifika sunduğu için uyumludur). Sorun yaşarsanız proxy'yi
+"DNS only" (gri bulut) yaparak da çalıştırabilirsiniz.
 
 
 ================================================================================
- ADIM 2 — ALAN ADINI CLOUDFRONT'A YÖNLENDİRME  (sertifika "Issued" olunca)
+ KONTROL
 ================================================================================
-Sertifika doğrulandıktan ve CloudFront'a bağlandıktan sonra bu iki kaydı ekleyin.
-Önerilen başlangıç: İKİSİ DE "DNS only" (gri bulut). İstenirse sonra proxy açılır.
-
---- Kayıt 3 (kök alan) ---
-Type   : CNAME
-Name   : @            (veya "nordvow.com")
-Target : d226kw9nfbh4rs.cloudfront.net
-Proxy  : DNS only (gri bulut) — başlangıç için
-TTL    : Auto
-Not    : Kök alanda CNAME; Cloudflare "CNAME flattening" ile bunu otomatik çözer.
-
---- Kayıt 4 (www) ---
-Type   : CNAME
-Name   : www
-Target : d226kw9nfbh4rs.cloudfront.net
-Proxy  : DNS only (gri bulut) — başlangıç için
-TTL    : Auto
+  curl -I https://nordvow.com/giris        -> 200
+  curl -I https://www.nordvow.com/giris    -> 200
+  curl -I http://nordvow.com/              -> 301 https (HTTP->HTTPS)
 
 
 ================================================================================
- PROXY (TURUNCU BULUT) KULLANMAK İSTERSENİZ
+ SONRAKİ DEPLOY'LARDA DİKKAT
 ================================================================================
-ADIM 2 kayıtlarını turuncu bulut (proxy açık) yaparsanız:
-  - Cloudflare SSL/TLS modunu "Full (strict)" yapın.
-    (Flexible veya Full-strict-değil yönlendirme döngüsüne yol açar.)
-  - CloudFront zaten geçerli sertifika sunduğu için Full (strict) uyumludur.
-Başlangıçta DNS only ile doğrulayıp, her şey çalışınca proxy'ye geçmek en güvenlisidir.
-
-
-================================================================================
- KONTROL (ADIM 2 sonrası)
-================================================================================
-  dig +short nordvow.com
-  dig +short www.nordvow.com
-  curl -I https://nordvow.com/giris        (200 beklenir)
-
-DNS yayılması Cloudflare'de genelde hızlıdır (dakikalar). CloudFront dağıtım
-güncellemesi 5-15 dakika sürebilir.
-
-
-================================================================================
- ÖZET TABLO
-================================================================================
-Aşama  Type   Name                                        Target                                                         Proxy
-1      CNAME  _85e3556ab20e21723ff6d33abc9a8452           _addd225e253840d5d28a275eb6fad8ac.wzccmgtwzk.acm-validations.aws   DNS only
-1      CNAME  _840345a765fc8cc91a06714bdf98a965.www       _fb7b8b3afc679b8249c72c96b035edcb.wzccmgtwzk.acm-validations.aws   DNS only
-2      CNAME  @ (nordvow.com)                             d226kw9nfbh4rs.cloudfront.net                                   DNS only
-2      CNAME  www                                         d226kw9nfbh4rs.cloudfront.net                                   DNS only
-================================================================================
+Terraform apply komutlarında şu değişkenleri HER ZAMAN geçin; aksi halde domain
+bağlantısı ve Bedrock kapanır:
+  -var domain_name=nordvow.com -var domain_validated=true -var llm_provider=bedrock
+(Bu değerler infra/terraform/terraform.tfvars.example içinde de belgelenmiştir.)
