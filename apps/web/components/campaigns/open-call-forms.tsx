@@ -64,21 +64,16 @@ export function ApplyForm({ openCallId }: { openCallId: string }) {
   );
 }
 
-/** Marka: başvuruyu incele/kabul/ret. */
+/** Marka: başvuruyu kabul et (teklife dönüşür) veya reddet. Tek form, tek mesaj. */
 export function ReviewApplication({ id }: { id: string }) {
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <ActionForm action={reviewApplicationAction} aria-label="Başvuruyu kabul et" className="!flex-row items-end gap-2">
-        <input type="hidden" name="id" value={id} />
-        <input type="hidden" name="to" value="KABUL" />
-        <Input name="reviewNote" placeholder="Not (opsiyonel)" className="h-8 text-[12px]" />
-        <Button type="submit" size="sm" variant="primary">Kabul</Button>
-      </ActionForm>
-      <ActionForm action={reviewApplicationAction} aria-label="Başvuruyu reddet" className="!flex-row">
-        <input type="hidden" name="id" value={id} />
-        <input type="hidden" name="to" value="RED" />
-        <Button type="submit" size="sm" variant="ghost">Reddet</Button>
-      </ActionForm>
-    </div>
+    <ActionForm action={reviewApplicationAction} aria-label="Başvuruyu değerlendir" className="gap-2">
+      <input type="hidden" name="id" value={id} />
+      <div className="flex flex-wrap items-center gap-2">
+        <Input name="reviewNote" placeholder="Not (opsiyonel)" aria-label="Değerlendirme notu" className="h-8 max-w-64 text-[12px]" />
+        <Button type="submit" name="to" value="KABUL" size="sm" variant="primary">Kabul et · teklife dönüştür</Button>
+        <Button type="submit" name="to" value="RED" size="sm" variant="ghost">Reddet</Button>
+      </div>
+    </ActionForm>
   );
 }

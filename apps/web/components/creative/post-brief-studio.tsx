@@ -8,7 +8,7 @@ import { generatePostAction, generateBriefAction, type PostBriefState } from "@/
 type AssetOption = { id: string; label: string };
 
 /** Üretilen görsel/videolardan (veya serbest konudan) post metni ve kampanya brief'i oluşturur. */
-export function PostBriefStudio({ assets }: { assets: AssetOption[] }) {
+export function PostBriefStudio({ assets, defaultAssetId = "" }: { assets: AssetOption[]; defaultAssetId?: string }) {
   const [postState, postAction, postPending] = useActionState<PostBriefState, FormData>(generatePostAction, idleState);
   const [briefState, briefAction, briefPending] = useActionState<PostBriefState, FormData>(generateBriefAction, idleState);
 
@@ -25,9 +25,9 @@ export function PostBriefStudio({ assets }: { assets: AssetOption[] }) {
             startTransition(() => postAction(fd));
           }}
         >
-          <Field label="Üretilen görsel (opsiyonel)">
+          <Field label="Galeriden içerik (isteğe bağlı)">
             {(p) => (
-              <Select {...p} name="assetId" defaultValue="">
+              <Select {...p} name="assetId" defaultValue={assets.some((a) => a.id === defaultAssetId) ? defaultAssetId : ""}>
                 <option value="">Görsel seçme (konudan üret)</option>
                 {assets.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -75,9 +75,9 @@ export function PostBriefStudio({ assets }: { assets: AssetOption[] }) {
             startTransition(() => briefAction(fd));
           }}
         >
-          <Field label="Üretilen görsel (opsiyonel)">
+          <Field label="Galeriden içerik (isteğe bağlı)">
             {(p) => (
-              <Select {...p} name="assetId" defaultValue="">
+              <Select {...p} name="assetId" defaultValue={assets.some((a) => a.id === defaultAssetId) ? defaultAssetId : ""}>
                 <option value="">Görsel seçme (konudan üret)</option>
                 {assets.map((a) => (
                   <option key={a.id} value={a.id}>

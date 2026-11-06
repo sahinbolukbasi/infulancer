@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import { redirect } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
 import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
@@ -24,7 +25,8 @@ const createSchema = z.object({
 /** Marka açık çağrı (başvuru) oluşturur. */
 export async function createOpenCallAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN", "BRAND");
-  return attempt(async () => {
+  const created: { id?: string } = {};
+  const res = await attempt(async () => {
     const tenantId = actor.role === "BRAND" ? actor.brandId! : (optStr(fd, "tenantId") ?? "");
     const minRaw = str(fd, "budgetMin");
     const maxRaw = str(fd, "budgetMax");
@@ -52,9 +54,12 @@ export async function createOpenCallAction(_p: ActionState, fd: FormData): Promi
       createdByUserId: actor.userId,
     });
     await audit.append({ actor: toAuditActor(actor), action: "OPEN_CALL_CREATED", entityType: "CampaignOpenCall", entityId: call.id, data: { title: input.title } });
+    created.id = call.id;
     revalidateAll();
     return { ok: true, message: "Başvuru çağrısı oluşturuldu (taslak)." };
   });
+  if (res.ok && created.id && actor.role === "BRAND") redirect(`/marka/teklifler/cagri/${created.id}`);
+  return res;
 }
 
 export async function setOpenCallStatusAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -93,9 +98,9 @@ export async function reviewApplicationAction(_p: ActionState, fd: FormData): Pr
     const note = optStr(fd, "reviewNote");
     const tenantId = actor.role === "BRAND" ? actor.brandId! : (await prisma.campaignApplication.findUnique({ where: { id }, select: { openCall: { select: { tenantId: true } } } }))?.openCall.tenantId;
     if (!tenantId) throw new DomainError("BULUNAMADI", "Başvuru bulunamadı.");
-    await reviewApplication(tenantId, id, to, note);
+    await reviewApplication(tenantId, id, to, note, actor.userId);
     await audit.append({ actor: toAuditActor(actor), action: "OPEN_CALL_REVIEWED", entityType: "CampaignApplication", entityId: id, data: { to } });
     revalidateAll();
-    return { ok: true, message: to === "KABUL" ? "Başvuru kabul edildi." : to === "RED" ? "Başvuru reddedildi." : "İncelemeye alındı." };
+    return { ok: true, message: to === "KABUL" ? "Başvuru kabul edildi; Teklifler listesine kabul edilmiş teklif olarak eklendi." : to === "RED" ? "Başvuru reddedildi." : "İncelemeye alındı." };
   });
 }

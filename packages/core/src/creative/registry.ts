@@ -15,7 +15,7 @@ export async function resolveModel(key: string, depth = 0): Promise<NonNullable<
   if (!m) throw new ModelUnavailableError(`Model kaydı bulunamadı: ${key}`);
   if (m.status !== "active") {
     if (m.replacementKey && depth < 3) {
-      await notifyAdmins("Deprecated model kullanımı", `${key} kullanım dışı; iş ${m.replacementKey} modeline yönlendirildi.`, "/admin/creative");
+      await notifyAdmins("Deprecated model kullanımı", `${key} kullanım dışı; iş ${m.replacementKey} modeline yönlendirildi.`, "/creative");
       return resolveModel(m.replacementKey, depth + 1);
     }
     throw new ModelUnavailableError(`${key} kullanım dışı ve yerine geçecek model tanımlı değil.`);

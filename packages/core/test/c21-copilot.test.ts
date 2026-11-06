@@ -27,6 +27,7 @@ describe("asistan niyet motoru", () => {
   });
   it("katalog dışı / başka rolün eylemi ve serbest URL süzülür", () => {
     expect(allowedActions("BRAND", ["finance", "campaigns", "https://kotu.example", 5, "campaigns"]).map((a) => a.id)).toEqual(["campaigns"]);
-    expect(COPILOT_ACTIONS.BRAND.every((a) => a.href.startsWith("/marka") || a.href.startsWith("/docs"))).toBe(true);
+    // /creative tüm rollerin ortak stüdyosu.
+    expect(COPILOT_ACTIONS.BRAND.every((a) => a.href.startsWith("/marka") || a.href.startsWith("/docs") || a.href === "/creative")).toBe(true);
   });
 });

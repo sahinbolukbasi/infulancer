@@ -1,6 +1,7 @@
 import { Prisma } from "../generated/prisma/client";
 import { prisma, type Tx } from "../db";
 import { notifyAdmins } from "../agents/common";
+import { envInt } from "../env";
 
 /**
  * Creative kredileri: submit'te HOLD, fal webhook'unda (başarılı çıktı) CHARGE.
@@ -31,7 +32,7 @@ export async function chargeHold(holdId: string, db: Tx = prisma): Promise<boole
     WHERE "tenantId" = ${hold.tenantId}`;
   const acc = await db.creditAccount.findUnique({ where: { tenantId: hold.tenantId } });
   if (acc && acc.balanceCredits.lessThan(acc.lowBalanceAlert)) {
-    await notifyAdmins("Kredi bakiyesi düşük", `${hold.tenantId}: kalan ${acc.balanceCredits.toFixed(0)} kredi. (fal prepaid bakiyesi aynı zamanda eşzamanlılık limitidir.)`, "/admin/creative");
+    await notifyAdmins("Kredi bakiyesi düşük", `${hold.tenantId}: kalan ${acc.balanceCredits.toFixed(0)} kredi. (fal prepaid bakiyesi aynı zamanda eşzamanlılık limitidir.)`, "/creative");
   }
   return true;
 }
@@ -51,4 +52,12 @@ export async function topUp(tenantId: string, credits: number) {
     create: { tenantId, balanceCredits: D(credits) },
     update: { balanceCredits: { increment: D(credits) } },
   });
+}
+
+/**
+ * Hoş geldin kredisi: hesabı hiç olmayan (ilk kez Creative açan) marka/influencer için
+ * tek seferlik başlangıç bakiyesi açar. Hesap zaten varsa hiçbir şey yapmaz (idempotent).
+ */
+export async function ensureStarterCredits(tenantId: string, credits = envInt("CREATIVE_STARTER_CREDITS", 30)) {
+  return prisma.creditAccount.upsert({ where: { tenantId }, create: { tenantId, balanceCredits: D(credits) }, update: {} });
 }

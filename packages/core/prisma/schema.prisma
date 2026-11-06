@@ -1709,6 +1709,8 @@ model CampaignApplication {
   quotedKurus  BigInt?                   @map("quoted_kurus")
   status       CampaignApplicationStatus @default(BASVURULDU)
   reviewNote   String?                   @map("review_note")
+  /// Kabul edilen başvurunun dönüştüğü teklif (Teklifler'de tek akış).
+  offerId      String?                   @map("offer_id")
   createdAt    DateTime                  @default(now()) @map("created_at")
   updatedAt    DateTime                  @updatedAt @map("updated_at")
   @@unique([openCallId, influencerId])

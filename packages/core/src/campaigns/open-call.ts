@@ -1,5 +1,7 @@
 import { prisma } from "../db";
 import { DomainError } from "../domain/errors";
+import { OFFER_TTL_DAYS } from "../domain/offers";
+import { platformRules } from "../domain/platform-rules";
 
 /**
  * Kampanya açık çağrı (başvuru) akışı. Marka çağrı açar → influencer başvurur → marka
@@ -65,8 +67,40 @@ export async function applyToOpenCall(input: { openCallId: string; influencerId:
   });
 }
 
-export async function reviewApplication(tenantId: string, applicationId: string, to: "INCELENIYOR" | "KABUL" | "RED", reviewNote?: string | null) {
-  const app = await prisma.campaignApplication.findUnique({ where: { id: applicationId }, include: { openCall: { select: { tenantId: true } } } });
+/**
+ * Başvuruyu inceler. KABUL edilen başvuru, Teklifler'de tek akış olsun diye "kabul edilmiş teklif"e
+ * dönüştürülür (bedel = üreticinin teklif ettiği fiyat, yoksa çağrının alt bütçesi). Ajans bu teklifi
+ * diğer kabul edilen teklifler gibi kampanyaya ekler. İşlem idempotenttir: ikinci kez teklif açılmaz.
+ */
+export async function reviewApplication(tenantId: string, applicationId: string, to: "INCELENIYOR" | "KABUL" | "RED", reviewNote?: string | null, actorUserId?: string | null) {
+  const app = await prisma.campaignApplication.findUnique({ where: { id: applicationId }, include: { openCall: true } });
   if (!app || app.openCall.tenantId !== tenantId) throw new DomainError("BULUNAMADI", "Başvuru bulunamadı.");
-  return prisma.campaignApplication.update({ where: { id: applicationId }, data: { status: to, reviewNote: reviewNote ?? null } });
+  if (app.offerId && to !== "KABUL") throw new DomainError("KURAL_IHLALI", "Kabul edilip teklife dönüşen başvuru geri alınamaz; teklifi Teklifler'den yönetin.");
+  return prisma.$transaction(async (tx) => {
+    let offerId = app.offerId;
+    if (to === "KABUL" && !offerId) {
+      const platform = (["INSTAGRAM", "TIKTOK", "YOUTUBE"].includes(app.openCall.platforms[0] ?? "") ? app.openCall.platforms[0] : "INSTAGRAM") as keyof typeof platformRules;
+      const price = Number(app.quotedKurus ?? app.openCall.budgetMinKurus ?? 0n);
+      const creator = actorUserId ?? app.openCall.createdByUserId ?? (await tx.user.findFirst({ where: { brandId: tenantId }, select: { id: true } }))?.id;
+      if (!creator) throw new DomainError("DOGRULAMA", "Teklifi oluşturacak marka kullanıcısı bulunamadı.");
+      const now = new Date();
+      const offer = await tx.offer.create({
+        data: {
+          brandId: tenantId,
+          influencerId: app.influencerId,
+          createdById: creator,
+          title: app.openCall.title,
+          message: `Başvurudan: ${app.pitch}`,
+          items: [{ platform, contentType: platformRules[platform].contentTypes[0], qty: 1, priceKurus: price }],
+          totalKurus: price,
+          status: "KABUL",
+          respondedAt: now,
+          responseNote: reviewNote ?? null,
+          expiresAt: new Date(now.getTime() + OFFER_TTL_DAYS * 86_400_000),
+        },
+      });
+      offerId = offer.id;
+    }
+    return tx.campaignApplication.update({ where: { id: applicationId }, data: { status: to, reviewNote: reviewNote ?? null, offerId } });
+  });
 }

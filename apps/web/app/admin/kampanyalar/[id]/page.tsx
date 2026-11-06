@@ -24,7 +24,7 @@ import { DeliverableForm } from "@/components/forms/deliverable-form";
 import { BrandDataForm, BrandPaymentForm, CloseCampaignForm, ContractDecision } from "@/components/forms/small-forms";
 import { ExternalIcon, UserPlusIcon } from "@/components/icons";
 import { InfluencerPicker, type PickerInfluencer } from "@/components/campaign/influencer-picker";
-import { categoryLabel } from "@infulancer/core/domain/categories";
+import { pickerPool, toPickerInfluencers } from "@/lib/campaign-picker";
 import { PlatformIcon } from "@/components/platform-icon";
 import { Card, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -34,7 +34,6 @@ import { PageHeader } from "@/components/ui/layout";
 import { StatusDot } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
 import { requireActor } from "@/lib/auth-guard";
-import { pickAvatar } from "@/components/ui/avatar";
 import { TrackerGallery, TrackerList } from "@/components/agent/tracker-ui";
 import { loadTrackerViews, templateViews } from "@/lib/trackers";
 import { isOverdue } from "@/lib/calendar";
@@ -50,8 +49,10 @@ const AGENCY_KINDS = ["BRIEF_PDF", "MARKA_LOGO", "MARKA_FONT", "ORNEK_CEKIM", "U
 type Candidate = { influencerId?: string; name?: string; score?: number; rationale?: string };
 
 function candidatesOf(findings: unknown): Candidate[] {
-  const f = findings as { candidates?: unknown } | null;
-  return Array.isArray(f?.candidates) ? (f.candidates as Candidate[]).filter((c) => c && typeof c === "object") : [];
+  // Öneri ajanı "recommendations", eski kayıtlar "candidates" alanını kullanır.
+  const f = findings as { candidates?: unknown; recommendations?: unknown } | null;
+  const list = Array.isArray(f?.recommendations) ? f.recommendations : Array.isArray(f?.candidates) ? f.candidates : [];
+  return (list as Candidate[]).filter((c) => c && typeof c === "object");
 }
 
 export default async function CampaignDetailPage({
@@ -110,47 +111,14 @@ export default async function CampaignDetailPage({
       include: { resolvedBy: { select: { name: true } } },
       take: 100,
     }),
-    prisma.influencer.findMany({
-      where: { assignments: { none: { campaignId: campaign.id, contractStatus: { not: "RED" } } } },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        city: true,
-        categories: { include: { category: { include: { parent: { select: { name: true } } } } }, orderBy: { primary: "desc" } },
-        socialAccounts: { select: { platform: true, handle: true, followers: true, engagementRate: true, avatarUrl: true } },
-        assignments: {
-          where: { contractStatus: { not: "RED" } },
-          orderBy: { createdAt: "desc" },
-          select: { feeKurus: true, campaign: { select: { brandId: true } } },
-        },
-      },
-    }),
+    pickerPool(campaign.id),
   ]);
   const trackers = await loadTrackerViews({ scope: "CAMPAIGN", targetId: campaign.id });
   const suggestions = runs.filter((r) => r.checkType === "INFLUENCER_ONERI" && r.targetType === "Campaign");
   const editable = campaign.status === "TASLAK" || campaign.status === "AKTIF";
   const suggested = new Map<string, string | undefined>();
   for (const s of suggestions) for (const c of candidatesOf(s.findings)) if (c.influencerId) suggested.set(c.influencerId, c.rationale);
-  const pickerInfluencers: PickerInfluencer[] = influencers.map((i) => {
-    const accounts = i.socialAccounts.map((a) => ({ platform: a.platform, handle: a.handle, followers: a.followers, er: Number(a.engagementRate) }));
-    return {
-      id: i.id,
-      name: i.name,
-      city: i.city,
-      primaryCategory: i.categories[0] ? categoryLabel(i.categories[0].category) : i.category,
-      categories: [...new Set(i.categories.flatMap((c) => [c.category.name, c.category.parent?.name].filter((x): x is string => !!x)).concat(i.category ? [i.category] : []))],
-      accounts,
-      totalFollowers: accounts.reduce((s, a) => s + a.followers, 0),
-      bestEr: accounts.reduce((m, a) => Math.max(m, a.er), 0),
-      lastFeeTl: i.assignments[0] ? Math.round(i.assignments[0].feeKurus / 100) : null,
-      brandHistory: i.assignments.filter((a) => a.campaign.brandId === campaign.brand.id).length,
-      suggested: suggested.has(i.id),
-      rationale: suggested.get(i.id),
-      avatarUrl: pickAvatar(i.socialAccounts),
-    };
-  });
+  const pickerInfluencers: PickerInfluencer[] = toPickerInfluencers(influencers, campaign.brand.id, suggested);
 
   const latestReach = (snaps: { reach: number | null; measuredAt: Date }[]) =>
     [...snaps].sort((a, b) => b.measuredAt.getTime() - a.measuredAt.getTime()).find((s) => s.reach != null)?.reach ?? 0;

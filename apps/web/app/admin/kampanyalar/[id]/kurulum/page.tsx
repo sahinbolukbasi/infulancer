@@ -8,6 +8,8 @@ import { contentTypeLabels, formatKurus, platformLabels } from "@infulancer/core
 import { SetupSteps } from "@/components/campaign/setup-steps";
 import { RecommendButton } from "@/components/forms/agent-job-forms";
 import { AssignmentForm } from "@/components/forms/assignment-form";
+import { InfluencerPicker } from "@/components/campaign/influencer-picker";
+import { pickerPool, toPickerInfluencers } from "@/lib/campaign-picker";
 import { BriefForm } from "@/components/forms/brief-form";
 import { CampaignForm } from "@/components/forms/campaign-form";
 import { DeliverableForm } from "@/components/forms/deliverable-form";
@@ -56,16 +58,13 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
       },
     }),
     prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-    prisma.influencer.findMany({
-      where: { assignments: { none: { campaignId: id, contractStatus: { not: "RED" } } } },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, category: true },
-    }),
+    pickerPool(id),
     prisma.campaignBrief.findFirst({ where: { campaignId: id }, orderBy: { version: "desc" } }),
     prisma.agentRun.findFirst({ where: { checkType: "INFLUENCER_ONERI", targetType: "Campaign", targetId: id }, orderBy: { createdAt: "desc" } }),
   ]);
   const editable = c.status === "TASLAK" || c.status === "AKTIF";
-  const recs = ((suggestions?.findings as { recommendations?: { influencerId: string; name: string; score: number; rationale: string }[] } | null)?.recommendations ?? []).slice(0, 5);
+  const recs = (suggestions?.findings as { recommendations?: { influencerId: string; name: string; score: number; rationale: string }[] } | null)?.recommendations ?? [];
+  const picker = toPickerInfluencers(pool, c.brand.id, new Map(recs.map((r) => [r.influencerId, r.rationale])));
 
   return (
     <div className="flex flex-col gap-8">
@@ -115,49 +114,47 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
         ) : null}
 
         {active === "influencerlar" ? (
-          <div className="grid-12">
-            <div className="flex flex-col gap-4 md:col-span-7">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-sm text-fg">Kampanyadaki influencerlar ({c.assignments.length})</h3>
               {c.assignments.length ? (
-                <ul className="flex flex-col divide-y divide-border">
+                <ul className="flex flex-wrap gap-2">
                   {c.assignments.map((a) => (
-                    <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                    <li key={a.id} className="flex items-center gap-2 rounded-full border border-border py-1 pr-3 pl-3 text-[13px]">
                       <Link href={`/admin/influencerlar/${a.influencer.id}`} className="hover:underline">
                         {a.influencer.name}
                       </Link>
-                      <span className="text-fg-muted tabular-nums">{formatKurus(a.feeKurus)}</span>
+                      <span className="tabular-nums text-fg-muted">{formatKurus(a.feeKurus)}</span>
                       <StatusDot tone={contractTone(a.contractStatus)}>{contractUiLabels[a.contractStatus]}</StatusDot>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-fg-passive">Henüz influencer yok.</p>
-              )}
-              {editable ? <AssignmentForm campaignId={id} influencers={pool} /> : null}
-            </div>
-            <div className="flex flex-col gap-3 md:col-span-5">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm text-fg">Önerilen adaylar</h3>
-                <RecommendButton campaignId={id} />
-              </div>
-              {recs.length ? (
-                <ul className="flex flex-col divide-y divide-border text-sm">
-                  {recs.map((r) => (
-                    <li key={r.influencerId} className="flex flex-col gap-1 py-2">
-                      <span className="flex justify-between">
-                        <span>{r.name}</span>
-                        <span className="tabular-nums text-fg-muted">{r.score}</span>
-                      </span>
-                      <span className="text-[12px] text-fg-passive">{r.rationale}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-[13px] text-fg-passive">Kategori, etkileşim, müsaitlik ve marka çakışmasına göre aday önermek için “Aday öner”e basın.</p>
+                <p className="text-[13px] text-fg-passive">Henüz influencer yok. Aşağıdan kategoriye göre toplu seçip tek seferde ekleyin.</p>
               )}
             </div>
+            {editable ? (
+              <>
+                <div className="flex flex-col gap-4 rounded-[8px] border border-border p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-sm text-fg">Influencer seç ve ekle</h3>
+                      <p className="text-[13px] text-fg-muted">Kategori seçip “Tümünü seç” ile toplu işaretleyin, bedeli hepsine birden uygulayın. Eklenen herkese teklif gider; rakip markayla çakışanlar otomatik engellenir.</p>
+                    </div>
+                    <RecommendButton campaignId={id} />
+                  </div>
+                  <InfluencerPicker campaignId={id} influencers={picker} />
+                </div>
+                <details className="rounded-[8px] border border-border">
+                  <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Tekli atama (kupon, münhasırlık veya çakışma gerekçesiyle)</summary>
+                  <div className="border-t border-border p-4">
+                    <AssignmentForm campaignId={id} influencers={pool.map((i) => ({ id: i.id, name: i.name, category: i.category }))} />
+                  </div>
+                </details>
+              </>
+            ) : null}
           </div>
         ) : null}
-
         {active === "icerik" ? (
           c.assignments.length === 0 ? (
             <InfoNote>Önce influencer atayın; içerik planı influencer başına yapılır.</InfoNote>

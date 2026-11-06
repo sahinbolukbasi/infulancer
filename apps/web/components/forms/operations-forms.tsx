@@ -7,9 +7,9 @@ import { generateCreative, requestAdBudget, topUpCredits } from "@/lib/actions/o
 
 type Brand = { id: string; name: string };
 
-function BrandSelect({ brands }: { brands: Brand[] }) {
+function BrandSelect({ brands, label = "Marka" }: { brands: Brand[]; label?: string }) {
   return (
-    <Field label="Marka">
+    <Field label={label}>
       {(p) => (
         <Select {...p} name="tenantId" required defaultValue={brands[0]?.id}>
           {brands.map((b) => (
@@ -85,11 +85,11 @@ export function CreativeForm({ brands, models }: { brands: Brand[]; models: Mode
   );
 }
 
-export function TopUpForm({ brands }: { brands: Brand[] }) {
+export function TopUpForm({ brands, label }: { brands: Brand[]; label?: string }) {
   return (
     <ActionForm action={topUpCredits} resetOnSuccess submitLabel="Kredi yükle" submitSize="sm" aria-label="Kredi yükle">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <BrandSelect brands={brands} />
+        <BrandSelect brands={brands} label={label} />
         <Field label="Kredi">{(p) => <Input {...p} name="credits" type="number" min={1} required defaultValue={100} />}</Field>
       </div>
     </ActionForm>

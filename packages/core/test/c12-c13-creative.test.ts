@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/db";
 import { memoryStore } from "../src/channels/raw-store";
-import { topUp } from "../src/creative/credits";
+import { ensureStarterCredits, topUp } from "../src/creative/credits";
 import { CreativeRejectedError, handleFalWebhook, submitCreative } from "../src/creative/fal";
 import { assertNoRealPersonClone, RealPersonBlockedError } from "../src/creative/md2712";
 import { ModelUnavailableError, resolveModel } from "../src/creative/registry";
@@ -84,6 +84,19 @@ describe("creative üretimi", () => {
       await expect(submitCreative({ tenantId: T.tenantId, modelKey: "nano-banana-pro", prompt: "Kaan Arslan bu ayakkabıyı giyiyor", units: 1 })).rejects.toBeInstanceOf(CreativeRejectedError);
       const j = await prisma.creativeJob.findFirstOrThrow({ where: { tenantId: T.tenantId, status: "REJECTED" } });
       expect(j.rejectReason).toMatch(/27\/12/);
+    });
+  });
+  describe("hoş geldin kredisi", () => {
+    it("hesabı olmayan tenant'a bir kez başlangıç kredisi açar, mevcut bakiyeye dokunmaz", async () => {
+      const tid = `inf_${Date.now()}`;
+      await ensureStarterCredits(tid, 30);
+      await ensureStarterCredits(tid, 30);
+      const acc = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: tid } });
+      expect(Number(acc.balanceCredits)).toBe(30);
+      const before = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: T.tenantId } });
+      await ensureStarterCredits(T.tenantId, 30);
+      const after = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: T.tenantId } });
+      expect(Number(after.balanceCredits)).toBe(Number(before.balanceCredits));
     });
   });
 });

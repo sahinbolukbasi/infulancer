@@ -63,7 +63,7 @@ describe("K17 doğrulanmamış rakamlar etiketli", () => {
 
   it("kanal sayfaları doğrulanmamış değerleri etiketle gösterir (fiyat sayfası kaldırıldı)", () => {
     const web = path.resolve(root, "../../apps/web/app");
-    for (const page of ["admin/kanallar/page.tsx", "admin/creative/page.tsx"]) {
+    for (const page of ["admin/kanallar/page.tsx", "creative/page.tsx"]) {
       const src = readFileSync(path.join(web, page), "utf8");
       expect(src, page).toMatch(/UnverifiedBadge|withUnverified|UNVERIFIED_FACTS/);
     }

@@ -45,8 +45,19 @@ describe("K30 açık çağrı (başvuru)", () => {
     const app = await applyToOpenCall({ openCallId: call.id, influencerId: inf.id, pitch: "Harika bir fikrim var ve kitlem uygun.", quotedKurus: 1500000 });
     expect(app.status).toBe("BASVURULDU");
     await expect(applyToOpenCall({ openCallId: call.id, influencerId: inf.id, pitch: "tekrar başvuru denemesi" })).rejects.toBeInstanceOf(DomainError); // tekrar
-    const reviewed = await reviewApplication(T.tenantId, app.id, "KABUL", "Uygun bulundu");
+    const reviewed = await reviewApplication(T.tenantId, app.id, "KABUL", "Uygun bulundu", T.user.id);
     expect(reviewed.status).toBe("KABUL");
+    // Kabul edilen başvuru Teklifler akışına "kabul edilmiş teklif" olarak düşer.
+    expect(reviewed.offerId).toBeTruthy();
+    const offer = await prisma.offer.findUniqueOrThrow({ where: { id: reviewed.offerId! } });
+    expect(offer.status).toBe("KABUL");
+    expect(offer.influencerId).toBe(inf.id);
+    expect(offer.totalKurus).toBe(1500000);
+    // İdempotent: tekrar kabul yeni teklif açmaz; teklife dönüşmüş başvuru reddedilemez.
+    const again = await reviewApplication(T.tenantId, app.id, "KABUL", null, T.user.id);
+    expect(again.offerId).toBe(reviewed.offerId);
+    expect(await prisma.offer.count({ where: { influencerId: inf.id, brandId: T.tenantId } })).toBe(1);
+    await expect(reviewApplication(T.tenantId, app.id, "RED")).rejects.toBeInstanceOf(DomainError);
   });
 
   it("kısa başvuru reddedilir; bütçe tutarsızlığı engellenir", async () => {

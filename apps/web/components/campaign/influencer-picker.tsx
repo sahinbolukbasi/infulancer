@@ -32,13 +32,15 @@ const pct = new Intl.NumberFormat("tr-TR", { style: "percent", maximumFractionDi
 const FOLLOWER_STEPS = [0, 10_000, 50_000, 100_000, 500_000, 1_000_000];
 
 /**
- * Kampanyaya influencer ekleme: ara/filtrele → işaretle → bedel gir → tek tıkla ekle.
+ * Kampanyaya influencer ekleme: kategori çipleriyle filtrele → listelenenlerin tümünü (veya tek tek) seç
+ * → ortak bedeli herkese uygula → tek tıkla ekle (50'den fazlası parça parça gönderilir).
  * Marka çakışması olanlar eklenmez ve gerekçeli tekli atamaya yönlendirilir.
  */
 export function InfluencerPicker({ campaignId, influencers }: { campaignId: string; influencers: PickerInfluencer[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
-  const [category, setCategory] = useState("");
+  const [cats, setCats] = useState<Set<string>>(new Set());
+  const [bulkFee, setBulkFee] = useState("");
   const [platform, setPlatform] = useState<"" | Platform>("");
   const [minFollowers, setMinFollowers] = useState(0);
   const [sort, setSort] = useState<"suggested" | "followers" | "er" | "name">("suggested");
@@ -47,14 +49,19 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
   const [result, setResult] = useState<BulkAssignResult | null>(null);
   const [pending, start] = useTransition();
 
-  const categories = useMemo(() => [...new Set(influencers.flatMap((i) => i.categories))].sort((a, b) => a.localeCompare(b, "tr")), [influencers]);
+  // Kategori → kişi sayısı (çipte gösterilir), en kalabalık önce.
+  const categoryCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of influencers) for (const c of i.categories) m.set(c, (m.get(c) ?? 0) + 1);
+    return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "tr"));
+  }, [influencers]);
   const byId = useMemo(() => new Map(influencers.map((i) => [i.id, i])), [influencers]);
 
   const list = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
     const rows = influencers.filter((i) => {
       if (needle && !`${i.name} ${i.city ?? ""} ${i.accounts.map((a) => a.handle).join(" ")}`.toLocaleLowerCase("tr").includes(needle)) return false;
-      if (category && !i.categories.includes(category)) return false;
+      if (cats.size && !i.categories.some((c) => cats.has(c))) return false;
       const accs = platform ? i.accounts.filter((a) => a.platform === platform) : i.accounts;
       if (platform && accs.length === 0) return false;
       if (minFollowers && accs.reduce((s, a) => s + a.followers, 0) < minFollowers) return false;
@@ -66,7 +73,33 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
       if (sort === "er") return b.bestEr - a.bestEr;
       return Number(b.suggested) - Number(a.suggested) || b.brandHistory - a.brandHistory || b.totalFollowers - a.totalFollowers;
     });
-  }, [influencers, q, category, platform, minFollowers, sort]);
+  }, [influencers, q, cats, platform, minFollowers, sort]);
+  const toggleCat = (c: string) =>
+    setCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+  const listedSelected = list.filter((i) => selected.has(i.id)).length;
+  const allListed = list.length > 0 && listedSelected === list.length;
+  /** Listelenen herkesi seç / seçimi kaldır (filtreye göre toplu seçim). */
+  const selectListed = (on: boolean) =>
+    setSelected((prev) => {
+      const next = new Map(prev);
+      for (const i of list) {
+        if (on && !next.has(i.id)) next.set(i.id, bulkFee || (i.lastFeeTl ? String(i.lastFeeTl) : ""));
+        if (!on) next.delete(i.id);
+      }
+      return next;
+    });
+  /** Bedeli seçili herkese (veya yalnız boş olanlara) uygula. */
+  const applyFee = (onlyEmpty: boolean) =>
+    setSelected((prev) => {
+      const next = new Map(prev);
+      for (const [id, v] of next) if (!onlyEmpty || !v.trim()) next.set(id, bulkFee);
+      return next;
+    });
 
   const toggle = (i: PickerInfluencer) =>
     setSelected((prev) => {
@@ -84,40 +117,33 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
 
   const submit = () =>
     start(async () => {
-      const res = await createAssignmentsBulk({
-        campaignId,
-        commissionPct: Number.isFinite(pctNum) ? pctNum : 0,
-        items: parsedFees.map((f) => ({ influencerId: f.id, feeKurus: Math.round(f.tl * 100) })),
-      });
-      setResult(res);
-      if (res.created.length) {
+      // Sunucu tek istekte en fazla 50 kişi kabul eder; büyük seçimler parça parça gönderilir.
+      const items = parsedFees.map((f) => ({ influencerId: f.id, feeKurus: Math.round(f.tl * 100) }));
+      const merged: BulkAssignResult = { ok: false, created: [], failed: [] };
+      for (let k = 0; k < items.length; k += 50) {
+        const res = await createAssignmentsBulk({ campaignId, commissionPct: Number.isFinite(pctNum) ? pctNum : 0, items: items.slice(k, k + 50) });
+        merged.created.push(...res.created);
+        merged.failed.push(...res.failed);
+        if (!res.created.length && !res.failed.length && res.error) merged.error = res.error;
+      }
+      merged.ok = merged.created.length > 0;
+      setResult(merged);
+      if (merged.created.length) {
         setSelected((prev) => {
           const next = new Map(prev);
-          for (const c of res.created) next.delete(c.influencerId);
+          for (const c of merged.created) next.delete(c.influencerId);
           return next;
         });
         router.refresh();
       }
     });
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[2fr_1fr_1fr_1fr]">
         <label className="relative">
           <span className="sr-only">Influencer ara</span>
           <SearchIcon size={16} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-passive" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="İsim, şehir veya @kullanıcı" className="pl-9" />
-        </label>
-        <label>
-          <span className="sr-only">Kategori</span>
-          <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">Tüm kategoriler</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </Select>
         </label>
         <label>
           <span className="sr-only">Platform</span>
@@ -149,14 +175,61 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
         </label>
       </div>
 
-      <p className="text-[13px] text-fg-passive" aria-live="polite">
-        {list.length} uygun influencer · {selected.size} seçili
-      </p>
+      {categoryCounts.length ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-[12px] text-fg-muted">Kategoriler (birden fazla seçebilirsiniz)</span>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Kategori filtresi">
+            <button
+              type="button"
+              aria-pressed={cats.size === 0}
+              onClick={() => setCats(new Set())}
+              className={cn("rounded-full border px-3 py-1 text-[12px] transition-standard", cats.size === 0 ? "border-fg bg-fg text-bg" : "border-border text-fg-muted hover:text-fg")}
+            >
+              Tümü <span className="tabular-nums opacity-60">{influencers.length}</span>
+            </button>
+            {categoryCounts.map(([c, n]) => (
+              <button
+                key={c}
+                type="button"
+                aria-pressed={cats.has(c)}
+                onClick={() => toggleCat(c)}
+                className={cn("rounded-full border px-3 py-1 text-[12px] transition-standard", cats.has(c) ? "border-fg bg-fg text-bg" : "border-border text-fg-muted hover:text-fg")}
+              >
+                {c} <span className="tabular-nums opacity-60">{n}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-3 rounded-[8px] border border-border bg-surface-hover/40 px-3 py-2">
+        <label className="flex items-center gap-2 text-[13px] text-fg">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-[var(--color-fg)]"
+            checked={allListed}
+            ref={(el) => {
+              if (el) el.indeterminate = listedSelected > 0 && !allListed;
+            }}
+            onChange={(e) => selectListed(e.target.checked)}
+            disabled={list.length === 0}
+            aria-label="Listelenen tüm influencerları seç"
+          />
+          {allListed ? "Listelenenlerin seçimini kaldır" : `Listelenen ${list.length} kişinin tümünü seç`}
+        </label>
+        <span className="text-[13px] text-fg-passive" aria-live="polite">
+          {list.length} listelenen · {selected.size} seçili
+        </span>
+        {selected.size ? (
+          <button type="button" onClick={() => setSelected(new Map())} className="ml-auto text-[12px] text-fg-muted underline-offset-4 hover:text-fg hover:underline">
+            Tüm seçimi temizle
+          </button>
+        ) : null}
+      </div>
 
       {influencers.length === 0 ? (
         <p className="text-sm text-fg-passive">Eklenebilecek influencer kalmadı; hepsi bu kampanyada.</p>
       ) : (
-        <ul className="grid max-h-[480px] grid-cols-1 gap-2 overflow-auto pr-1 lg:grid-cols-2" aria-label="Influencer listesi">
+        <ul className="flex max-h-[520px] flex-col divide-y divide-border overflow-auto rounded-[8px] border border-border" aria-label="Influencer listesi">
           {list.map((i) => {
             const on = selected.has(i.id);
             return (
@@ -166,8 +239,8 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
                   onClick={() => toggle(i)}
                   aria-pressed={on}
                   className={cn(
-                    "flex w-full items-start gap-3 rounded-[8px] border p-3 text-left transition-standard",
-                    on ? "border-fg bg-surface-hover" : "border-border hover:bg-surface-hover",
+                    "flex w-full items-start gap-3 px-3 py-2.5 text-left transition-standard",
+                    on ? "bg-surface-hover" : "hover:bg-surface-hover/60",
                   )}
                 >
                   <span
@@ -179,7 +252,7 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
                   >
                     {on ? <CheckIcon size={14} /> : null}
                   </span>
-                  <Avatar name={i.name} src={i.avatarUrl} size={40} />
+                  <Avatar name={i.name} src={i.avatarUrl} size={36} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="truncate text-sm text-fg">{i.name}</span>
@@ -219,12 +292,21 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
         <div className="flex flex-col gap-3 rounded-[8px] border border-border p-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <p className="text-sm text-fg">Seçilenler ({selected.size}) · bedelleri girin</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input value={bulkFee} onChange={(e) => setBulkFee(e.target.value)} inputMode="decimal" placeholder="Ortak bedel (TL)" aria-label="Seçilenlere uygulanacak ortak bedel (TL)" className="w-40" />
+              <Button type="button" size="sm" variant="secondary" onClick={() => applyFee(false)} disabled={!bulkFee.trim()}>
+                Herkese uygula
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => applyFee(true)} disabled={!bulkFee.trim()}>
+                Yalnız boşlara
+              </Button>
+            </div>
             <label className="flex items-center gap-2 text-[13px] text-fg-muted">
               Ajans komisyonu %
               <Input value={commissionPct} onChange={(e) => setCommissionPct(e.target.value)} inputMode="decimal" className="w-20" aria-label="Ajans komisyonu yüzdesi" />
             </label>
           </div>
-          <ul className="flex flex-col divide-y divide-border">
+          <ul className="flex max-h-72 flex-col divide-y divide-border overflow-auto">
             {[...selected].map(([id, fee]) => {
               const inf = byId.get(id);
               return (
