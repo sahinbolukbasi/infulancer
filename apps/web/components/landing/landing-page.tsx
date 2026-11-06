@@ -9,6 +9,7 @@ import { BrandBadge, BrandLogo, type BrandLogoName } from "@/components/icons/br
 import { LANDING_FEATURES, type LandingReference, type LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
 import { BRAND_NAME } from "@/lib/brand";
+import { NordvowMark } from "@/components/brand/logo";
 
 export type LandingStats = { influencers: number; followers: number; campaigns: number; published: number };
 
@@ -224,7 +225,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
       <header className="fixed inset-x-0 top-4 z-50 px-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-line bg-glass-strong py-2 pr-2 pl-5 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
-            <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] animate-spin-slow" />
+            <NordvowMark size={24} />
             {BRAND_NAME}
           </Link>
           <nav aria-label="Tanıtım" className="hidden gap-7 text-sm text-fg-muted md:flex">

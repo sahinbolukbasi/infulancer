@@ -6,6 +6,7 @@ import { ReelCard } from "@/components/landing/reel-card";
 import type { LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
 import { BRAND_NAME } from "@/lib/brand";
+import { NordvowMark } from "@/components/brand/logo";
 
 /**
  * Giriş / kayıt / onay ekranlarının ortak çerçevesi: solda animasyonlu marka paneli,
@@ -38,7 +39,7 @@ export function AuthShell({
       {/* Sol: marka paneli */}
       <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line p-12 lg:flex">
         <Link href="/" className="flex w-fit items-center gap-2 text-lg font-semibold tracking-tight">
-          <span aria-hidden className="h-7 w-7 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] animate-spin-slow" />
+          <NordvowMark size={28} />
           {BRAND_NAME}
         </Link>
         <div className="relative mx-auto flex h-[420px] w-full max-w-[380px] items-center justify-center">
@@ -69,7 +70,7 @@ export function AuthShell({
         <div className={cn("flex w-full animate-enter flex-col gap-6", wide ? "max-w-2xl" : "max-w-md")}>
           <div className="flex items-center justify-between gap-3">
             <Link href="/" className="flex w-fit items-center gap-2 text-lg font-semibold tracking-tight lg:invisible">
-              <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)]" />
+              <NordvowMark size={24} />
               {BRAND_NAME}
             </Link>
             <ThemeToggle />

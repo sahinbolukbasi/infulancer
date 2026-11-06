@@ -9,8 +9,11 @@ const geistSans = Geist({ subsets: ["latin", "latin-ext"], variable: "--font-gei
 const geistMono = Geist_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? "https://nordvow.com"),
   title: { default: BRAND_NAME, template: `%s · ${BRAND_NAME}` },
-  description: "Influencer ajansı operasyon paneli",
+  description: `${BRAND_NAME} — influencer pazarlama ve ajans operasyon platformu`,
+  applicationName: BRAND_NAME,
+  icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
 };
 
 export const viewport: Viewport = {

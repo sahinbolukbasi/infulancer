@@ -12,6 +12,7 @@ import { isPathHidden, type PagePermissionRow } from "@infulancer/core/access/pa
 import type { Role as CoreRole } from "@infulancer/core/enums";
 export type PermCtx = { perms: PagePermissionRow[]; role: CoreRole; userId: string };
 import { BRAND_NAME } from "@/lib/brand";
+import { NordvowMark } from "@/components/brand/logo";
 
 const STORAGE_KEY = "infulancer.sidebar.collapsed";
 const EVENT = "infulancer:sidebar";
@@ -56,8 +57,13 @@ export function Sidebar({ role, perm }: { role: Role; perm?: PermCtx }) {
       )}
     >
       <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center" : "justify-between px-4")}>
-        {collapsed ? null : (
-          <Link href={items[0]?.href ?? "/"} className="text-[15px] font-semibold tracking-tight text-fg">
+        {collapsed ? (
+          <Link href={items[0]?.href ?? "/"} aria-label={BRAND_NAME} className="inline-flex">
+            <NordvowMark size={26} />
+          </Link>
+        ) : (
+          <Link href={items[0]?.href ?? "/"} className="inline-flex items-center gap-2 text-[15px] font-semibold tracking-tight text-fg">
+            <NordvowMark size={24} />
             {BRAND_NAME}
           </Link>
         )}

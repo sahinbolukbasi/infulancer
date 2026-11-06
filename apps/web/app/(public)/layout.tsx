@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { BRAND_NAME } from "@/lib/brand";
+import { NordvowMark } from "@/components/brand/logo";
 /** Girişsiz erişilebilen yasal sayfalar (Meta/TikTok App Review için menüye girmeden görünür). */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -9,7 +10,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span aria-hidden className="h-6 w-6 rounded-lg bg-[conic-gradient(from_180deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)]" />
+            <NordvowMark size={24} />
             {BRAND_NAME}
           </Link>
           <nav aria-label="Genel" className="flex items-center gap-5 text-sm text-fg-muted">

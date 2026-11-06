@@ -11,6 +11,7 @@ import { CopilotLauncher } from "@/components/copilot/copilot-launcher";
 import { Sidebar } from "./sidebar";
 import { loadPagePermissions, type PagePermissionRow } from "@infulancer/core/access/page-permissions";
 import { BRAND_NAME } from "@/lib/brand";
+import { NordvowMark } from "@/components/brand/logo";
 
 /**
  * Uygulama iskeleti: kenar çubuğu (md+) / alt sekme çubuğu (mobil), 64px başlık
@@ -40,7 +41,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
       <Sidebar role={navRole} perm={permCtx} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line bg-bg/70 px-4 backdrop-blur-xl md:px-8">
-          <span className="text-[15px] font-semibold tracking-tight md:hidden">{BRAND_NAME}</span>
+          <span className="inline-flex items-center gap-2 text-[15px] font-semibold tracking-tight md:hidden"><NordvowMark size={22} />{BRAND_NAME}</span>
           {role === "ADMIN" ? (
             <form action="/admin/ara" method="get" role="search" className="hidden max-w-md flex-1 sm:block">
               <label htmlFor="global-search" className="sr-only">
