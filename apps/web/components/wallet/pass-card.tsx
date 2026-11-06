@@ -21,7 +21,7 @@ export function WalletButtons({ appleUrl, googleUrl, live }: { appleUrl: string;
           </span>
         </a>
       </div>
-      {!live ? <p className="text-[11px] text-white/40">Cüzdan imzalama anahtarları eklenince kart telefonda doğrudan cüzdana eklenir; şu an web kart görünümü açılır.</p> : null}
+      {!live ? <p className="text-[11px] text-fg-passive">Cüzdan imzalama anahtarları eklenince kart telefonda doğrudan cüzdana eklenir; şu an web kart görünümü açılır.</p> : null}
     </div>
   );
 }
@@ -29,5 +29,5 @@ export function WalletButtons({ appleUrl, googleUrl, live }: { appleUrl: string;
 /** QR kod görseli (data URL, sunucuda üretildi). */
 export function QrImage({ dataUrl, alt }: { dataUrl: string; alt: string }) {
   // eslint-disable-next-line @next/next/no-img-element -- QR data URL
-  return <img src={dataUrl} alt={alt} width={208} height={208} className="rounded-2xl bg-white p-3 shadow-lg" />;
+  return <img src={dataUrl} alt={alt} width={176} height={176} className="rounded-xl bg-white p-1" />;
 }

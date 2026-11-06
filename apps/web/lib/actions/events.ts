@@ -139,19 +139,28 @@ export async function respondInviteAction(_p: ActionState, fd: FormData): Promis
     const inviteId = str(fd, "inviteId");
     const accept = bool(fd, "accept");
     const holderName = str(fd, "holderName") || undefined;
+    // Sahiplik: influencer yalnız kendi davetini, marka yalnız kendi etkinliğinin davetini yanıtlar.
+    const inv = await prisma.eventInvite.findUnique({ where: { id: inviteId }, select: { influencerId: true, event: { select: { tenantId: true } } } });
+    if (!inv) throw new DomainError("BULUNAMADI", "Davet bulunamadı.");
+    if (actor.role === "INFLUENCER" && inv.influencerId !== actor.influencerId) throw new DomainError("YETKISIZ", "Bu davet size ait değil.");
+    if (actor.role === "BRAND" && inv.event.tenantId !== actor.brandId) throw new DomainError("YETKISIZ", "Bu etkinlik sizin değil.");
     await respondInvite(inviteId, accept, holderName);
     await audit.append({ actor: toAuditActor(actor), action: "EVENT_INVITE_RESPONSE", entityType: "EventInvite", entityId: inviteId, data: { accept } });
     revalidateAll();
-    return { ok: true, message: accept ? "Katılım onaylandı; biletiniz hazır." : "Davet reddedildi." };
+    return { ok: true, message: accept ? "Katılımınız onaylandı; biletiniz hazır." : "Katılmayacağınız kaydedildi." };
   });
 }
 
 /** QR kodla etkinlik girişi (check-in). */
 export async function checkInAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await requireActor("ADMIN", "BRAND");
+  const actor = await requireActor("ADMIN", "BRAND");
   return attempt(async () => {
     const { checkInTicket } = await import("@infulancer/core/events/service");
-    const code = str(fd, "code").trim();
+    const code = str(fd, "code").trim().toUpperCase();
+    if (actor.role === "BRAND") {
+      const t = await prisma.eventTicket.findUnique({ where: { code }, select: { event: { select: { tenantId: true } } } });
+      if (t && t.event.tenantId !== actor.brandId) throw new DomainError("YETKISIZ", "Bu bilet sizin etkinliğinize ait değil.");
+    }
     const r = await checkInTicket(code);
     revalidateAll();
     if (r.alreadyUsed) return { ok: true, message: `Bu bilet zaten kullanılmış (${r.ticket.holderName}).` };

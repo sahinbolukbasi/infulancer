@@ -6,7 +6,7 @@ import { mediaSrc } from "@/lib/media";
  * Tek görsel yükleyici: seç → /api/media'ya presign ile yükle → gizli input'a key yaz.
  * Form gönderilince key sunucuya gider. 8 MB, JPEG/PNG/WebP.
  */
-export function ImageUpload({ name, label, defaultKey }: { name: string; label: string; defaultKey?: string | null }) {
+export function ImageUpload({ name, label, defaultKey, onPreview }: { name: string; label: string; defaultKey?: string | null; onPreview?: (url: string | null) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [key, setKey] = useState<string | null>(defaultKey ?? null);
   const [preview, setPreview] = useState<string | null>(mediaSrc(defaultKey));
@@ -19,7 +19,9 @@ export function ImageUpload({ name, label, defaultKey }: { name: string; label: 
     try {
       if (file.size > 8 * 1024 * 1024) throw new Error("Dosya 8 MB'ı aşıyor.");
       if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("JPEG, PNG veya WebP seçin.");
-      setPreview(URL.createObjectURL(file));
+      const local = URL.createObjectURL(file);
+      setPreview(local);
+      onPreview?.(local);
       const pres = await fetch("/api/media", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mime: file.type, size: file.size }) });
       const pj = await pres.json();
       if (!pres.ok) throw new Error(pj.error ?? "Hazırlık başarısız.");
@@ -31,6 +33,7 @@ export function ImageUpload({ name, label, defaultKey }: { name: string; label: 
       setKey(cj.key);
     } catch (e) {
       setPreview(null);
+      onPreview?.(null);
       setKey(null);
       setErr(e instanceof Error ? e.message : "Hata.");
     } finally {
