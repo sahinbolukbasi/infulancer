@@ -8,6 +8,8 @@ import { PageHeader } from "@/components/ui/layout";
 import { requireAdmin } from "@/lib/auth-guard";
 import type { PagePermissionRow } from "@infulancer/core/access/page-visibility";
 import { PageVisibilityManager } from "@/components/admin/page-visibility-manager";
+import { UserPageExceptions, type PermUser } from "@/components/admin/user-page-exceptions";
+import type { Role } from "@infulancer/core/enums";
 export const metadata: Metadata = { title: "Rol ve yetkiler" };
 
 type Access = "full" | "own" | "read" | "none";
@@ -49,7 +51,12 @@ function Cell({ a }: { a: Access }) {
 export default async function PermissionsPage() {
   await requireAdmin();
   const counts = await prisma.user.groupBy({ by: ["role", "status"], _count: true });
-  const perms: PagePermissionRow[] = await prisma.pagePermission.findMany({ where: { scopeType: "ROLE" }, select: { id: true, scopeType: true, scopeId: true, pathPrefix: true, allowed: true } });
+  const [perms, userRows] = await Promise.all([
+    prisma.pagePermission.findMany({ select: { id: true, scopeType: true, scopeId: true, pathPrefix: true, allowed: true } }) as Promise<PagePermissionRow[]>,
+    prisma.user.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true, role: true }, take: 500 }),
+  ]);
+  const rolePerms = perms.filter((p) => p.scopeType === "ROLE");
+  const users: PermUser[] = userRows.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role as Role }));
   const n = (role: string, status?: string) => counts.filter((c) => c.role === role && (!status || c.status === status)).reduce((s, c) => s + c._count, 0);
   const roles = [
     { id: "ADMIN", title: "Admin", text: "Platform sahibi: tüm modüller, kullanıcılar, roller, finans, tanıtım sayfası." },
@@ -128,7 +135,14 @@ export default async function PermissionsPage() {
           <h2 className="text-lg font-semibold text-fg">Sayfa görünürlüğü</h2>
           <p className="text-sm text-fg-muted">Rollere göre menü sayfalarını açıp kapatın. Kapatılan sayfa o rolde menüden kalkar ve erişim engellenir. Bu ayar koddaki rol kurallarını gevşetmez, yalnızca daraltır.</p>
         </div>
-        <PageVisibilityManager perms={perms} />
+        <PageVisibilityManager perms={rolePerms} />
+      </section>
+      <section className="flex flex-col gap-3 border-t border-border pt-6" aria-label="Kişiye özel sayfa istisnaları">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-fg">Kişiye özel istisnalar</h2>
+          <p className="text-sm text-fg-muted">Tek bir kullanıcı için bir sayfayı açın veya gizleyin. Kişiye özel ayar, rol görünürlüğünün önüne geçer; &quot;Aç&quot; rol gizlemesini bu kişi için geri alır.</p>
+        </div>
+        <UserPageExceptions users={users} perms={perms} />
       </section>
     </div>
   );
