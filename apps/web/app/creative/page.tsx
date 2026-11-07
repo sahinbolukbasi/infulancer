@@ -266,7 +266,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
               <PricingForm markup={pricing.markup} minTry={pricing.minTry} usdTry={pricing.usdTry} autoFx={pricing.autoFx} />
               <SectionHead title="Bakiye yükle" />
               <TopUpForm label="Hesap" brands={tenants.map((t) => ({ id: t.id, name: `${t.group === "Markalar" ? "Marka" : "Influencer"} · ${t.name}` }))} />
-              <p className="text-[12px] text-fg-passive">Tutarlar TL cinsindendir. Yeni marka/influencer ilk girişte {fmtTl(Number(process.env.CREATIVE_STARTER_CREDITS ?? "5000"))} hoş geldin bakiyesi alır.</p>
+              <p className="text-[12px] text-fg-passive">Tutarlar TL cinsindendir. Yeni marka/influencer ilk girişte {fmtTl(Number(process.env.CREATIVE_STARTER_CREDITS ?? "250"))} hoş geldin bakiyesi alır.</p>
             </div>
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
               <SectionHead title="Bakiyeler" />
@@ -475,7 +475,7 @@ async function Inspiration() {
   );
 }
 
-const LEDGER_LABEL: Record<string, string> = { STARTER: "Hoş geldin bakiyesi", TOPUP: "Yükleme", CHARGE: "Üretim", REFUND: "İade" };
+const LEDGER_LABEL: Record<string, string> = { STARTER: "Hoş geldin bakiyesi", TOPUP: "Yükleme", CHARGE: "Üretim", REFUND: "İade", ADJUST: "Düzeltme" };
 /** Bakiye hareketleri: her yükleme ve tahsilat, işlem sonrası bakiyeyle. */
 function LedgerList({ rows }: { rows: { id: string; kind: string; amount: unknown; balanceAfter: unknown; note: string | null; createdAt: Date }[] }) {
   return (

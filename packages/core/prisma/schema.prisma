@@ -1908,7 +1908,7 @@ model VideoEditJob {
 model CreditLedger {
   id           String   @id @default(cuid())
   tenantId     String   @map("tenant_id")
-  /// STARTER · TOPUP · CHARGE · REFUND
+  /// STARTER · TOPUP · CHARGE · REFUND · ADJUST
   kind         String
   /// + yükleme, − tahsilat (TL)
   amount       Decimal  @db.Decimal(14, 3)
