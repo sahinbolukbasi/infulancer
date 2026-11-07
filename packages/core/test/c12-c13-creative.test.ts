@@ -21,7 +21,7 @@ describe("creative üretimi", () => {
       const job = await submitCreative({ tenantId: T.tenantId, modelKey: "nano-banana-pro", prompt: "Pastel arka planda ruj ürün fotoğrafı", units: 2 });
       expect(job.status).toBe("IN_QUEUE");
       let acc = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: T.tenantId } });
-      expect(Number(acc.heldCredits)).toBe(80);
+      expect(Number(acc.heldCredits)).toBe(46); // 0,15 $ × 50,18 × 3 = 22,581 TL/adet → 2 adet = 45,16 → 46 TL
       expect(Number(acc.balanceCredits)).toBe(1000);
 
       const r = await handleFalWebhook({ request_id: job.requestId!, status: "OK", payload: { images: [{ url: "https://fal.media/x.png" }] }, metrics: { inference_time: 2.5 } });
@@ -32,7 +32,7 @@ describe("creative üretimi", () => {
       expect(await memoryStore.has(`${asset.s3Key}.c2pa.json`)).toBe(true);
       acc = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: T.tenantId } });
       expect(Number(acc.heldCredits)).toBe(0);
-      expect(Number(acc.balanceCredits)).toBe(920);
+      expect(Number(acc.balanceCredits)).toBe(954);
     });
 
     it("webhook retry'ı ikinci varlık ve ikinci tahsilat üretmez", async () => {
@@ -57,7 +57,7 @@ describe("creative üretimi", () => {
   describe("K13 license_status != cleared model müşteri işinde çalışmaz", () => {
     it("pending/restricted model reddedilir, kredi bloke edilmez", async () => {
       await expect(resolveModel("gpt-image-2")).rejects.toBeInstanceOf(ModelUnavailableError);
-      await expect(resolveModel("flux-schnell")).rejects.toThrow(/lisans/);
+      await expect(resolveModel("z-image-turbo")).rejects.toThrow(/lisans/);
       await prisma.modelRegistry.update({ where: { key: "nano-banana" }, data: { licenseStatus: "restricted" } });
       const held = Number((await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId: T.tenantId } })).heldCredits);
       await expect(submitCreative({ tenantId: T.tenantId, modelKey: "nano-banana", prompt: "x", units: 1 })).rejects.toBeInstanceOf(ModelUnavailableError);

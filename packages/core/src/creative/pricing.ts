@@ -1,64 +1,47 @@
+import { getConfig, setConfig } from "../config/store";
+
 /**
- * Creative üretim fiyatları — TÜRK LİRASI (TL) cinsinden, birim başına.
+ * Creative fiyatlandırması — TL, gerçek maliyetten türetilir (elle tablo YOK).
  *
- * Sistem içinde "kredi" birimi 1 TL'ye eşittir: creditsPerUnit = buradaki TL fiyatı.
- * Detaylı/ağır içerik (video, yüksek kalite görsel) daha pahalıdır. Her tek üretim
- * en çok ~5000 TL olacak şekilde birim fiyat ve maxUnits birlikte ayarlanmıştır.
+ *   birim TL   = sağlayıcı USD birim fiyatı × USD/TRY × markup         (model kaydında saklanır)
+ *   iş tutarı  = max(minTry, yukarı yuvarla(birim TL × birim adedi))    (bakiyeden düşen tutar)
  *
- * Model kaydı (registry) bu tabloyu esas alır; bir model burada yoksa 0 kabul edilmez,
- * seed sırasında uyarı amaçlı makul bir varsayılan kullanılır.
+ * Sistemde "kredi" = 1 TL. USD/TRY her başlangıçta güncellenir (autoFx); markup ve en düşük
+ * ücret `pricing.creative` ayarındadır. Böylece kur değişince fiyatlar kendiliğinden doğru kalır
+ * ve hiçbir model maliyetinin altında satılmaz.
  */
-export const MODEL_PRICE_TRY: Record<string, number> = {
-  // Görsel (adet başına)
-  "nano-banana": 15, // ekonomik
-  "nano-banana-2": 20,
-  "nano-banana-pro": 40, // en yüksek kalite
-  "ideogram-4": 25, // yazılı afiş
-  "recraft-v4-pro": 30, // illüstrasyon/vektör
-  "gpt-image-2": 45,
-  "flux-schnell": 10, // megapiksel ama pratikte hızlı/ucuz
-  "z-image-turbo": 12,
-  "nova-canvas": 20,
-  "titan-image-g1-v2": 12,
+export type CreativePricing = { usdTry: number; markup: number; minTry: number; autoFx: boolean; fxUpdatedAt: string | null };
 
-  // Video (saniye başına) — 10 sn tavan ile en çok ~2000-5000 TL
-  "minimax-h3-turbo": 150, // 10 sn = 1500
-  "minimax-h3-i2v": 200,
-  "minimax-h3-ref2video": 250,
-  "kling-v2-5-turbo-pro": 300, // 10 sn = 3000
-  "kling-v3-pro": 500, // sinematik; 10 sn = 5000 (tavan)
-  "kling-2-1-pro": 300,
-  "seedance-2": 10, // 1k token başına; maxUnits ile sınırlı
-  "nova-reel": 180,
+export async function creativePricing(): Promise<CreativePricing> {
+  return getConfig("pricing.creative");
+}
 
-  // Seslendirme (1000 karakter başına)
-  "elevenlabs-turbo-2-5": 20,
-  "elevenlabs-multilingual-v2": 35, // en doğal
-  "minimax-speech-2-8-turbo": 18,
+/** Birim TL fiyatı (3 hane hassasiyet; yuvarlama iş toplamında yapılır). */
+export function unitPriceTry(unitPriceUsd: number, p: Pick<CreativePricing, "usdTry" | "markup">): number {
+  return Math.round(unitPriceUsd * p.usdTry * p.markup * 1000) / 1000;
+}
 
-  // Düzenleme / tryon (adet)
-  "flux-kontext-pro": 25,
-  "fashn-tryon-1-6": 30,
-  "bria-tryon": 20,
-  "stability-fast-upscale": 15,
-  "stability-outpaint": 20,
-  "stability-remove-bg": 15,
-  "stability-conservative-upscale": 60,
-  "stability-creative-upscale": 90,
-  "flux-lora-fast-training": 400, // eğitim (run)
+/** Bir işin bakiyeden düşecek tutarı (tam TL, en az minTry). */
+export function jobChargeTry(creditsPerUnit: number, units: number, minTry: number): number {
+  return Math.max(minTry, Math.ceil(creditsPerUnit * units - 1e-9));
+}
 
-  // Stüdyo AI düzenlemeleri (yüklenen görsel üzerinde). Ham maliyet: $0.04 / $0.018 / ~$0.005 / $0.07 sn.
-  "nano-banana-edit": 15, // komutla düzenle
-  "bria-bg-remove": 8, // arka plan kaldır
-  "esrgan-upscale": 5, // 2x netleştir
-  "kling-v2-5-i2v": 300, // görselden video (sn); 5 sn = 1500 TL
-};
-
-/** Model için TL birim fiyatı (tabloda yoksa makul varsayılan). */
-export function priceTry(key: string, kind: string): number {
-  if (MODEL_PRICE_TRY[key] != null) return MODEL_PRICE_TRY[key];
-  // Tabloda olmayan model: türüne göre güvenli varsayılan.
-  if (kind === "video") return 250;
-  if (kind === "audio") return 25;
-  return 25;
+/** USD/TRY kurunu açık bir kaynaktan çeker; başarısızsa mevcut değer kalır. */
+export async function refreshFx(fetcher: typeof fetch = fetch): Promise<CreativePricing> {
+  const cur = await creativePricing();
+  if (!cur.autoFx) return cur;
+  try {
+    const res = await fetcher("https://open.er-api.com/v6/latest/USD", { signal: AbortSignal.timeout(8000) });
+    const j = (await res.json()) as { result?: string; rates?: Record<string, number> };
+    const rate = j.rates?.TRY;
+    // Akıl sağlığı kontrolü: bozuk/aşırı veri fiyatları bozmasın.
+    if (j.result === "success" && typeof rate === "number" && rate > 1 && rate < 1000 && Math.abs(rate - cur.usdTry) / cur.usdTry < 0.5) {
+      const next = { ...cur, usdTry: Math.round(rate * 100) / 100, fxUpdatedAt: new Date().toISOString() };
+      await setConfig("pricing.creative", next, true);
+      return next;
+    }
+  } catch {
+    /* ağ yoksa son bilinen kur kullanılır */
+  }
+  return cur;
 }

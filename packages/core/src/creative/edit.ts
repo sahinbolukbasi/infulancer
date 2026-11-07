@@ -6,10 +6,12 @@ import { getOwnedUpload, presignCreativeGet } from "./uploads";
  * Yüklenen görsel üzerinde AI düzenlemesi (ücretli, TL bakiyeden düşer).
  * Ücretsiz düzenlemeler (kırp, döndür, filtre, yazı) tarayıcıda yapılır; buraya gelmez.
  *
- *  - prompt-duzenle  → nano-banana-edit (komutla düzenle)        15 TL
- *  - arka-plan-kaldir → bria-bg-remove                            8 TL
- *  - netlestir       → esrgan-upscale (2x)                         5 TL
- *  - videoya-cevir   → kling-v2-5-i2v (5 veya 10 sn)             300 TL/sn
+ *  - prompt-duzenle  → nano-banana-edit (komutla düzenle)
+ *  - arka-plan-kaldir → bria-bg-remove
+ *  - netlestir       → esrgan-upscale (2x)
+ *  - videoya-cevir   → kling-v2-5-i2v (5/10 sn, yüksek kalite)
+ *  - videoya-cevir-ekonomik → hailuo-02-fast-i2v (6/10 sn, 512p)
+ * Tutarlar pricing.ts formülüyle (USD × kur × markup) hesaplanır.
  *
  * Kaynak dosya modele 1 saatlik imzalı URL ile verilir; bucket herkese açılmaz.
  */
@@ -18,6 +20,7 @@ export const EDIT_ACTIONS = {
   "arka-plan-kaldir": { modelKey: "bria-bg-remove", generative: false, needsPrompt: false },
   netlestir: { modelKey: "esrgan-upscale", generative: false, needsPrompt: false },
   "videoya-cevir": { modelKey: "kling-v2-5-i2v", generative: true, needsPrompt: true },
+  "videoya-cevir-ekonomik": { modelKey: "hailuo-02-fast-i2v", generative: true, needsPrompt: true },
 } as const;
 export type EditAction = keyof typeof EDIT_ACTIONS;
 
@@ -26,6 +29,7 @@ const LABEL: Record<EditAction, string> = {
   "arka-plan-kaldir": "Arka plan kaldırma",
   netlestir: "Netleştirme (2x)",
   "videoya-cevir": "Görselden video",
+  "videoya-cevir-ekonomik": "Görselden video (ekonomik)",
 };
 
 export async function submitImageEdit(input: { tenantId: string; uploadId: string; action: string; prompt?: string | null; seconds?: number; portrait?: boolean }) {
@@ -43,9 +47,12 @@ export async function submitImageEdit(input: { tenantId: string; uploadId: strin
   if (action === "prompt-duzenle") falInput = { prompt: userPrompt, image_urls: [url], num_images: 1, output_format: "png" };
   else if (action === "arka-plan-kaldir") falInput = { image_url: url }; // prompt gönderilmez (fal'da daha pahalı)
   else if (action === "netlestir") falInput = { image_url: url, scale: 2, output_format: "png" };
-  else {
+  else if (action === "videoya-cevir") {
     units = input.seconds === 10 ? 10 : 5; // Kling yalnız 5 veya 10 sn
     falInput = { prompt: userPrompt, image_url: url, duration: String(units) };
+  } else {
+    units = input.seconds === 10 ? 10 : 6; // Hailuo-02 Fast yalnız 6 veya 10 sn (512p)
+    falInput = { prompt: userPrompt, image_url: url, duration: String(units), prompt_optimizer: true };
   }
 
   return submitCreative({

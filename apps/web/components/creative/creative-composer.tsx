@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { KindIcon } from "@/components/creative/kind-icon";
 import { fmtTl, KIND_LABEL, modelHint, modelName, unitLabel, type CreativeKind } from "@/lib/creative-models";
 
-export type ComposerModel = { key: string; kind: CreativeKind; unit: string; creditsPerUnit: number; maxUnits: number | null };
+export type ComposerModel = { key: string; kind: CreativeKind; unit: string; creditsPerUnit: number; maxUnits: number | null; durations: number[] | null; aspects: string[] | null };
 export type ComposerTenant = { id: string; name: string; group: "Markalar" | "Influencerlar"; available: number };
 
 const IDEAS: Record<CreativeKind, { label: string; text: string }[]> = {
@@ -30,10 +30,13 @@ const IDEAS: Record<CreativeKind, { label: string; text: string }[]> = {
   ],
 };
 const FORMATS = [
-  { id: "dikey", label: "Dikey", hint: "9:16 · Reels, Story", box: "h-6 w-3.5" },
-  { id: "kare", label: "Kare", hint: "1:1 · Akış", box: "h-5 w-5" },
-  { id: "yatay", label: "Yatay", hint: "16:9 · YouTube", box: "h-3.5 w-6" },
+  { id: "9:16", label: "Story / Reels", hint: "9:16", box: "h-6 w-3.5" },
+  { id: "4:5", label: "Gönderi", hint: "4:5", box: "h-6 w-5" },
+  { id: "1:1", label: "Kare", hint: "1:1", box: "h-5 w-5" },
+  { id: "16:9", label: "Yatay", hint: "16:9", box: "h-3.5 w-6" },
 ];
+/** Sunucudaki tutar hesabının aynısı (pricing.jobChargeTry): tam TL, en az minTry. */
+const chargeTry = (cpu: number, units: number, minTry: number) => Math.max(minTry, Math.ceil(cpu * units - 1e-9));
 const STYLES = ["Minimal", "Sinematik", "Pastel", "Neon", "Doğal ışık", "Stüdyo", "Retro", "Lüks"];
 
 const KIND_DESC: Record<CreativeKind, string> = { image: "Afiş, ürün, story", video: "Reels, TikTok, tanıtım", audio: "Reklam ve story sesi" };
@@ -47,6 +50,7 @@ export function CreativeComposer({
   tenants,
   isAdmin,
   available,
+  minTry = 2,
   initialPrompt = "",
 }: {
   models: ComposerModel[];
@@ -54,6 +58,8 @@ export function CreativeComposer({
   isAdmin: boolean;
   /** Marka/influencer için kullanılabilir bakiye TL (yönetici için seçili hesaptan okunur). */
   available: number;
+  /** İş başına en düşük ücret (TL). */
+  minTry?: number;
   initialPrompt?: string;
 }) {
   const router = useRouter();
@@ -62,17 +68,21 @@ export function CreativeComposer({
   const [kind, setKind] = useState<CreativeKind>(kinds[0] ?? "image");
   const inKind = models.filter((m) => m.kind === kind);
   const [modelKey, setModelKey] = useState(inKind[0]?.key ?? "");
-  const [units, setUnits] = useState("1");
+  const [seconds, setSeconds] = useState(0);
   const [prompt, setPrompt] = useState(initialPrompt);
-  const [format, setFormat] = useState("dikey");
+  const [format, setFormat] = useState("9:16");
   const [style, setStyle] = useState("");
   const [tenantId, setTenantId] = useState(tenants[0]?.id ?? "");
   const m = models.find((x) => x.key === modelKey) ?? inKind[0];
-  const n = Number(units || "0");
-  const cost = m ? Math.ceil(m.creditsPerUnit * n * 1000) / 1000 : 0;
+  // Faturalanan birim sunucudakiyle aynı: video = seçilen süre, ses = metnin 1000 karakter dilimi, görsel = 1.
+  const durations = m?.durations ?? [5];
+  const sec = durations.includes(seconds) ? seconds : durations[0]!;
+  const n = kind === "video" ? sec : kind === "audio" ? Math.max(1, Math.ceil(prompt.trim().length / 1000)) : 1;
+  const cost = m ? chargeTry(m.creditsPerUnit, n, minTry) : 0;
+  const aspectOk = kind === "audio" || !m?.aspects || m.aspects.includes(format);
   const balance = isAdmin ? (tenants.find((t) => t.id === tenantId)?.available ?? 0) : available;
   const short = cost > balance;
-  const ready = prompt.trim().length >= 10 && !!m && n > 0 && !short && (!isAdmin || !!tenantId);
+  const ready = prompt.trim().length >= 10 && !!m && n > 0 && !short && aspectOk && (!isAdmin || !!tenantId);
 
   useEffect(() => {
     if (state.ok) {
@@ -86,7 +96,7 @@ export function CreativeComposer({
     setKind(k);
     const first = models.find((x) => x.kind === k);
     setModelKey(first?.key ?? "");
-    setUnits(k === "video" ? "5" : "1");
+    setSeconds(0);
   };
 
   if (!models.length) {
@@ -96,7 +106,8 @@ export function CreativeComposer({
   return (
     <form action={action} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface">
       <input type="hidden" name="modelKey" value={m?.key ?? ""} />
-      <input type="hidden" name="format" value={kind === "audio" ? "" : format} />
+      <input type="hidden" name="aspect" value={kind === "audio" ? "" : format} />
+      <input type="hidden" name="seconds" value={kind === "video" ? sec : ""} />
       <input type="hidden" name="style" value={kind === "audio" ? "" : style} />
       {isAdmin ? <input type="hidden" name="tenantId" value={tenantId} /> : null}
 
@@ -154,7 +165,9 @@ export function CreativeComposer({
         <div className="grid grid-cols-1 gap-4 border-t border-line p-4 md:grid-cols-2">
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2 text-[13px] font-medium text-fg">Format</legend>
-            <div className="grid grid-cols-3 gap-2">
+            {!aspectOk ? <p className="text-[11px] text-amber-600">Bu model {format} üretmiyor; {m?.aspects?.join(", ")} seçin ya da başka model seçin.</p> : null}
+            {format === "9:16" && kind === "image" ? <p className="text-[11px] text-fg-passive">Story düzeni: üst ve altta yazı/arayüz için boş alan bırakılır.</p> : null}
+            <div className="grid grid-cols-4 gap-2">
               {FORMATS.map((f) => (
                 <button
                   key={f.id}
@@ -204,10 +217,25 @@ export function CreativeComposer({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-[12px] text-fg-muted">
-          Miktar ({m ? unitLabel(m.unit) : "birim"})
-          <input name="units" type="number" min={1} max={m?.maxUnits ?? 100} value={units} onChange={(e) => setUnits(e.target.value)} className="h-10 rounded-xl border border-line bg-bg px-3 text-[14px] tabular-nums text-fg" />
-        </label>
+        {kind === "video" ? (
+          <label className="flex flex-col gap-1 text-[12px] text-fg-muted">
+            Süre
+            <select value={sec} onChange={(e) => setSeconds(Number(e.target.value))} className="h-10 rounded-xl border border-line bg-bg px-3 text-[14px] tabular-nums text-fg">
+              {durations.map((d) => (
+                <option key={d} value={d}>
+                  {d} sn
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <div className="flex flex-col gap-1 text-[12px] text-fg-muted">
+            Ücretlendirme
+            <span className="flex h-10 items-center rounded-xl border border-line bg-bg/50 px-3 text-[13px] text-fg">
+              {kind === "audio" ? `${prompt.trim().length} karakter · ${n} × 1000` : "1 adet"}
+            </span>
+          </div>
+        )}
         {isAdmin ? (
           <label className="flex flex-col gap-1 text-[12px] text-fg-muted sm:col-span-2 lg:col-span-1">
             Kimin adına

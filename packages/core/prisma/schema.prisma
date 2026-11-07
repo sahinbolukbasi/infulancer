@@ -1902,3 +1902,20 @@ model VideoEditJob {
   @@index([tenantId, createdAt])
   @@map("video_edit_jobs")
 }
+
+/// Bakiye hareketleri (TL). Her yükleme, hoş geldin bakiyesi ve tahsilat tek satır; değiştirilmez.
+/// Kullanıcıya "bakiyem neden azaldı" sorusunun cevabı ve muhasebe izi.
+model CreditLedger {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  /// STARTER · TOPUP · CHARGE · REFUND
+  kind         String
+  /// + yükleme, − tahsilat (TL)
+  amount       Decimal  @db.Decimal(14, 3)
+  balanceAfter Decimal  @map("balance_after") @db.Decimal(14, 3)
+  jobId        String?  @map("job_id")
+  note         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@index([tenantId, createdAt])
+  @@map("credit_ledger")
+}

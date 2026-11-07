@@ -3,6 +3,10 @@ import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
 import { aiDisclosureChecklist } from "@infulancer/core/creative/c2pa";
 import { ensureStarterCredits } from "@infulancer/core/creative/credits";
+import { allowedDurations, modelSpec, supportedAspects } from "@infulancer/core/creative/adapters";
+import { creativePricing } from "@infulancer/core/creative/pricing";
+import { reconcileStaleJobs } from "@infulancer/core/creative/fal";
+import { PricingForm } from "@/components/creative/pricing-form";
 import { CreditRequestForm } from "@/components/creative/credit-request-form";
 import { StudioEditor, type StudioUpload } from "@/components/creative/studio-editor";
 import { AssetThumb } from "@/components/creative/asset-thumb";
@@ -50,6 +54,12 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   const scope = own ? { tenantId: own } : {};
   const pendingCreditReq = own ? !!(await prisma.creditRequest.findFirst({ where: { tenantId: own, status: "BEKLIYOR" }, select: { id: true } })) : false;
 
+  // Webhook'u kaçan işleri arka planda sonuçlandır (bakiye bloke kalmasın).
+  void reconcileStaleJobs().catch(() => {});
+  const [pricing, ledger] = await Promise.all([
+    creativePricing(),
+    prisma.creditLedger.findMany({ where: own ? { tenantId: own } : {}, orderBy: { createdAt: "desc" }, take: own ? 30 : 60 }),
+  ]);
   const [models, flags, brands, influencers, accounts, jobs, assets] = await Promise.all([
     prisma.modelRegistry.findMany({ orderBy: [{ kind: "asc" }, { creditsPerUnit: "asc" }] }),
     getConfig("features"),
@@ -66,9 +76,10 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
     const a = accounts.find((x) => x.tenantId === tenantId);
     return a ? Number(a.balanceCredits) - Number(a.heldCredits) : 0;
   };
+  // Yalnız istek gövdesi tanımlı (adapters) ve fal'da doğrulanmış modeller; ucuzdan pahalıya.
   const usable: ComposerModel[] = models
-    .filter((m) => m.status === "active" && m.licenseStatus === "cleared" && (!m.featureFlag || flags[m.featureFlag]) && m.provider === "fal" && asKind(m.kind) && !needsReference(m.key))
-    .map((m) => ({ key: m.key, kind: asKind(m.kind)!, unit: m.unit, creditsPerUnit: Number(m.creditsPerUnit), maxUnits: m.maxUnits }));
+    .filter((m) => m.status === "active" && m.licenseStatus === "cleared" && (!m.featureFlag || flags[m.featureFlag]) && m.provider === "fal" && asKind(m.kind) && !needsReference(m.key) && modelSpec(m.key))
+    .map((m) => ({ key: m.key, kind: asKind(m.kind)!, unit: m.unit, creditsPerUnit: Number(m.creditsPerUnit), maxUnits: m.maxUnits, durations: allowedDurations(m.key), aspects: supportedAspects(m.key) }));
   const tenants: ComposerTenant[] = isAdmin
     ? [...brands.map((b) => ({ id: b.id, name: b.name, group: "Markalar" as const, available: avail(b.id) })), ...influencers.map((i) => ({ id: i.id, name: i.name, group: "Influencerlar" as const, available: avail(i.id) }))]
     : [];
@@ -96,7 +107,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
         }))
       : [];
   const priceOf = (key: string, fallback: number) => Number(models.find((m) => m.key === key)?.creditsPerUnit ?? fallback);
-  const studioPrices = { promptEdit: priceOf("nano-banana-edit", 15), bgRemove: priceOf("bria-bg-remove", 8), upscale: priceOf("esrgan-upscale", 5), i2vPerSec: priceOf("kling-v2-5-i2v", 300) };
+  const studioPrices = { minTry: pricing.minTry, promptEdit: priceOf("nano-banana-edit", 6), bgRemove: priceOf("bria-bg-remove", 3), upscale: priceOf("esrgan-upscale", 1), i2vPerSec: priceOf("kling-v2-5-i2v", 11), i2vEcoPerSec: priceOf("hailuo-02-fast-i2v", 3) };
   const available = own ? avail(own) : accounts.reduce((s, a) => s + Number(a.balanceCredits) - Number(a.heldCredits), 0);
   const completed = jobs.filter((j) => j.status === "COMPLETED").length;
   const description =
@@ -133,12 +144,18 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
       </header>
 
       {!isAdmin && own ? <CreditRequestForm pending={pendingCreditReq} /> : null}
+      {!isAdmin && own && ledger.length ? (
+        <details className="rounded-2xl border border-line bg-surface">
+          <summary className="cursor-pointer px-4 py-3 text-[13px] font-medium text-fg">Bakiye hareketleri</summary>
+          <LedgerList rows={ledger} />
+        </details>
+      ) : null}
       <FilterTabs items={tabs} active={tab} />
 
       {tab === "uret" ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="flex min-w-0 flex-col gap-6">
-            <CreativeComposer key={sp.prompt ?? ""} models={usable} tenants={tenants} isAdmin={isAdmin} available={own ? avail(own) : 0} initialPrompt={(sp.prompt ?? "").slice(0, 2000)} />
+            <CreativeComposer key={sp.prompt ?? ""} minTry={pricing.minTry} models={usable} tenants={tenants} isAdmin={isAdmin} available={own ? avail(own) : 0} initialPrompt={(sp.prompt ?? "").slice(0, 2000)} />
             <Inspiration />
           </div>
           <aside className="flex flex-col gap-4" aria-label="Son üretimler">
@@ -242,6 +259,11 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           />
           <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+              <SectionHead title="Fiyatlandırma" />
+              <p className="text-[12px] text-fg-muted">
+                Fiyat = sağlayıcı USD maliyeti × kur ({pricing.usdTry.toLocaleString("tr-TR")} TL{pricing.fxUpdatedAt ? `, ${fmtDateTime(new Date(pricing.fxUpdatedAt))}` : ""}) × {pricing.markup} · iş başına en az {fmtTl(pricing.minTry)}. Kur her açılışta güncellenir.
+              </p>
+              <PricingForm markup={pricing.markup} minTry={pricing.minTry} usdTry={pricing.usdTry} autoFx={pricing.autoFx} />
               <SectionHead title="Bakiye yükle" />
               <TopUpForm label="Hesap" brands={tenants.map((t) => ({ id: t.id, name: `${t.group === "Markalar" ? "Marka" : "Influencer"} · ${t.name}` }))} />
               <p className="text-[12px] text-fg-passive">Tutarlar TL cinsindendir. Yeni marka/influencer ilk girişte {fmtTl(Number(process.env.CREATIVE_STARTER_CREDITS ?? "5000"))} hoş geldin bakiyesi alır.</p>
@@ -262,6 +284,14 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
               <DocLink slug="kredi-ve-maliyet" />
             </div>
           </section>
+          {ledger.length ? (
+            <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface">
+              <div className="px-4 pt-4">
+                <SectionHead title="Son bakiye hareketleri (tüm hesaplar)" />
+              </div>
+              <LedgerList rows={ledger.map((r) => ({ ...r, note: `${nameOf.get(r.tenantId) ?? r.tenantId.slice(-6)}${r.note ? ` · ${r.note}` : ""}` }))} />
+            </section>
+          ) : null}
           <section className="flex flex-col gap-3">
             <SectionHead title="Model kaydı" action={<DocLink slug="model-kaydi-ve-lisans" />} />
             <div className="overflow-x-auto rounded-2xl border border-line">
@@ -442,5 +472,32 @@ async function Inspiration() {
         ))}
       </div>
     </section>
+  );
+}
+
+const LEDGER_LABEL: Record<string, string> = { STARTER: "Hoş geldin bakiyesi", TOPUP: "Yükleme", CHARGE: "Üretim", REFUND: "İade" };
+/** Bakiye hareketleri: her yükleme ve tahsilat, işlem sonrası bakiyeyle. */
+function LedgerList({ rows }: { rows: { id: string; kind: string; amount: unknown; balanceAfter: unknown; note: string | null; createdAt: Date }[] }) {
+  return (
+    <ul className="flex max-h-80 flex-col divide-y divide-line overflow-y-auto border-t border-line text-[13px]">
+      {rows.map((r) => {
+        const amt = Number(r.amount);
+        return (
+          <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-2">
+            <span className="flex min-w-0 flex-col">
+              <span className="text-fg">{LEDGER_LABEL[r.kind] ?? r.kind}</span>
+              <span className="truncate text-[11px] text-fg-passive">
+                {fmtDateTime(r.createdAt)}
+                {r.note ? ` · ${r.note}` : ""}
+              </span>
+            </span>
+            <span className="flex shrink-0 flex-col items-end tabular-nums">
+              <span className={amt < 0 ? "text-fg" : "text-emerald-600"}>{amt > 0 ? "+" : "−"}{fmtTl(Math.abs(amt))}</span>
+              <span className="text-[11px] text-fg-passive">Bakiye {fmtTl(Number(r.balanceAfter))}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

@@ -26,6 +26,8 @@ export const PRESETS: { id: Preset; label: string }[] = [
   { id: "vintage", label: "Vintage" },
   { id: "siyah-beyaz", label: "Siyah-beyaz" },
 ];
+/** Instagram Story çıktı boyutu. */
+export const STORY_SIZE = { w: 1080, h: 1920 };
 export const DEFAULT_EDITS: ImageEdits = { rotate: 0, flipH: false, aspect: "orijinal", brightness: 0, contrast: 0, saturation: 0, preset: "yok", text: "", textSize: 7, textColor: "#ffffff", textPos: "alt" };
 
 const RATIO: Record<Exclude<Aspect, "orijinal">, number> = { "1:1": 1, "4:5": 4 / 5, "9:16": 9 / 16, "16:9": 16 / 9 };
@@ -145,7 +147,11 @@ function drawText(ctx: CanvasRenderingContext2D, w: number, h: number, e: ImageE
   if (line) lines.push(line);
   const lh = size * 1.2;
   const block = lh * lines.length;
-  const y0 = e.textPos === "ust" ? h * 0.08 + lh / 2 : e.textPos === "orta" ? h / 2 - block / 2 + lh / 2 : h - h * 0.08 - block + lh / 2;
+  // Story (9:16): Instagram üstte profil/ilerleme çubuğu, altta yanıt alanı gösterir; yazı güvenli alanda kalsın.
+  const story = e.aspect === "9:16";
+  const top = story ? 0.16 : 0.08;
+  const bottom = story ? 0.22 : 0.08;
+  const y0 = e.textPos === "ust" ? h * top + lh / 2 : e.textPos === "orta" ? h / 2 - block / 2 + lh / 2 : h - h * bottom - block + lh / 2;
   ctx.shadowColor = "rgba(0,0,0,0.55)";
   ctx.shadowBlur = Math.round(size * 0.35);
   ctx.fillStyle = e.textColor;

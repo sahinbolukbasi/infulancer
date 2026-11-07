@@ -57,7 +57,7 @@ describe("K35 Creative stüdyo: yükleme ve düzenleme", () => {
     expect(job.modelKey).toBe("bria-bg-remove");
     expect(job.inputUploadId).toBe(img.id);
     const held = await prisma.creditAccount.findUniqueOrThrow({ where: { tenantId } });
-    expect(Number(held.heldCredits)).toBe(8); // arka plan kaldırma 8 TL bloke
+    expect(Number(held.heldCredits)).toBe(3); // 0,018 $ × 50,18 × 3 = 2,71 → 3 TL bloke
   });
 
   it("gerçek kişi koruması yalnız üretken düzenlemede uygulanır", async () => {

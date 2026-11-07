@@ -46,6 +46,8 @@ export type ConfigShape = {
   "pricing.competitors": { name: string; detail: string }[];
   "pricing.bsp360dialog": { tier: string; eurPerMonth: number; channels: number }[];
   "pricing.markup": { messageMarkupPct: number; creditUsd: number; creditMarkup: [number, number] };
+  /** Creative TL fiyatı = max(minTry, yukarı yuvarla(fal/Bedrock USD maliyeti × usdTry × markup)). */
+  "pricing.creative": { usdTry: number; markup: number; minTry: number; autoFx: boolean; fxUpdatedAt: string | null };
   "tax.gvk103.fourthBracketTry": { year: number; amount: number | null };
   "tiktok.contentPosting": { unauditedMaxUsersPer24h: number };
   "features": Record<string, boolean>;
@@ -146,6 +148,7 @@ export const defaultConfig: { [K in ConfigKey]: Entry<K> } = {
     ],
   },
   "pricing.markup": { verified: false, note: "Ürün kararı", value: { messageMarkupPct: 0, creditUsd: 0.05, creditMarkup: [3, 5] } },
+  "pricing.creative": { verified: false, note: "USD/TRY her başlangıçta open.er-api.com'dan güncellenir (autoFx). Markup ürün kararı.", value: { usdTry: 50.18, markup: 3, minTry: 2, autoFx: true, fxUpdatedAt: null } },
   "tax.gvk103.fourthBracketTry": { verified: false, note: "gib.gov.tr'den yıllık okunup girilmeli", value: { year: 2026, amount: null } },
   "tiktok.contentPosting": { verified: true, note: "Audit öncesi", value: { unauditedMaxUsersPer24h: 5 } },
   "features": {

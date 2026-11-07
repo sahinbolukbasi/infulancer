@@ -6,6 +6,12 @@ export type CreativeKind = "image" | "video" | "audio";
 export const KIND_LABEL: Record<CreativeKind, string> = { image: "Görsel", video: "Video", audio: "Seslendirme" };
 
 const MODEL_INFO: Record<string, { name: string; hint: string }> = {
+  "flux-schnell": { name: "FLUX Schnell", hint: "En ekonomik, hızlı" },
+  "recraft-v3": { name: "Recraft V3", hint: "Gerçekçi ve illüstrasyon" },
+  "ideogram-v3": { name: "Ideogram V3", hint: "Yazılı afiş ve tipografi" },
+  "ltxv-distilled": { name: "LTX Video", hint: "En ekonomik, 5 sn" },
+  "hailuo-02-standard": { name: "Hailuo 02", hint: "Dengeli, 6/10 sn" },
+  "hailuo-02-fast-i2v": { name: "Hailuo 02 Fast", hint: "Görselden video, ekonomik" },
   "nano-banana-2": { name: "Nano Banana 2", hint: "Hızlı ve dengeli" },
   "nano-banana-pro": { name: "Nano Banana Pro", hint: "En yüksek kalite" },
   "nano-banana": { name: "Nano Banana", hint: "Ekonomik" },
@@ -15,7 +21,7 @@ const MODEL_INFO: Record<string, { name: string; hint: string }> = {
   "titan-image-g1-v2": { name: "Titan Image", hint: "AWS Bedrock, ekonomik" },
   "minimax-h3-turbo": { name: "Hailuo 3 Turbo", hint: "Hızlı video" },
   "kling-v2-5-turbo-pro": { name: "Kling 2.5 Turbo Pro", hint: "Akıcı hareket" },
-  "kling-v3-pro": { name: "Kling 3 Pro", hint: "Sinematik, en yüksek kalite" },
+  "kling-v3-pro": { name: "Kling 3 Pro", hint: "Sinematik, 5–15 sn (sessiz)" },
   "seedance-2": { name: "Seedance 2", hint: "Uzun sahneler" },
   "nova-reel": { name: "Nova Reel", hint: "AWS Bedrock" },
   "elevenlabs-turbo-2-5": { name: "ElevenLabs Turbo", hint: "Hızlı seslendirme" },
@@ -54,4 +60,4 @@ export function toneFor(kind: CreativeKind, seed: string): string {
 }
 export const fmtCredits = (n: number) => new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(n);
 /** TL para biçimi (1 kredi = 1 TL). Üretim maliyeti ve bakiye bu birimle gösterilir. */
-export const fmtTl = (n: number) => `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(Math.round(n))} TL`;
+export const fmtTl = (n: number) => `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: Math.abs(n) < 10 && !Number.isInteger(n) ? 2 : 0 }).format(Math.abs(n) < 10 ? n : Math.round(n))} TL`;

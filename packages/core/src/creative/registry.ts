@@ -1,5 +1,5 @@
 import { prisma } from "../db";
-import { priceTry } from "./pricing";
+import { creativePricing, refreshFx, unitPriceTry } from "./pricing";
 import { getConfig } from "../config/store";
 import { notifyAdmins } from "../agents/common";
 
@@ -35,49 +35,69 @@ type Seed = {
   key: string; provider: string; modelId: string; kind: string; unit: string; unitPriceUsd: number;
   deterministic?: boolean; maxUnits?: number; status?: "active" | "deprecated"; replacementKey?: string;
   licenseStatus?: "cleared" | "pending" | "restricted"; featureFlag?: string;
+  /** Fiyat ve model kimliği fal/Bedrock model sayfasından doğrulandı mı (7 Kas 2026). */
+  priceVerified?: boolean;
 };
-
-/** 2 Kasım 2026 gözlemi — her fiyat kendi sayfasından TEYİT EDİLMELİ (priceVerified=false). */
+/**
+ * Model kaydı tohumu. Fiyatlar sağlayıcının KENDİ model sayfasından (fal.ai/models/<id>/llms.txt)
+ * 7 Kas 2026'da teyit edildi. TL fiyat burada yazılmaz: pricing.ts formülüyle (USD × kur × markup)
+ * her başlangıçta hesaplanır. Kimliği doğrulanamayan eski kayıtlar deprecated + doğru karşılığa yönlenir.
+ */
 export const MODEL_SEEDS: Seed[] = [
-  { key: "nano-banana-2", provider: "fal", modelId: "fal-ai/nano-banana-2", kind: "image", unit: "image", unitPriceUsd: 0.08, licenseStatus: "cleared" },
-  { key: "nano-banana-pro", provider: "fal", modelId: "fal-ai/nano-banana-pro", kind: "image", unit: "image", unitPriceUsd: 0.15, licenseStatus: "cleared" },
-  { key: "nano-banana", provider: "fal", modelId: "fal-ai/nano-banana", kind: "image", unit: "image", unitPriceUsd: 0.0398, licenseStatus: "cleared" },
-  { key: "ideogram-4", provider: "fal", modelId: "fal-ai/ideogram/v4", kind: "image", unit: "image", unitPriceUsd: 0.06, licenseStatus: "cleared" },
-  { key: "recraft-v4-pro", provider: "fal", modelId: "fal-ai/recraft/v4/pro", kind: "image", unit: "image", unitPriceUsd: 0.08, licenseStatus: "cleared" },
-  { key: "gpt-image-2", provider: "fal", modelId: "fal-ai/gpt-image-2", kind: "image", unit: "unit (tanımsız)", unitPriceUsd: 1, licenseStatus: "pending" },
-  { key: "flux-schnell", provider: "fal", modelId: "fal-ai/flux/schnell", kind: "image", unit: "megapixel", unitPriceUsd: 0.003, licenseStatus: "pending", featureFlag: "creative.flux" },
-  { key: "flux-kontext-pro", provider: "fal", modelId: "fal-ai/flux-pro/kontext", kind: "edit", unit: "image", unitPriceUsd: 0.04, licenseStatus: "pending", featureFlag: "creative.flux" },
+  // --- Görsel (adet) ---
+  { key: "flux-schnell", provider: "fal", modelId: "fal-ai/flux/schnell", kind: "image", unit: "image", unitPriceUsd: 0.003, licenseStatus: "cleared", priceVerified: true }, // Apache-2.0, ≤1 MP
+  { key: "nano-banana", provider: "fal", modelId: "fal-ai/nano-banana", kind: "image", unit: "image", unitPriceUsd: 0.0398, licenseStatus: "cleared", priceVerified: true },
+  { key: "recraft-v3", provider: "fal", modelId: "fal-ai/recraft/v3/text-to-image", kind: "image", unit: "image", unitPriceUsd: 0.04, licenseStatus: "cleared", priceVerified: true },
+  { key: "ideogram-v3", provider: "fal", modelId: "fal-ai/ideogram/v3", kind: "image", unit: "image", unitPriceUsd: 0.06, licenseStatus: "cleared", priceVerified: true }, // BALANCED
+  { key: "nano-banana-2", provider: "fal", modelId: "fal-ai/nano-banana-2", kind: "image", unit: "image", unitPriceUsd: 0.08, licenseStatus: "cleared", priceVerified: true }, // 1K
+  { key: "nano-banana-pro", provider: "fal", modelId: "fal-ai/nano-banana-pro", kind: "image", unit: "image", unitPriceUsd: 0.15, licenseStatus: "cleared", priceVerified: true }, // 1K
+  { key: "z-image-turbo", provider: "fal", modelId: "fal-ai/z-image/turbo", kind: "image", unit: "image", unitPriceUsd: 0.005, licenseStatus: "pending", featureFlag: "creative.researchModels", priceVerified: true },
+  { key: "gpt-image-2", provider: "fal", modelId: "fal-ai/gpt-image-2", kind: "image", unit: "image", unitPriceUsd: 1, licenseStatus: "pending" },
+  // Eski/doğrulanamayan kimlikler → doğru karşılığa yönlenir
+  { key: "ideogram-4", provider: "fal", modelId: "fal-ai/ideogram/v3", kind: "image", unit: "image", unitPriceUsd: 0.06, status: "deprecated", replacementKey: "ideogram-v3", licenseStatus: "cleared" },
+  { key: "recraft-v4-pro", provider: "fal", modelId: "fal-ai/recraft/v3/text-to-image", kind: "image", unit: "image", unitPriceUsd: 0.04, status: "deprecated", replacementKey: "recraft-v3", licenseStatus: "cleared" },
+
+  // --- Video (saniye) ---
+  { key: "ltxv-distilled", provider: "fal", modelId: "fal-ai/ltxv-13b-098-distilled", kind: "video", unit: "second", unitPriceUsd: 0.02, licenseStatus: "cleared", maxUnits: 5, priceVerified: true }, // en ekonomik, 9:16 destekli
+  { key: "hailuo-02-standard", provider: "fal", modelId: "fal-ai/minimax/hailuo-02/standard/text-to-video", kind: "video", unit: "second", unitPriceUsd: 0.045, licenseStatus: "cleared", maxUnits: 10, priceVerified: true },
+  { key: "kling-v2-5-turbo-pro", provider: "fal", modelId: "fal-ai/kling-video/v2.5-turbo/pro/text-to-video", kind: "video", unit: "second", unitPriceUsd: 0.07, licenseStatus: "cleared", maxUnits: 10, priceVerified: true },
+  { key: "kling-v3-pro", provider: "fal", modelId: "fal-ai/kling-video/v3/pro/text-to-video", kind: "video", unit: "second", unitPriceUsd: 0.112, licenseStatus: "cleared", maxUnits: 15, priceVerified: true }, // ses kapalı
+  { key: "minimax-h3-turbo", provider: "fal", modelId: "fal-ai/minimax/hailuo-02/standard/text-to-video", kind: "video", unit: "second", unitPriceUsd: 0.045, status: "deprecated", replacementKey: "hailuo-02-standard", licenseStatus: "cleared" },
+  { key: "minimax-h3-ref2video", provider: "fal", modelId: "fal-ai/minimax/hailuo-02/standard/text-to-video", kind: "video", unit: "second", unitPriceUsd: 0.045, status: "deprecated", replacementKey: "hailuo-02-standard", licenseStatus: "cleared" },
+  { key: "seedance-2", provider: "fal", modelId: "fal-ai/ltxv-13b-098-distilled", kind: "video", unit: "second", unitPriceUsd: 0.02, status: "deprecated", replacementKey: "ltxv-distilled", licenseStatus: "cleared" },
+  { key: "kling-2-1-pro", provider: "fal", modelId: "fal-ai/kling-video/v2.5-turbo/pro/text-to-video", kind: "video", unit: "second", unitPriceUsd: 0.07, status: "deprecated", replacementKey: "kling-v2-5-turbo-pro", licenseStatus: "cleared" },
+  // Görselden video (stüdyo)
+  { key: "hailuo-02-fast-i2v", provider: "fal", modelId: "fal-ai/minimax/hailuo-02-fast/image-to-video", kind: "video", unit: "second", unitPriceUsd: 0.017, licenseStatus: "cleared", maxUnits: 10, priceVerified: true }, // 512p, ekonomik
+  { key: "kling-v2-5-i2v", provider: "fal", modelId: "fal-ai/kling-video/v2.5-turbo/pro/image-to-video", kind: "video", unit: "second", unitPriceUsd: 0.07, licenseStatus: "cleared", maxUnits: 10, priceVerified: true },
+  { key: "minimax-h3-i2v", provider: "fal", modelId: "fal-ai/minimax/hailuo-02-fast/image-to-video", kind: "video", unit: "second", unitPriceUsd: 0.017, status: "deprecated", replacementKey: "hailuo-02-fast-i2v", licenseStatus: "cleared" },
+
+  // --- Seslendirme (1000 karakter) ---
+  { key: "elevenlabs-turbo-2-5", provider: "fal", modelId: "fal-ai/elevenlabs/tts/turbo-v2.5", kind: "audio", unit: "1k_chars", unitPriceUsd: 0.05, licenseStatus: "cleared", priceVerified: true },
+  { key: "minimax-speech-2-8-turbo", provider: "fal", modelId: "fal-ai/minimax/speech-2.8-turbo", kind: "audio", unit: "1k_chars", unitPriceUsd: 0.06, licenseStatus: "cleared", priceVerified: true },
+  { key: "elevenlabs-multilingual-v2", provider: "fal", modelId: "fal-ai/elevenlabs/tts/multilingual-v2", kind: "audio", unit: "1k_chars", unitPriceUsd: 0.1, licenseStatus: "cleared", priceVerified: true },
+
+  // --- Stüdyo düzenleme (adet) ---
+  { key: "esrgan-upscale", provider: "fal", modelId: "fal-ai/esrgan", kind: "edit", unit: "image", unitPriceUsd: 0.005, licenseStatus: "cleared" }, // işlem süresi bazlı (~$0.00111/sn); tahmini
+  { key: "bria-bg-remove", provider: "fal", modelId: "fal-ai/bria/background/remove", kind: "edit", unit: "image", unitPriceUsd: 0.018, licenseStatus: "cleared", priceVerified: true },
+  { key: "nano-banana-edit", provider: "fal", modelId: "fal-ai/nano-banana/edit", kind: "edit", unit: "image", unitPriceUsd: 0.0398, licenseStatus: "cleared", priceVerified: true },
+  { key: "flux-kontext-pro", provider: "fal", modelId: "fal-ai/flux-pro/kontext", kind: "edit", unit: "image", unitPriceUsd: 0.04, licenseStatus: "pending", featureFlag: "creative.flux", priceVerified: true },
   { key: "flux-lora-fast-training", provider: "fal", modelId: "fal-ai/flux-lora-fast-training", kind: "training", unit: "run", unitPriceUsd: 2, licenseStatus: "pending", featureFlag: "creative.flux" },
-  { key: "z-image-turbo", provider: "fal", modelId: "fal-ai/z-image/turbo", kind: "image", unit: "megapixel", unitPriceUsd: 0.005, licenseStatus: "pending", featureFlag: "creative.researchModels" },
-  { key: "minimax-h3-turbo", provider: "fal", modelId: "fal-ai/minimax/hailuo-3-max-turbo", kind: "video", unit: "second", unitPriceUsd: 0.015, licenseStatus: "cleared", maxUnits: 10 },
-  { key: "minimax-h3-i2v", provider: "fal", modelId: "fal-ai/minimax/hailuo-3-max/image-to-video", kind: "video", unit: "second", unitPriceUsd: 0.03, licenseStatus: "cleared", maxUnits: 10 },
-  { key: "minimax-h3-ref2video", provider: "fal", modelId: "fal-ai/minimax/hailuo-3-max/reference-to-video", kind: "video", unit: "second", unitPriceUsd: 0.05, licenseStatus: "cleared", maxUnits: 10 },
-  { key: "kling-v2-5-turbo-pro", provider: "fal", modelId: "fal-ai/kling-video/v2.5-turbo/pro", kind: "video", unit: "second", unitPriceUsd: 0.07, licenseStatus: "cleared", maxUnits: 10 },
-  { key: "kling-v3-pro", provider: "fal", modelId: "fal-ai/kling-video/v3/pro", kind: "video", unit: "second", unitPriceUsd: 0.14, licenseStatus: "cleared", maxUnits: 10 },
-  { key: "kling-2-1-pro", provider: "fal", modelId: "fal-ai/kling-video/v2.1/pro", kind: "video", unit: "second", unitPriceUsd: 0.09, status: "deprecated", replacementKey: "kling-v2-5-turbo-pro", licenseStatus: "cleared" },
-  { key: "seedance-2", provider: "fal", modelId: "fal-ai/bytedance/seedance/v2", kind: "video", unit: "1k_tokens", unitPriceUsd: 0.014, deterministic: false, maxUnits: 300, licenseStatus: "cleared" },
-  { key: "elevenlabs-turbo-2-5", provider: "fal", modelId: "fal-ai/elevenlabs/tts/turbo-v2.5", kind: "audio", unit: "1k_chars", unitPriceUsd: 0.05, licenseStatus: "cleared" },
-  { key: "elevenlabs-multilingual-v2", provider: "fal", modelId: "fal-ai/elevenlabs/tts/multilingual-v2", kind: "audio", unit: "1k_chars", unitPriceUsd: 0.1, licenseStatus: "cleared" },
-  { key: "minimax-speech-2-8-turbo", provider: "fal", modelId: "fal-ai/minimax/speech-2.8-turbo", kind: "audio", unit: "1k_chars", unitPriceUsd: 0.06, licenseStatus: "cleared" },
-  { key: "fashn-tryon-1-6", provider: "fal", modelId: "fal-ai/fashn/tryon/v1.6", kind: "tryon", unit: "image", unitPriceUsd: 0.075, licenseStatus: "pending" },
+  { key: "fashn-tryon-1-6", provider: "fal", modelId: "fal-ai/fashn/tryon/v1.6", kind: "tryon", unit: "image", unitPriceUsd: 0.075, licenseStatus: "pending", priceVerified: true },
   { key: "bria-tryon", provider: "fal", modelId: "bria/fibo-edit-1.5/virtual-try-on", kind: "tryon", unit: "image", unitPriceUsd: 0.04, licenseStatus: "pending" },
+
+  // --- Amazon Bedrock ---
   { key: "stability-fast-upscale", provider: "bedrock", modelId: "stability.stable-fast-upscale-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.03, licenseStatus: "cleared" },
   { key: "stability-outpaint", provider: "bedrock", modelId: "stability.stable-outpaint-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.06, licenseStatus: "cleared" },
   { key: "stability-remove-bg", provider: "bedrock", modelId: "stability.stable-image-remove-background-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.07, licenseStatus: "cleared" },
   { key: "stability-conservative-upscale", provider: "bedrock", modelId: "stability.stable-conservative-upscale-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.4, licenseStatus: "cleared" },
   { key: "stability-creative-upscale", provider: "bedrock", modelId: "stability.stable-creative-upscale-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.6, licenseStatus: "cleared" },
-  // Creative stüdyosu düzenleme modelleri (kullanıcı görseli girdi). Fiyatlar fal model sayfasından (7 Kas 2026).
-  { key: "nano-banana-edit", provider: "fal", modelId: "fal-ai/nano-banana/edit", kind: "edit", unit: "image", unitPriceUsd: 0.0398, licenseStatus: "cleared" },
-  { key: "bria-bg-remove", provider: "fal", modelId: "fal-ai/bria/background/remove", kind: "edit", unit: "image", unitPriceUsd: 0.018, licenseStatus: "cleared" },
-  { key: "esrgan-upscale", provider: "fal", modelId: "fal-ai/esrgan", kind: "edit", unit: "image", unitPriceUsd: 0.005, licenseStatus: "cleared" },
-  { key: "kling-v2-5-i2v", provider: "fal", modelId: "fal-ai/kling-video/v2.5-turbo/pro/image-to-video", kind: "video", unit: "second", unitPriceUsd: 0.07, licenseStatus: "cleared", maxUnits: 10 },
-  // Amazon Bedrock üretim modelleri. Bölge/erişim açılana kadar featureFlag ile kapalı (erişim bekliyor).
   { key: "nova-canvas", provider: "bedrock", modelId: "amazon.nova-canvas-v1:0", kind: "image", unit: "image", unitPriceUsd: 0.04, licenseStatus: "cleared", featureFlag: "creative.bedrockImage" },
   { key: "titan-image-g1-v2", provider: "bedrock", modelId: "amazon.titan-image-generator-v2:0", kind: "image", unit: "image", unitPriceUsd: 0.01, licenseStatus: "cleared", featureFlag: "creative.bedrockImage" },
   { key: "nova-reel", provider: "bedrock", modelId: "amazon.nova-reel-v1:1", kind: "video", unit: "second", unitPriceUsd: 0.08, licenseStatus: "cleared", maxUnits: 120, featureFlag: "creative.bedrockVideo" },
 ];
-
 export async function seedModelRegistry() {
+  // Kur güncel olsun; ağ yoksa son bilinen kur (pricing.creative) kullanılır.
+  const pricing = process.env.NODE_ENV === "test" ? await creativePricing() : await refreshFx();
   for (const s of MODEL_SEEDS) {
     const data = {
       provider: s.provider,
@@ -85,8 +105,9 @@ export async function seedModelRegistry() {
       kind: s.kind,
       unit: s.unit,
       unitPriceUsd: s.unitPriceUsd,
-      // Fiyat doğrudan TL (1 kredi = 1 TL).
-      creditsPerUnit: priceTry(s.key, s.kind),
+      // TL birim fiyat = USD × kur × markup (1 kredi = 1 TL).
+      creditsPerUnit: unitPriceTry(s.unitPriceUsd, pricing),
+      priceVerified: s.priceVerified ?? false,
       deterministic: s.deterministic ?? true,
       maxUnits: s.maxUnits ?? null,
       status: s.status ?? "active",
@@ -98,7 +119,7 @@ export async function seedModelRegistry() {
     await prisma.modelRegistry.upsert({
       where: { key: s.key },
       create: { key: s.key, ...data },
-      update: { provider: data.provider, modelId: data.modelId, kind: data.kind, unit: data.unit, unitPriceUsd: data.unitPriceUsd, creditsPerUnit: data.creditsPerUnit, maxUnits: data.maxUnits, status: data.status, replacementKey: data.replacementKey, licenseStatus: data.licenseStatus, featureFlag: data.featureFlag },
+      update: { provider: data.provider, modelId: data.modelId, kind: data.kind, unit: data.unit, unitPriceUsd: data.unitPriceUsd, creditsPerUnit: data.creditsPerUnit, priceVerified: data.priceVerified, maxUnits: data.maxUnits, status: data.status, replacementKey: data.replacementKey, licenseStatus: data.licenseStatus, featureFlag: data.featureFlag },
     });
   }
 }

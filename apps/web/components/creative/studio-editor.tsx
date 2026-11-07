@@ -6,19 +6,21 @@ import { idleState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
 import { fmtTl } from "@/lib/creative-models";
 import { KindIcon } from "@/components/creative/kind-icon";
-import { DEFAULT_EDITS, PRESETS, renderEdits, type Aspect, type ImageEdits } from "./studio-image-render";
+import { DEFAULT_EDITS, PRESETS, renderEdits, STORY_SIZE, type Aspect, type ImageEdits } from "./studio-image-render";
 
 export type StudioUpload = { id: string; kind: "image" | "video"; name: string | null; mime: string; sizeBytes: number; source: string; durationSec: number | null; createdAt: string };
-export type StudioPrices = { promptEdit: number; bgRemove: number; upscale: number; i2vPerSec: number };
+export type StudioPrices = { minTry: number; promptEdit: number; bgRemove: number; upscale: number; i2vPerSec: number; i2vEcoPerSec: number };
+/** Sunucudaki tutar hesabının aynısı: tam TL, en az minTry. */
+const chargeTry = (cpu: number, units: number, minTry: number) => Math.max(minTry, Math.ceil(cpu * units - 1e-9));
 
 const fileUrl = (id: string) => `/api/creative/file/${id}`;
 const fmtSize = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const ASPECTS: { id: Aspect; label: string }[] = [
   { id: "orijinal", label: "Orijinal" },
-  { id: "1:1", label: "1:1" },
-  { id: "4:5", label: "4:5" },
-  { id: "9:16", label: "9:16" },
-  { id: "16:9", label: "16:9" },
+  { id: "9:16", label: "Story 9:16" },
+  { id: "4:5", label: "Gönderi 4:5" },
+  { id: "1:1", label: "Kare 1:1" },
+  { id: "16:9", label: "Yatay 16:9" },
 ];
 
 /** Tarayıcıdan S3'e yükleme (ilerleme çubuğu için XHR). */
@@ -254,13 +256,26 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
     setSaving(true);
     setSaveMsg(null);
     try {
-      const c = document.createElement("canvas");
+      let c = document.createElement("canvas");
       renderEdits(img, edits, c, 2048);
+      // Story: Instagram'ın beklediği tam 1080×1920 boyutuna getir.
+      if (edits.aspect === "9:16") {
+        const out = document.createElement("canvas");
+        out.width = STORY_SIZE.w;
+        out.height = STORY_SIZE.h;
+        const octx = out.getContext("2d");
+        if (octx) {
+          octx.imageSmoothingQuality = "high";
+          octx.drawImage(c, 0, 0, out.width, out.height);
+          c = out;
+        }
+      }
       const mime = upload.mime === "image/png" ? "image/png" : "image/jpeg";
       const blob = await new Promise<Blob | null>((r) => c.toBlob(r, mime, 0.92));
       if (!blob) throw new Error("Görsel oluşturulamadı.");
       const base = (upload.name ?? "gorsel").replace(/\.[a-z0-9]+$/i, "");
-      const r = await uploadFile(blob, { name: `${base} (düzenlendi).${mime === "image/png" ? "png" : "jpg"}`, mime, tenantId, parentId: upload.id });
+      const suffix = edits.aspect === "9:16" ? "story" : "düzenlendi";
+      const r = await uploadFile(blob, { name: `${base} (${suffix}).${mime === "image/png" ? "png" : "jpg"}`, mime, tenantId, parentId: upload.id });
       setSaveMsg("Kopya kitaplığa kaydedildi.");
       setEdits(DEFAULT_EDITS);
       onSaved(r.id);
@@ -279,7 +294,16 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
             {loadErr ? (
               <p className="text-sm text-fg-muted">Görsel yüklenemedi.</p>
             ) : img ? (
-              <canvas ref={canvasRef} className="max-h-[560px] max-w-full rounded-xl shadow-lg" aria-label="Düzenleme önizlemesi" />
+              <div className="relative inline-block">
+                <canvas ref={canvasRef} className="block max-h-[560px] max-w-full rounded-xl shadow-lg" aria-label="Düzenleme önizlemesi" />
+                {edits.aspect === "9:16" ? (
+                  <div aria-hidden className="pointer-events-none absolute inset-0 rounded-xl">
+                    <div className="absolute inset-x-0 top-0 h-[14%] border-b border-dashed border-white/70 bg-black/25" />
+                    <div className="absolute inset-x-0 bottom-0 h-[20%] border-t border-dashed border-white/70 bg-black/25" />
+                    <span className="absolute top-1 left-1/2 -translate-x-1/2 rounded bg-black/50 px-1.5 text-[10px] text-white">Story arayüz alanı</span>
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <p className="text-sm text-fg-muted">Yükleniyor…</p>
             )}
@@ -305,6 +329,7 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
           <div className="flex flex-col gap-2">
             <span className="text-[12px] text-fg-muted">Kadraj</span>
             <Chips label="Kadraj" items={ASPECTS} value={edits.aspect} onChange={(v) => set("aspect", v)} />
+            {edits.aspect === "9:16" ? <span className="text-[11px] text-fg-passive">1080×1920 kaydedilir; kesikli alanlar Instagram arayüzünün altında kalır.</span> : null}
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => set("rotate", (((edits.rotate + 90) % 360) as ImageEdits["rotate"]))} className="flex-1 rounded-xl border border-line py-2 text-[12px] hover:border-fg/40">
@@ -371,20 +396,25 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
 function AiEditPanel({ upload, tenantId, available, prices, isAdmin }: { upload: StudioUpload; tenantId?: string; available: number; prices: StudioPrices; isAdmin: boolean }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(imageEditAction, idleState);
-  const [mode, setMode] = useState<"prompt-duzenle" | "arka-plan-kaldir" | "netlestir" | "videoya-cevir">("prompt-duzenle");
+  const [mode, setMode] = useState<"prompt-duzenle" | "arka-plan-kaldir" | "netlestir" | "videoya-cevir" | "videoya-cevir-ekonomik">("prompt-duzenle");
   const [prompt, setPrompt] = useState("");
-  const [seconds, setSeconds] = useState<5 | 10>(5);
+  const [seconds, setSeconds] = useState<number>(5);
   useEffect(() => {
     if (state.ok) router.refresh();
   }, [state, router]);
+  const isVideo = mode === "videoya-cevir" || mode === "videoya-cevir-ekonomik";
+  const secOptions = mode === "videoya-cevir-ekonomik" ? [6, 10] : [5, 10];
+  const sec = secOptions.includes(seconds) ? seconds : secOptions[0]!;
+  const ch = (cpu: number, u = 1) => chargeTry(cpu, u, prices.minTry);
   const opts = [
-    { id: "prompt-duzenle" as const, title: "Komutla düzenle", desc: "Arka planı değiştir, ürün ekle, ışığı düzelt…", price: prices.promptEdit },
-    { id: "arka-plan-kaldir" as const, title: "Arka planı kaldır", desc: "Şeffaf PNG, ürün çekimleri için", price: prices.bgRemove },
-    { id: "netlestir" as const, title: "Netleştir (2x)", desc: "Çözünürlüğü iki katına çıkar", price: prices.upscale },
-    { id: "videoya-cevir" as const, title: "Görselden video", desc: "Fotoğrafı hareketli videoya çevir", price: prices.i2vPerSec * seconds },
+    { id: "prompt-duzenle" as const, title: "Komutla düzenle", desc: "Arka planı değiştir, ürün ekle, ışığı düzelt…", price: ch(prices.promptEdit), label: fmtTl(ch(prices.promptEdit)) },
+    { id: "arka-plan-kaldir" as const, title: "Arka planı kaldır", desc: "Şeffaf PNG, ürün çekimleri için", price: ch(prices.bgRemove), label: fmtTl(ch(prices.bgRemove)) },
+    { id: "netlestir" as const, title: "Netleştir (2x)", desc: "Çözünürlüğü iki katına çıkar", price: ch(prices.upscale), label: fmtTl(ch(prices.upscale)) },
+    { id: "videoya-cevir-ekonomik" as const, title: "Görselden video · ekonomik", desc: "512p, 6/10 sn (Hailuo 02 Fast)", price: ch(prices.i2vEcoPerSec, sec), label: `${fmtTl(prices.i2vEcoPerSec)}/sn` },
+    { id: "videoya-cevir" as const, title: "Görselden video · kaliteli", desc: "1080p, 5/10 sn (Kling 2.5)", price: ch(prices.i2vPerSec, sec), label: `${fmtTl(prices.i2vPerSec)}/sn` },
   ];
   const cur = opts.find((o) => o.id === mode)!;
-  const needsPrompt = mode === "prompt-duzenle" || mode === "videoya-cevir";
+  const needsPrompt = mode === "prompt-duzenle" || isVideo;
   const short = !isAdmin && cur.price > available;
   return (
     <form
@@ -397,18 +427,18 @@ function AiEditPanel({ upload, tenantId, available, prices, isAdmin }: { upload:
     >
       <input type="hidden" name="uploadId" value={upload.id} />
       <input type="hidden" name="action" value={mode} />
-      <input type="hidden" name="seconds" value={seconds} />
+      <input type="hidden" name="seconds" value={sec} />
       {tenantId ? <input type="hidden" name="tenantId" value={tenantId} /> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-[14px] font-semibold text-fg">AI ile düzenle</h3>
         <span className="text-[12px] text-fg-muted">Bakiyeden düşer · başarısız işte ücret alınmaz</span>
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4" role="radiogroup" aria-label="AI düzenleme türü">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5" role="radiogroup" aria-label="AI düzenleme türü">
         {opts.map((o) => (
           <button key={o.id} type="button" role="radio" aria-checked={mode === o.id} onClick={() => setMode(o.id)} className={cn("flex flex-col gap-1 rounded-xl border p-3 text-left transition-standard", mode === o.id ? "border-fg bg-fg/5" : "border-line hover:border-fg/40")}>
             <span className="text-[13px] font-semibold text-fg">{o.title}</span>
             <span className="text-[11px] text-fg-muted">{o.desc}</span>
-            <span className="mt-1 text-[12px] font-medium tabular-nums text-fg">{o.id === "videoya-cevir" ? `${fmtTl(prices.i2vPerSec)}/sn` : fmtTl(o.price)}</span>
+            <span className="mt-1 text-[12px] font-medium tabular-nums text-fg">{o.label}</span>
           </button>
         ))}
       </div>
@@ -420,12 +450,12 @@ function AiEditPanel({ upload, tenantId, available, prices, isAdmin }: { upload:
           rows={2}
           maxLength={1000}
           required
-          placeholder={mode === "videoya-cevir" ? "Örn. ürün yavaşça dönsün, kamera yaklaşsın, yumuşak ışık" : "Örn. arka planı pastel pembe stüdyo yap, gölgeleri yumuşat"}
+          placeholder={isVideo ? "Örn. ürün yavaşça dönsün, kamera yaklaşsın, yumuşak ışık" : "Örn. arka planı pastel pembe stüdyo yap, gölgeleri yumuşat"}
           aria-label="Düzenleme komutu"
           className="resize-y rounded-xl border border-line bg-bg px-3 py-2 text-[14px] text-fg placeholder:text-fg-passive"
         />
       ) : null}
-      {mode === "videoya-cevir" ? <Chips label="Süre" items={[{ id: "5", label: "5 sn" }, { id: "10", label: "10 sn" }]} value={String(seconds) as "5" | "10"} onChange={(v) => setSeconds(v === "10" ? 10 : 5)} /> : null}
+      {isVideo ? <Chips label="Süre" items={secOptions.map((x) => ({ id: String(x), label: `${x} sn` }))} value={String(sec)} onChange={(v) => setSeconds(Number(v))} /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {needsPrompt ? (
           <label className="flex items-center gap-2 text-[12px] text-fg-muted">

@@ -30,7 +30,7 @@ export async function approveCreditRequest(id: string, decidedByUserId: string) 
   const updated = await prisma.creditRequest.updateMany({ where: { id, status: "BEKLIYOR" }, data: { status: "ONAYLANDI", decidedByUserId, decidedAt: new Date() } });
   if (updated.count !== 1) throw new DomainError("KURAL_IHLALI", "Talep zaten sonuçlandırılmış.");
   const req = await prisma.creditRequest.findUniqueOrThrow({ where: { id } });
-  await topUp(req.tenantId, req.amountTry);
+  await topUp(req.tenantId, req.amountTry, "Bakiye talebi onaylandı");
   return req;
 }
 
