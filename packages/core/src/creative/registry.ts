@@ -66,6 +66,11 @@ export const MODEL_SEEDS: Seed[] = [
   { key: "stability-remove-bg", provider: "bedrock", modelId: "stability.stable-image-remove-background-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.07, licenseStatus: "cleared" },
   { key: "stability-conservative-upscale", provider: "bedrock", modelId: "stability.stable-conservative-upscale-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.4, licenseStatus: "cleared" },
   { key: "stability-creative-upscale", provider: "bedrock", modelId: "stability.stable-creative-upscale-v1:0", kind: "edit", unit: "image", unitPriceUsd: 0.6, licenseStatus: "cleared" },
+  // Creative stüdyosu düzenleme modelleri (kullanıcı görseli girdi). Fiyatlar fal model sayfasından (7 Kas 2026).
+  { key: "nano-banana-edit", provider: "fal", modelId: "fal-ai/nano-banana/edit", kind: "edit", unit: "image", unitPriceUsd: 0.0398, licenseStatus: "cleared" },
+  { key: "bria-bg-remove", provider: "fal", modelId: "fal-ai/bria/background/remove", kind: "edit", unit: "image", unitPriceUsd: 0.018, licenseStatus: "cleared" },
+  { key: "esrgan-upscale", provider: "fal", modelId: "fal-ai/esrgan", kind: "edit", unit: "image", unitPriceUsd: 0.005, licenseStatus: "cleared" },
+  { key: "kling-v2-5-i2v", provider: "fal", modelId: "fal-ai/kling-video/v2.5-turbo/pro/image-to-video", kind: "video", unit: "second", unitPriceUsd: 0.07, licenseStatus: "cleared", maxUnits: 10 },
   // Amazon Bedrock üretim modelleri. Bölge/erişim açılana kadar featureFlag ile kapalı (erişim bekliyor).
   { key: "nova-canvas", provider: "bedrock", modelId: "amazon.nova-canvas-v1:0", kind: "image", unit: "image", unitPriceUsd: 0.04, licenseStatus: "cleared", featureFlag: "creative.bedrockImage" },
   { key: "titan-image-g1-v2", provider: "bedrock", modelId: "amazon.titan-image-generator-v2:0", kind: "image", unit: "image", unitPriceUsd: 0.01, licenseStatus: "cleared", featureFlag: "creative.bedrockImage" },

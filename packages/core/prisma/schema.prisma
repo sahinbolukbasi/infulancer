@@ -1236,6 +1236,8 @@ model CreativeJob {
   units        Decimal           @db.Decimal(10, 3)
   requestId    String?           @unique
   creditHoldId String?
+  /// Düzenleme işlerinde kaynak dosya (kullanıcı yüklemesi); üretimde null.
+  inputUploadId String?          @map("input_upload_id")
   status       CreativeJobStatus @default(HELD)
   rejectReason String?
   inferenceMs  Int?
@@ -1863,4 +1865,40 @@ enum CreditRequestStatus {
   BEKLIYOR
   ONAYLANDI
   RED
+}
+
+/// Creative stüdyosuna kullanıcının yüklediği veya stüdyoda düzenlediği görsel/video.
+/// AI üretimi değildir (AI çıktıları generated_assets'te, C2PA etiketli).
+model CreativeUpload {
+  id               String   @id @default(cuid())
+  tenantId         String   @map("tenant_id")
+  uploadedByUserId String?  @map("uploaded_by_user_id")
+  kind             String
+  mime             String
+  sizeBytes        Int      @map("size_bytes")
+  s3Key            String   @map("s3_key")
+  name             String?
+  /// upload: kullanıcı yükledi · edit: stüdyo düzenleyicisiyle türetildi
+  source           String   @default("upload")
+  parentId         String?  @map("parent_id")
+  durationSec      Float?   @map("duration_sec")
+  createdAt        DateTime @default(now()) @map("created_at")
+  @@index([tenantId, createdAt])
+  @@map("creative_uploads")
+}
+
+/// Video düzenleme işi (ffmpeg, sunucuda; AI maliyeti yok). Kuyruk sırayla işlenir.
+model VideoEditJob {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  uploadId       String   @map("upload_id")
+  ops            Json
+  status         String   @default("QUEUED")
+  outputUploadId String?  @map("output_upload_id")
+  error          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  @@index([status, createdAt])
+  @@index([tenantId, createdAt])
+  @@map("video_edit_jobs")
 }

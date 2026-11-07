@@ -20,8 +20,8 @@ RUN DATABASE_URL=postgresql://build:build@localhost:5432/build \
 FROM node:24.14.0-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000
-# Apple Wallet .pkpass imzalama (PKCS#7) için openssl gerekir.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl zip && rm -rf /var/lib/apt/lists/*
+# openssl+zip: Apple Wallet .pkpass imzası · ffmpeg: Creative stüdyo video düzenleme (AI maliyeti yok).
+RUN apt-get update && apt-get install -y --no-install-recommends openssl zip ffmpeg && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app /app
 RUN chmod +x docker/entrypoint.sh && chown -R node:node /app
 USER node

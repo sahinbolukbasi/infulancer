@@ -4,6 +4,9 @@ import { prisma } from "@infulancer/core/db";
 import { aiDisclosureChecklist } from "@infulancer/core/creative/c2pa";
 import { ensureStarterCredits } from "@infulancer/core/creative/credits";
 import { CreditRequestForm } from "@/components/creative/credit-request-form";
+import { StudioEditor, type StudioUpload } from "@/components/creative/studio-editor";
+import { AssetThumb } from "@/components/creative/asset-thumb";
+import { openAssetInStudioAction } from "@/lib/actions/creative-studio";
 import { getConfig } from "@infulancer/core/config/store";
 import { withUnverified } from "@infulancer/core/unverified";
 import { CreativeComposer, type ComposerModel, type ComposerTenant } from "@/components/creative/creative-composer";
@@ -33,8 +36,8 @@ const JOB_STATUS: Record<string, { label: string; tone: PillTone }> = {
   IN_PROGRESS: { label: "Üretiliyor", tone: "violet" },
   CANCELLED: { label: "İptal", tone: "gray" },
 };
-type Tab = "uret" | "galeri" | "metin" | "yonetim";
-type SP = { sekme?: string; tur?: string; asset?: string; prompt?: string };
+type Tab = "uret" | "studyo" | "galeri" | "metin" | "yonetim";
+type SP = { sekme?: string; tur?: string; asset?: string; prompt?: string; hesap?: string; dosya?: string; hata?: string };
 
 /** Creative: tüm roller için tek stüdyo (üret · galeri · post/brief · yönetim). */
 export default async function CreativePage({ searchParams }: { searchParams: Promise<SP> }) {
@@ -76,7 +79,24 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   }
   const adBase = actor.role === "ADMIN" ? "/admin/reklam" : actor.role === "BRAND" ? "/marka/reklam" : null;
 
-  const tab: Tab = sp.sekme === "galeri" || sp.sekme === "metin" || (sp.sekme === "yonetim" && isAdmin) ? (sp.sekme as Tab) : "uret";
+  const tab: Tab = sp.sekme === "galeri" || sp.sekme === "metin" || sp.sekme === "studyo" || (sp.sekme === "yonetim" && isAdmin) ? (sp.sekme as Tab) : "uret";
+  // Stüdyo: marka/influencer kendi kitaplığı; yönetici seçtiği hesabın (varsayılan ilk marka).
+  const studioTenant = own ?? (tenants.some((t) => t.id === sp.hesap) ? sp.hesap! : (tenants[0]?.id ?? null));
+  const studioUploads: StudioUpload[] =
+    tab === "studyo" && studioTenant
+      ? (await prisma.creativeUpload.findMany({ where: { tenantId: studioTenant }, orderBy: { createdAt: "desc" }, take: 120 })).map((u) => ({
+          id: u.id,
+          kind: u.kind === "video" ? "video" : "image",
+          name: u.name,
+          mime: u.mime,
+          sizeBytes: u.sizeBytes,
+          source: u.source,
+          durationSec: u.durationSec,
+          createdAt: u.createdAt.toISOString(),
+        }))
+      : [];
+  const priceOf = (key: string, fallback: number) => Number(models.find((m) => m.key === key)?.creditsPerUnit ?? fallback);
+  const studioPrices = { promptEdit: priceOf("nano-banana-edit", 15), bgRemove: priceOf("bria-bg-remove", 8), upscale: priceOf("esrgan-upscale", 5), i2vPerSec: priceOf("kling-v2-5-i2v", 300) };
   const available = own ? avail(own) : accounts.reduce((s, a) => s + Number(a.balanceCredits) - Number(a.heldCredits), 0);
   const completed = jobs.filter((j) => j.status === "COMPLETED").length;
   const description =
@@ -88,6 +108,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
 
   const tabs = [
     { id: "uret", label: "Üret", href: "/creative" },
+    { id: "studyo", label: "Stüdyo (yükle ve düzenle)", href: "/creative?sekme=studyo" },
     { id: "galeri", label: "Galeri", href: "/creative?sekme=galeri", count: assets.length },
     { id: "metin", label: "Post ve brief", href: "/creative?sekme=metin" },
     ...(isAdmin ? [{ id: "yonetim", label: "Kredi ve modeller", href: "/creative?sekme=yonetim" }] : []),
@@ -162,7 +183,36 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
         </div>
       ) : null}
 
+      {tab === "galeri" && sp.hata ? <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-[13px] text-critical">{sp.hata.slice(0, 200)}</p> : null}
       {tab === "galeri" ? <Gallery assets={assets} kindOf={kindOf} jobPrompt={jobPrompt} nameOf={nameOf} isAdmin={isAdmin} adBase={adBase} filter={sp.tur} completed={completed} /> : null}
+
+      {tab === "studyo" ? (
+        <div className="flex flex-col gap-4">
+          {isAdmin ? (
+            <nav aria-label="Hesap seç" className="flex flex-wrap items-center gap-2 text-[13px]">
+              <span className="text-fg-muted">Kimin kitaplığı:</span>
+              {tenants.map((t) => (
+                <Link key={t.id} href={`/creative?sekme=studyo&hesap=${t.id}`} aria-current={t.id === studioTenant ? "page" : undefined} className={cn("rounded-full border px-3 py-1", t.id === studioTenant ? "border-fg bg-fg text-bg" : "border-line text-fg-muted hover:text-fg")}>
+                  {t.name}
+                </Link>
+              ))}
+            </nav>
+          ) : null}
+          {studioTenant ? (
+            <StudioEditor
+              key={studioTenant}
+              uploads={studioUploads}
+              tenantId={isAdmin ? studioTenant : undefined}
+              available={avail(studioTenant)}
+              prices={studioPrices}
+              isAdmin={isAdmin}
+              initialSelected={sp.dosya}
+            />
+          ) : (
+            <p className="text-sm text-fg-muted">Önce bir marka veya influencer ekleyin.</p>
+          )}
+        </div>
+      ) : null}
 
       {tab === "metin" ? (
         <div className="flex flex-col gap-4">
@@ -320,17 +370,18 @@ function Gallery({
             const basePrompt = prompt.split(". Format:")[0]!.split(". Stil:")[0]!;
             return (
               <li key={a.id} className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-standard hover:border-fg/30">
-                <div className={cn("relative flex aspect-[4/5] flex-col justify-between bg-gradient-to-br p-3 text-white", toneFor(k, a.id))}>
-                  <div className="flex items-start justify-between">
+                <div className={cn("relative flex aspect-[4/5] flex-col justify-between overflow-hidden bg-gradient-to-br p-3 text-white", toneFor(k, a.id))}>
+                  <AssetThumb id={a.id} kind={k} alt={basePrompt || modelName(a.modelKey)} />
+                  <div className="relative flex items-start justify-between">
                     <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium backdrop-blur">
                       <KindIcon kind={k} size={12} /> {KIND_LABEL[k]}
                     </span>
                     <span className="rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-black">AI</span>
                   </div>
-                  <div className="flex justify-center opacity-80" aria-hidden>
+                  <div className="relative flex justify-center opacity-80" aria-hidden>
                     <KindIcon kind={k} size={40} />
                   </div>
-                  <p className="line-clamp-3 rounded-xl bg-black/30 p-2 text-[12px] leading-snug backdrop-blur">{basePrompt || modelName(a.modelKey)}</p>
+                  <p className="relative line-clamp-3 rounded-xl bg-black/30 p-2 text-[12px] leading-snug backdrop-blur">{basePrompt || modelName(a.modelKey)}</p>
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-3">
                   <div className="flex flex-col text-[11px] text-fg-passive">
@@ -350,6 +401,14 @@ function Gallery({
                       <Link href={`${adBase}?asset=${a.id}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">
                         Reklam
                       </Link>
+                    ) : null}
+                    {k === "image" ? (
+                      <form action={openAssetInStudioAction}>
+                        <input type="hidden" name="assetId" value={a.id} />
+                        <button type="submit" className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">
+                          Stüdyoda düzenle
+                        </button>
+                      </form>
                     ) : null}
                     {basePrompt ? (
                       <Link href={`/creative?prompt=${encodeURIComponent(basePrompt)}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg-muted hover:text-fg">

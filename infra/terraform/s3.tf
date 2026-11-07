@@ -31,7 +31,8 @@ resource "aws_s3_bucket_cors_configuration" "assets" {
   bucket = aws_s3_bucket.assets.id
   cors_rule {
     allowed_methods = ["GET", "PUT", "HEAD"]
-    allowed_origins = [local.app_url]
+    # Kök, www ve CloudFront adresinden tarayıcı yüklemesi (Creative stüdyo, etkinlik görselleri).
+    allowed_origins = distinct(concat([local.app_url, "https://${aws_cloudfront_distribution.app.domain_name}"], [for d in local.domain_aliases : "https://${d}"]))
     allowed_headers = ["*"]
     expose_headers  = ["ETag"]
     max_age_seconds = 3000

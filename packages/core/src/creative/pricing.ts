@@ -46,6 +46,12 @@ export const MODEL_PRICE_TRY: Record<string, number> = {
   "stability-conservative-upscale": 60,
   "stability-creative-upscale": 90,
   "flux-lora-fast-training": 400, // eğitim (run)
+
+  // Stüdyo AI düzenlemeleri (yüklenen görsel üzerinde). Ham maliyet: $0.04 / $0.018 / ~$0.005 / $0.07 sn.
+  "nano-banana-edit": 15, // komutla düzenle
+  "bria-bg-remove": 8, // arka plan kaldır
+  "esrgan-upscale": 5, // 2x netleştir
+  "kling-v2-5-i2v": 300, // görselden video (sn); 5 sn = 1500 TL
 };
 
 /** Model için TL birim fiyatı (tabloda yoksa makul varsayılan). */

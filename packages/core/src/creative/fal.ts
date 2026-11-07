@@ -65,7 +65,21 @@ export function setFalClient(c: FalClient | undefined) {
 
 export class CreativeRejectedError extends Error {}
 
-export async function submitCreative(input: { tenantId: string; campaignId?: string; modelKey: string; prompt: string; units: number; referenceImageIsPortrait?: boolean }) {
+/**
+ * Üretim/düzenleme işini fal kuyruğuna gönderir. `falInput` verilirse modele bu gövde gider
+ * (düzenleme modelleri kaynak görsel URL'si ister; bazıları prompt'u ayrıca ücretlendirir),
+ * verilmezse yalnız { prompt }.
+ */
+export async function submitCreative(input: {
+  tenantId: string;
+  campaignId?: string;
+  modelKey: string;
+  prompt: string;
+  units: number;
+  referenceImageIsPortrait?: boolean;
+  falInput?: Record<string, unknown>;
+  inputUploadId?: string | null;
+}) {
   const promptHash = createHash("sha256").update(input.prompt).digest("hex");
   try {
     await assertNoRealPersonClone({ prompt: input.prompt, referenceImageIsPortrait: input.referenceImageIsPortrait });
@@ -83,11 +97,11 @@ export async function submitCreative(input: { tenantId: string; campaignId?: str
   const credits = Math.ceil(Number(model.creditsPerUnit) * input.units * 1000) / 1000;
   const hold = await placeHold(input.tenantId, credits);
   const job = await prisma.creativeJob.create({
-    data: { tenantId: input.tenantId, campaignId: input.campaignId, modelKey: model.key, modelId: model.modelId, prompt: input.prompt, promptHash, units: input.units, creditHoldId: hold.id, status: "HELD" },
+    data: { tenantId: input.tenantId, campaignId: input.campaignId, modelKey: model.key, modelId: model.modelId, prompt: input.prompt, promptHash, units: input.units, creditHoldId: hold.id, inputUploadId: input.inputUploadId ?? null, status: "HELD" },
   });
   try {
     const webhookUrl = `${envStr("APP_URL", "http://localhost:3000")}/api/webhooks/fal`;
-    const { requestId } = await fal().submit(model.modelId, { prompt: input.prompt }, webhookUrl);
+    const { requestId } = await fal().submit(model.modelId, input.falInput ?? { prompt: input.prompt }, webhookUrl);
     return prisma.creativeJob.update({ where: { id: job.id }, data: { requestId, status: "IN_QUEUE", submittedAt: new Date() } });
   } catch (e) {
     await releaseHold(hold.id);
@@ -96,7 +110,7 @@ export async function submitCreative(input: { tenantId: string; campaignId?: str
   }
 }
 
-export type FalWebhook = { request_id: string; status: "OK" | "ERROR"; payload?: { images?: { url: string }[]; video?: { url: string }; audio?: { url: string } }; metrics?: { inference_time?: number }; error?: string };
+export type FalWebhook = { request_id: string; status: "OK" | "ERROR"; payload?: { images?: { url: string }[]; image?: { url: string }; video?: { url: string }; audio?: { url: string } }; metrics?: { inference_time?: number }; error?: string };
 
 /** fal webhook işleyicisi — idempotent. */
 export async function handleFalWebhook(w: FalWebhook) {
@@ -111,7 +125,7 @@ export async function handleFalWebhook(w: FalWebhook) {
     await prisma.creativeJob.update({ where: { id: job.id }, data: { status: "FAILED", rejectReason: w.error ?? "fal ERROR", completedAt: new Date() } });
     return { handled: true, status: "FAILED" as const };
   }
-  const url = w.payload?.images?.[0]?.url ?? w.payload?.video?.url ?? w.payload?.audio?.url;
+  const url = w.payload?.images?.[0]?.url ?? w.payload?.image?.url ?? w.payload?.video?.url ?? w.payload?.audio?.url;
   if (!url) throw new Error("fal çıktısında URL yok");
   const out = await fal().download(url);
   const c2pa = embedC2pa({ assetBytes: out.bytes, mime: out.mime, modelKey: job.modelKey, modelId: job.modelId, tenantId: job.tenantId, promptHash: job.promptHash });
