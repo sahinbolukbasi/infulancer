@@ -95,7 +95,16 @@ variable "social_sync_mode" {
 variable "integration_secret_keys" {
   description = "infulancer-prod/integrations sırrından konteynere enjekte edilecek anahtar adları. Her ad sırda TANIMLI olmalı, yoksa görev başlamaz."
   type        = list(string)
-  default     = ["YOUTUBE_API_KEY"]
+  default = [
+    "YOUTUBE_API_KEY",
+    "GOOGLE_WALLET_ISSUER_ID",
+    "GOOGLE_WALLET_SA_KEY",
+    "APPLE_WALLET_CERT",
+    "APPLE_WALLET_CERT_PASSWORD",
+    "APPLE_WALLET_WWDR",
+    "APPLE_WALLET_TEAM_ID",
+    "APPLE_WALLET_PASS_TYPE_ID",
+  ]
 }
 
 variable "domain_name" {
