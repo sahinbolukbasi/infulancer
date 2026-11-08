@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
 import { campaignSetup } from "@infulancer/core/domain/campaign-setup";
@@ -12,6 +13,7 @@ const PUBLISHED = new Set(["YAYINLANDI", "METRIK_BEKLIYOR", "TAMAMLANDI"]);
  * gerçek kayıtlardan hesaplanır; etkin aşama vurgulanır. `base` admin için bağlantıları açar.
  */
 export async function CampaignLifecycle({ campaignId, base }: { campaignId: string; base?: string }) {
+  const tt = await getTT();
   const c = await prisma.campaign.findUnique({
     where: { id: campaignId },
     select: {
@@ -48,7 +50,7 @@ export async function CampaignLifecycle({ campaignId, base }: { campaignId: stri
   const activeIdx = c.status === "IPTAL" ? -1 : Math.max(0, stages.findIndex((s) => s.progress < 1));
   const current = activeIdx === -1 ? stages.length - 1 : activeIdx;
   return (
-    <nav aria-label="Kampanya aşamaları" className="rounded-3xl border border-line bg-glass p-4 backdrop-blur">
+    <nav aria-label={tt("Kampanya aşamaları")} className="rounded-3xl border border-line bg-glass p-4 backdrop-blur">
       <ol className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {stages.map((s, i) => {
           const done = s.progress >= 1;

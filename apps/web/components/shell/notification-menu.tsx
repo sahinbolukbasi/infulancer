@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { BellIcon } from "@/components/icons";
@@ -17,6 +18,7 @@ export type NotificationItem = {
 };
 
 export function NotificationMenu({ unread, items }: { unread: number; items: NotificationItem[] }) {
+  const tt = useTT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setOpen(false), []);
@@ -28,7 +30,7 @@ export function NotificationMenu({ unread, items }: { unread: number; items: Not
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={unread > 0 ? `Bildirimler, ${unread} okunmamış` : "Bildirimler"}
+        aria-label={unread > 0 ? `Bildirimler, ${unread} okunmamış` : tt("Bildirimler")}
         onClick={() => setOpen((o) => !o)}
         className="relative inline-flex h-9 w-9 items-center justify-center rounded-[8px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
       >
@@ -45,21 +47,19 @@ export function NotificationMenu({ unread, items }: { unread: number; items: Not
       {open ? (
         <div
           role="dialog"
-          aria-label="Bildirimler"
+          aria-label={tt("Bildirimler")}
           className="animate-modal-in absolute right-0 z-40 mt-2 w-[min(360px,calc(100vw-32px))] rounded-[8px] border border-border bg-surface"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <span className="text-label text-fg-muted">Bildirimler</span>
+            <span className="text-label text-fg-muted">{tt("Bildirimler")}</span>
             {unread > 0 ? (
               <form action={markNotificationsRead}>
-                <button type="submit" className="text-[13px] text-fg-muted transition-standard hover:text-fg">
-                  Tümünü okundu say
-                </button>
+                <button type="submit" className="text-[13px] text-fg-muted transition-standard hover:text-fg">{tt("Tümünü okundu say")}</button>
               </form>
             ) : null}
           </div>
           {items.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-fg-passive">Yeni bildirim yok.</p>
+            <p className="px-4 py-8 text-center text-sm text-fg-passive">{tt("Yeni bildirim yok.")}</p>
           ) : (
             <ul className="max-h-96 overflow-y-auto">
               {items.map((n) => (
@@ -80,15 +80,13 @@ export function NotificationMenu({ unread, items }: { unread: number; items: Not
                       <span className="text-[13px] text-fg-muted">{n.body}</span>
                       <span className="text-[12px] text-fg-passive">
                         {n.createdAtLabel}
-                        {n.read ? null : <span className="sr-only"> · okunmamış</span>}
+                        {n.read ? null : <span className="sr-only">{" "}{tt("· okunmamış")}</span>}
                       </span>
                     </div>
                     {n.read ? null : (
                       <form action={markNotificationsRead}>
                         <input type="hidden" name="id" value={n.id} />
-                        <button type="submit" className="text-[12px] text-fg-passive transition-standard hover:text-fg" aria-label={`${n.title} bildirimini okundu say`}>
-                          Okundu
-                        </button>
+                        <button type="submit" className="text-[12px] text-fg-passive transition-standard hover:text-fg" aria-label={`${n.title} bildirimini okundu say`}>{tt("Okundu")}</button>
                       </form>
                     )}
                   </div>

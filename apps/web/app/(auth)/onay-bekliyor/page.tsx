@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 /** Davetle kayıt olan kullanıcının bekleme ekranı (onay / red / askı durumları). */
 export default async function PendingPage() {
+  const tt = await getTT();
   const session = await auth();
   if (!session?.user?.id) redirect("/giris");
   const user = await prisma.user.findUnique({ where: { id: session.user.id }, include: { application: true } });
@@ -31,39 +33,32 @@ export default async function PendingPage() {
             <span className="absolute inset-0 rounded-full border-2 border-dashed border-neon-pink/70 animate-spin-slow" />
             <span className="h-3 w-3 rounded-full bg-neon-pink" />
           </div>
-          <p className="text-fg-muted">
-            Başvurunuz alındı{app ? ` (${fmtDateTime(app.createdAt)})` : ""}. Ajans ekibimiz bilgilerinizi inceledikten sonra hesabınızı etkinleştirecek; onaylandığında size bildirim
-            gelecek. Genellikle 1–2 iş günü içinde dönüş yapılır.
-          </p>
+          <p className="text-fg-muted">{tt("Başvurunuz alındı")}{app ? ` (${fmtDateTime(app.createdAt)})` : ""}{tt(". Ajans ekibimiz bilgilerinizi inceledikten sonra hesabınızı etkinleştirecek; onaylandığında size bildirim gelecek. Genellikle 1–2 iş günü içinde dönüş yapılır.")}</p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-2xl border border-line bg-glass-strong p-5 text-sm">
-            <dt className="text-fg-passive">Ad soyad</dt>
+            <dt className="text-fg-passive">{tt("Ad soyad")}</dt>
             <dd>{user.name}</dd>
-            <dt className="text-fg-passive">E-posta</dt>
+            <dt className="text-fg-passive">{tt("E-posta")}</dt>
             <dd>{user.email}</dd>
-            <dt className="text-fg-passive">Üyelik türü</dt>
-            <dd>{user.role === "BRAND" ? "Marka" : "Influencer"}</dd>
+            <dt className="text-fg-passive">{tt("Üyelik türü")}</dt>
+            <dd>{user.role === "BRAND" ? tt("Marka") : tt("Influencer")}</dd>
           </dl>
         </>
       ) : user.status === "ACTIVE" ? (
         <>
-          <p className="text-fg-muted">Hesabınız etkinleştirildi. Panelinize erişmek için oturumu yenileyin.</p>
+          <p className="text-fg-muted">{tt("Hesabınız etkinleştirildi. Panelinize erişmek için oturumu yenileyin.")}</p>
           <form action={reloginAction}>
-            <button type="submit" className={`${button} bg-fg text-bg`}>
-              Yeniden giriş yap
-            </button>
+            <button type="submit" className={`${button} bg-fg text-bg`}>{tt("Yeniden giriş yap")}</button>
           </form>
         </>
       ) : (
         <>
-          {app?.reviewNote ? <p className="rounded-2xl border border-line bg-glass-strong p-5 text-sm text-fg-muted">Not: {app.reviewNote}</p> : null}
-          <p className="text-fg-muted">Sorunuz için ajansınızla iletişime geçebilirsiniz.</p>
+          {app?.reviewNote ? <p className="rounded-2xl border border-line bg-glass-strong p-5 text-sm text-fg-muted">{tt("Not:")}{" "}{app.reviewNote}</p> : null}
+          <p className="text-fg-muted">{tt("Sorunuz için ajansınızla iletişime geçebilirsiniz.")}</p>
         </>
       )}
       {user.status !== "ACTIVE" ? (
         <form action={signOutAction}>
-          <button type="submit" className={`${button} border border-line-strong text-fg-muted hover:text-fg`}>
-            Çıkış yap
-          </button>
+          <button type="submit" className={`${button} border border-line-strong text-fg-muted hover:text-fg`}>{tt("Çıkış yap")}</button>
         </form>
       ) : null}
     </div>

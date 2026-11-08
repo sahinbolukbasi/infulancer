@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useState, type ReactNode } from "react";
 import { ActionForm } from "@/components/forms/action-form";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui/form";
@@ -46,6 +47,7 @@ const PRESET_COLORS = ["#ff2bd6", "#7c3aed", "#2563eb", "#0891b2", "#059669", "#
  * alıcının göreceği kartın canlı önizlemesi. Başarıda kupon yönetim sayfasına gider.
  */
 export function CouponCreateForm({ isAdmin, brands, brandName }: { isAdmin: boolean; brands?: { id: string; name: string }[]; brandName: string }) {
+  const tt = useTT();
   const [kind, setKind] = useState("KUPON");
   const [title, setTitle] = useState("");
   const [valueType, setValueType] = useState("YUZDE");
@@ -63,10 +65,10 @@ export function CouponCreateForm({ isAdmin, brands, brandName }: { isAdmin: bool
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <ActionForm action={createCouponAction} submitLabel="Kuponu oluştur" aria-label="Kupon oluştur" className="gap-5">
-        <Section n={1} title="Tür ve değer">
+      <ActionForm action={createCouponAction} submitLabel={tt("Kuponu oluştur")} aria-label={tt("Kupon oluştur")} className="gap-5">
+        <Section n={1} title={tt("Tür ve değer")}>
           {isAdmin && brands ? (
-            <Field label="Marka">
+            <Field label={tt("Marka")}>
               {(p) => (
                 <Select {...p} name="tenantId" defaultValue={brands[0]?.id} onChange={(e) => setBrand(brands.find((b) => b.id === e.target.value)?.name ?? brandName)}>
                   {brands.map((b) => (
@@ -76,54 +78,52 @@ export function CouponCreateForm({ isAdmin, brands, brandName }: { isAdmin: bool
               )}
             </Field>
           ) : null}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Tür">
-            <Choice name="kind" value="KUPON" checked={kind === "KUPON"} onChange={() => setKind("KUPON")} title="İndirim kuponu" desc="Yüzde veya tutar indirimi." />
-            <Choice name="kind" value="HEDIYE_CEKI" checked={kind === "HEDIYE_CEKI"} onChange={() => setKind("HEDIYE_CEKI")} title="Hediye çeki" desc="Belirli tutarda harcama hakkı." />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label={tt("Tür")}>
+            <Choice name="kind" value="KUPON" checked={kind === "KUPON"} onChange={() => setKind("KUPON")} title={tt("İndirim kuponu")} desc="Yüzde veya tutar indirimi." />
+            <Choice name="kind" value="HEDIYE_CEKI" checked={kind === "HEDIYE_CEKI"} onChange={() => setKind("HEDIYE_CEKI")} title={tt("Hediye çeki")} desc="Belirli tutarda harcama hakkı." />
           </div>
-          <Field label="Başlık">{(p) => <Input {...p} name="title" required minLength={3} maxLength={140} placeholder="Yaz koleksiyonu için özel" onChange={(e) => setTitle(e.target.value)} />}</Field>
+          <Field label={tt("Başlık")}>{(p) => <Input {...p} name="title" required minLength={3} maxLength={140} placeholder={tt("Yaz koleksiyonu için özel")} onChange={(e) => setTitle(e.target.value)} />}</Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Değer türü">
+            <Field label={tt("Değer türü")}>
               {(p) => (
                 <Select {...p} name="valueType" defaultValue="YUZDE" onChange={(e) => setValueType(e.target.value)}>
-                  <option value="YUZDE">Yüzde (%)</option>
-                  <option value="TUTAR">Tutar (TL)</option>
+                  <option value="YUZDE">{tt("Yüzde (%)")}</option>
+                  <option value="TUTAR">{tt("Tutar (TL)")}</option>
                 </Select>
               )}
             </Field>
-            <Field label={valueType === "YUZDE" ? "İndirim oranı (%)" : "Tutar (TL)"}>
+            <Field label={valueType === "YUZDE" ? tt("İndirim oranı (%)") : tt("Tutar (TL)")}>
               {(p) => <Input {...p} name="value" inputMode="decimal" required placeholder={valueType === "YUZDE" ? "20" : "500"} onChange={(e) => setValue(e.target.value)} />}
             </Field>
           </div>
-          <Field label="Açıklama (opsiyonel)">{(p) => <Textarea {...p} name="description" rows={2} placeholder="Kuponun kısa açıklaması" />}</Field>
+          <Field label={tt("Açıklama (opsiyonel)")}>{(p) => <Textarea {...p} name="description" rows={2} placeholder={tt("Kuponun kısa açıklaması")} />}</Field>
         </Section>
 
-        <Section n={2} title="Tasarım" hint="Kart marka renginizle oluşturulur.">
+        <Section n={2} title={tt("Tasarım")} hint={tt("Kart marka renginizle oluşturulur.")}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <ImageUpload name="logoKey" label="Marka logosu" onPreview={setLogo} />
-            <ImageUpload name="heroImageKey" label="Arka plan görseli (opsiyonel)" onPreview={setHero} />
+            <ImageUpload name="logoKey" label={tt("Marka logosu")} onPreview={setLogo} />
+            <ImageUpload name="heroImageKey" label={tt("Arka plan görseli (opsiyonel)")} onPreview={setHero} />
           </div>
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-label text-fg-muted">Marka rengi</legend>
+            <legend className="text-label text-fg-muted">{tt("Marka rengi")}</legend>
             <div className="flex flex-wrap items-center gap-2">
               {PRESET_COLORS.map((c) => (
                 <button key={c} type="button" onClick={() => setColor(c)} aria-label={`Renk ${c}`} aria-pressed={color === c} className={cn("h-8 w-8 rounded-full ring-offset-2 ring-offset-bg transition-standard", color === c ? "ring-2 ring-fg" : "ring-1 ring-line")} style={{ background: c }} />
               ))}
-              <label className="ml-1 flex items-center gap-2 text-[13px] text-fg-muted">
-                Özel
-                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-8 w-10 cursor-pointer rounded border border-line bg-transparent" aria-label="Özel renk seç" />
+              <label className="ml-1 flex items-center gap-2 text-[13px] text-fg-muted">{tt("Özel")}<input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-8 w-10 cursor-pointer rounded border border-line bg-transparent" aria-label={tt("Özel renk seç")} />
               </label>
             </div>
             <input type="hidden" name="brandColor" value={color} />
           </fieldset>
         </Section>
 
-        <Section n={3} title="Kod" hint="Alıcılara nasıl kod verileceğini seçin.">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Kod üretimi">
-            <Choice name="codeModeUi" value="unique" checked={codeMode === "unique"} onChange={() => setCodeMode("unique")} title="Kişiye özel kod" desc="Her alıcıya otomatik benzersiz kod üretilir; kime hangi kodun gittiği CSV ile indirilebilir." />
-            <Choice name="codeModeUi" value="shared" checked={codeMode === "shared"} onChange={() => setCodeMode("shared")} title="Herkese aynı kod" desc="Tüm alıcılar sizin belirlediğiniz tek kodu görür." />
+        <Section n={3} title={tt("Kod")} hint={tt("Alıcılara nasıl kod verileceğini seçin.")}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label={tt("Kod üretimi")}>
+            <Choice name="codeModeUi" value="unique" checked={codeMode === "unique"} onChange={() => setCodeMode("unique")} title={tt("Kişiye özel kod")} desc="Her alıcıya otomatik benzersiz kod üretilir; kime hangi kodun gittiği CSV ile indirilebilir." />
+            <Choice name="codeModeUi" value="shared" checked={codeMode === "shared"} onChange={() => setCodeMode("shared")} title={tt("Herkese aynı kod")} desc="Tüm alıcılar sizin belirlediğiniz tek kodu görür." />
           </div>
           {codeMode === "shared" ? (
-            <Field label="Ortak kod" hint="Harf ve rakam, 4-24 karakter.">
+            <Field label={tt("Ortak kod")} hint={tt("Harf ve rakam, 4-24 karakter.")}>
               {(p) => (
                 <Input
                   {...p}
@@ -132,7 +132,7 @@ export function CouponCreateForm({ isAdmin, brands, brandName }: { isAdmin: bool
                   minLength={4}
                   maxLength={24}
                   pattern="[A-Za-z0-9-]+"
-                  placeholder="YAZ20"
+                  placeholder={tt("YAZ20")}
                   value={shared}
                   onChange={(e) => setShared(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
                   className="font-mono uppercase tracking-widest"
@@ -142,18 +142,18 @@ export function CouponCreateForm({ isAdmin, brands, brandName }: { isAdmin: bool
           ) : null}
         </Section>
 
-        <Section n={4} title="Geçerlilik ve koşullar">
-          <Field label="Son kullanım tarihi (boş = süresiz)">{(p) => <Input {...p} name="validUntilDay" type="date" onChange={(e) => setValidDay(e.target.value)} className="max-w-52" />}</Field>
-          <Field label="Kullanım koşulları">{(p) => <Textarea {...p} name="terms" rows={3} placeholder="Tek kullanımlık. Diğer kampanyalarla birleştirilemez." />}</Field>
+        <Section n={4} title={tt("Geçerlilik ve koşullar")}>
+          <Field label={tt("Son kullanım tarihi (boş = süresiz)")}>{(p) => <Input {...p} name="validUntilDay" type="date" onChange={(e) => setValidDay(e.target.value)} className="max-w-52" />}</Field>
+          <Field label={tt("Kullanım koşulları")}>{(p) => <Textarea {...p} name="terms" rows={3} placeholder={tt("Tek kullanımlık. Diğer kampanyalarla birleştirilemez.")} />}</Field>
         </Section>
       </ActionForm>
 
-      <aside className="lg:sticky lg:top-6 lg:self-start" aria-label="Kupon önizlemesi">
-        <p className="mb-2 text-[12px] font-medium text-fg-muted">Önizleme · alıcının göreceği kart</p>
+      <aside className="lg:sticky lg:top-6 lg:self-start" aria-label={tt("Kupon önizlemesi")}>
+        <p className="mb-2 text-[12px] font-medium text-fg-muted">{tt("Önizleme · alıcının göreceği kart")}</p>
         <div className="flex justify-center rounded-3xl border border-line bg-bg p-5">
           <CouponCard
             kindLabel={kind === "HEDIYE_CEKI" ? "Hediye çeki" : "Kupon"}
-            title={title || "Kupon başlığı"}
+            title={title || tt("Kupon başlığı")}
             brandName={brand}
             valueLabel={valueLabel}
             code={codeMode === "shared" ? shared || "ORTAKKOD" : "KPN-XXXXXXXXXX"}
@@ -181,14 +181,13 @@ export function CouponStatusButton({ id, to, label, variant = "secondary" }: { i
 
 /** Kuponu kayıtlı içerik üreticilerine gönder: listeden seç veya tüm aktif üreticiler. */
 export function GrantForm({ couponId, influencers }: { couponId: string; influencers: PickItem[] }) {
+  const tt = useTT();
   return (
-    <ActionForm action={grantCouponAction} submitLabel="Gönder" resetOnSuccess aria-label="Kupon gönder">
+    <ActionForm action={grantCouponAction} submitLabel={tt("Gönder")} resetOnSuccess aria-label={tt("Kupon gönder")}>
       <input type="hidden" name="couponId" value={couponId} />
       <InfluencerPicker items={influencers} allLabel="Tümünü seç" />
       <label className="flex items-center gap-2 text-sm text-fg-muted">
-        <input type="checkbox" name="all" value="true" className="h-4 w-4 accent-[var(--color-fg)]" />
-        Seçim yerine tüm aktif içerik üreticilerine gönder
-      </label>
+        <input type="checkbox" name="all" value="true" className="h-4 w-4 accent-[var(--color-fg)]" />{tt("Seçim yerine tüm aktif içerik üreticilerine gönder")}</label>
     </ActionForm>
   );
 }

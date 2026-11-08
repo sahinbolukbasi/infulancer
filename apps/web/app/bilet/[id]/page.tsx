@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,6 +23,7 @@ const statusView: Record<string, { label: string; tone: "ok" | "used" | "void" }
 
 /** Herkese açık bilet: beyaz bilet kartı (QR + kopyalanabilir kod), cüzdan, takvim, konum. */
 export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   const { id } = await params;
   const ticket = await prisma.eventTicket.findUnique({ where: { id }, include: { event: true, invite: { select: { influencerId: true } } } });
   if (!ticket) notFound();
@@ -55,25 +57,23 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           qr={<QrImage dataUrl={links.qrDataUrl} alt={`Bilet QR kodu ${ticket.code}`} />}
         />
 
-        <section className="w-full rounded-2xl border border-line bg-surface p-4" aria-label="Cüzdana ekle">
+        <section className="w-full rounded-2xl border border-line bg-surface p-4" aria-label={tt("Cüzdana ekle")}>
           <WalletButtons appleUrl={links.appleUrl} googleUrl={links.googleUrl} live={links.live} />
-          <a href={`/api/bilet/${ticket.id}/pdf`} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-[13px] font-medium text-fg hover:border-line-strong">
-            PDF olarak indir
-          </a>
+          <a href={`/api/bilet/${ticket.id}/pdf`} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-[13px] font-medium text-fg hover:border-line-strong">{tt("PDF olarak indir")}</a>
         </section>
 
-        <section className="flex w-full flex-col gap-3 rounded-2xl border border-line bg-surface p-4" aria-label="Takvim ve konum">
+        <section className="flex w-full flex-col gap-3 rounded-2xl border border-line bg-surface p-4" aria-label={tt("Takvim ve konum")}>
           <div className="flex flex-wrap gap-2 text-[13px]">
-            <a href={gcal} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">Google Takvim&apos;e ekle</a>
-            <a href={`/api/etkinlik/${e.id}/ics`} className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">Apple / Outlook (.ics)</a>
+            <a href={gcal} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">{tt("Google Takvim'e ekle")}</a>
+            <a href={`/api/etkinlik/${e.id}/ics`} className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">{tt("Apple / Outlook (.ics)")}</a>
             {map.hasCoords || e.address ? (
               <>
-                <a href={map.google} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">Google Haritalar</a>
-                <a href={map.apple} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">Apple Haritalar</a>
+                <a href={map.google} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">{tt("Google Haritalar")}</a>
+                <a href={map.apple} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-fg hover:border-line-strong">{tt("Apple Haritalar")}</a>
               </>
             ) : null}
           </div>
-          <Link href={`/etkinlik/${e.id}`} className="w-fit text-[13px] font-medium text-fg underline-offset-4 hover:underline">Etkinlik sayfasını görüntüle →</Link>
+          <Link href={`/etkinlik/${e.id}`} className="w-fit text-[13px] font-medium text-fg underline-offset-4 hover:underline">{tt("Etkinlik sayfasını görüntüle →")}</Link>
         </section>
       </div>
     </main>

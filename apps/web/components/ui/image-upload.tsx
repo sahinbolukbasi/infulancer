@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useRef, useState } from "react";
 import { mediaSrc } from "@/lib/media";
 
@@ -7,6 +8,7 @@ import { mediaSrc } from "@/lib/media";
  * Form gönderilince key sunucuya gider. 8 MB, JPEG/PNG/WebP.
  */
 export function ImageUpload({ name, label, defaultKey, onPreview }: { name: string; label: string; defaultKey?: string | null; onPreview?: (url: string | null) => void }) {
+  const tt = useTT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [key, setKey] = useState<string | null>(defaultKey ?? null);
   const [preview, setPreview] = useState<string | null>(mediaSrc(defaultKey));
@@ -50,11 +52,11 @@ export function ImageUpload({ name, label, defaultKey, onPreview }: { name: stri
           // eslint-disable-next-line @next/next/no-img-element -- yüklenen görsel önizleme
           <img src={preview} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-line" />
         ) : (
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-dashed border-line text-[11px] text-fg-passive">Görsel</div>
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-dashed border-line text-[11px] text-fg-passive">{tt("Görsel")}</div>
         )}
         <div className="flex flex-col gap-1">
           <button type="button" onClick={() => inputRef.current?.click()} disabled={busy} className="w-fit rounded-full border border-line-strong px-4 py-1.5 text-[13px] font-medium transition-standard hover:border-neon-pink disabled:opacity-50">
-            {busy ? "Yükleniyor…" : key ? "Değiştir" : "Görsel yükle"}
+            {busy ? tt("Yükleniyor…") : key ? tt("Değiştir") : tt("Görsel yükle")}
           </button>
           {err ? <span className="text-[12px] text-critical">{err}</span> : null}
         </div>

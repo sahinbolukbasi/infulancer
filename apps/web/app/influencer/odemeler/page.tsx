@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma, type PayoutStatus } from "@infulancer/core/db";
 import { contentTypeLabels, formatKurus, ledgerReasonLabels, payoutStatusLabels, platformLabels } from "@infulancer/core/domain/labels";
@@ -24,6 +25,7 @@ const payoutTone: Record<PayoutStatus, StatusTone> = {
 };
 
 export default async function InfluencerPaymentsPage() {
+  const tt = await getTT();
   const actor = await requireActor("INFLUENCER");
   // Hakediş ve ödemeler influencer'ın kayıtlı ülkesinin para biriminde (çevrim yok).
   const myCountry = (await prisma.influencer.findUniqueOrThrow({ where: { id: actor.influencerId! }, select: { country: true } })).country;
@@ -58,29 +60,27 @@ export default async function InfluencerPaymentsPage() {
 
   return (
     <Stagger className="flex flex-col gap-6">
-      <PageHeader title="Ödemeler" description="Bakiyeniz, çekim talepleriniz ve hakediş geçmişiniz." />
+      <PageHeader title={tt("Ödemeler")} description={tt("Bakiyeniz, çekim talepleriniz ve hakediş geçmişiniz.")} />
       <BalanceCards balances={balances} holdDays={holdDays()} currency={currencyOf(myCountry)} />
 
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Çekim</CardTitle>
-        <p className="text-[13px] text-fg-muted">
-          Talepler ajans onayından sonra banka talimatına eklenir. Minimum çekim tutarı {formatKurus(minKurus)}.
+        <CardTitle>{tt("Çekim")}</CardTitle>
+        <p className="text-[13px] text-fg-muted">{tt("Talepler ajans onayından sonra banka talimatına eklenir. Minimum çekim tutarı")}{" "}{formatKurus(minKurus)}.
         </p>
         <PayoutRequestButton cekilebilirKurus={balances.cekilebilir} minKurus={minKurus} maskedIban={maskIban(me.iban)} holder={me.ibanHolder} />
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Çekim talepleri</CardTitle>
+        <CardTitle>{tt("Çekim talepleri")}</CardTitle>
         {payouts.length === 0 ? (
-          <p className="text-sm text-fg-passive">Henüz çekim talebiniz yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Henüz çekim talebiniz yok.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {payouts.map((p) => (
               <li key={p.id} className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
                 <span className="flex flex-col">
                   <span className="text-sm tabular-nums text-fg">{formatKurus(p.amountKurus)}</span>
-                  <span className="text-[13px] text-fg-passive tabular-nums">
-                    Talep {fmtDate(p.createdAt)}
+                  <span className="text-[13px] text-fg-passive tabular-nums">{tt("Talep")}{" "}{fmtDate(p.createdAt)}
                     {p.sentAt ? ` · gönderildi ${fmtDate(p.sentAt)}` : ""}
                     {p.status === "REDDEDILDI" && p.adminNote ? ` · ${p.adminNote}` : ""}
                   </span>
@@ -93,9 +93,9 @@ export default async function InfluencerPaymentsPage() {
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Hesap hareketleri</CardTitle>
+        <CardTitle>{tt("Hesap hareketleri")}</CardTitle>
         {entries.length === 0 ? (
-          <p className="text-sm text-fg-passive">Tamamlanan iş olduğunda hakedişler burada görünür.</p>
+          <p className="text-sm text-fg-passive">{tt("Tamamlanan iş olduğunda hakedişler burada görünür.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {entries.map((e) => {
@@ -105,7 +105,7 @@ export default async function InfluencerPaymentsPage() {
                 <li key={e.id} className="flex items-start justify-between gap-4 py-3 first:pt-0">
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate text-sm text-fg">
-                      {d ? d.assignment.campaign.name : e.reason === "ODEME" ? "Banka transferi" : ledgerReasonLabels[e.reason]}
+                      {d ? d.assignment.campaign.name : e.reason === "ODEME" ? tt("Banka transferi") : ledgerReasonLabels[e.reason]}
                     </span>
                     <span className="text-[13px] text-fg-passive tabular-nums">
                       {fmtDateTime(e.createdAt)} · {ledgerReasonLabels[e.reason]}
@@ -123,7 +123,7 @@ export default async function InfluencerPaymentsPage() {
         )}
       </Card>
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>İş ve ödeme geçmişi</CardTitle>
+        <CardTitle>{tt("İş ve ödeme geçmişi")}</CardTitle>
         <WorkHistory influencerId={actor.influencerId!} mode="influencer" />
       </Card>
     </Stagger>

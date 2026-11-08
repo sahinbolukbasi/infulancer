@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import Link from "next/link";
 import type { CalendarCard, CalendarRow } from "@/components/calendar/week-calendar";
 import { PlatformIcon } from "@/components/platform-icon";
@@ -15,7 +16,8 @@ const tone = (c: CalendarCard) =>
   c.overdue || c.violation ? "border-critical/60 bg-critical/10" : c.locked ? "border-line bg-glass opacity-70" : "border-neon-pink/40 bg-neon-pink/10";
 
 /** Gün görünümü: saat sırasıyla liste. */
-export function DayView({ rows, emptyText }: { rows: CalendarRow[]; emptyText: string }) {
+export async function DayView({ rows, emptyText }: { rows: CalendarRow[]; emptyText: string }) {
+  const tt = await getTT();
   const cards = flatten(rows);
   if (cards.length === 0) return <p className="rounded-2xl border border-dashed border-line p-10 text-center text-sm text-fg-passive">{emptyText}</p>;
   return (
@@ -33,7 +35,7 @@ export function DayView({ rows, emptyText }: { rows: CalendarRow[]; emptyText: s
             </span>
             <span className="text-[12px] text-fg-muted">
               {c.statusLabel}
-              {c.overdue ? " · gecikti" : ""}
+              {c.overdue ? tt(" · gecikti") : ""}
             </span>
           </Link>
         </li>
@@ -43,7 +45,8 @@ export function DayView({ rows, emptyText }: { rows: CalendarRow[]; emptyText: s
 }
 
 /** Ay görünümü: pazartesiden başlayan ızgara, günde en fazla 3 kart + "n daha". */
-export function MonthView({ days, rows, month, today, dayHref, labelBy = "influencer" }: { days: string[]; rows: CalendarRow[]; month: number; today: string; dayHref: (d: string) => string; labelBy?: "influencer" | "campaign" }) {
+export async function MonthView({ days, rows, month, today, dayHref, labelBy = "influencer" }: { days: string[]; rows: CalendarRow[]; month: number; today: string; dayHref: (d: string) => string; labelBy?: "influencer" | "campaign" }) {
+  const tt = await getTT();
   const byDay = new Map<string, Card[]>();
   for (const c of flatten(rows)) byDay.set(c.day, [...(byDay.get(c.day) ?? []), c]);
   return (
@@ -81,8 +84,7 @@ export function MonthView({ days, rows, month, today, dayHref, labelBy = "influe
                 {items.length > 3 ? (
                   <li>
                     <Link href={dayHref(d)} className="px-1.5 text-[11px] text-fg-muted hover:text-fg">
-                      +{items.length - 3} daha
-                    </Link>
+                      +{items.length - 3}{" "}{tt("daha")}</Link>
                   </li>
                 ) : null}
               </ul>
@@ -95,7 +97,8 @@ export function MonthView({ days, rows, month, today, dayHref, labelBy = "influe
 }
 
 /** Yıl görünümü: 12 mini ay, günler paylaşım yoğunluğuna göre renklenir. */
-export function YearView({ year, rows, today, dayHref, monthHref }: { year: number; rows: CalendarRow[]; today: string; dayHref: (d: string) => string; monthHref: (m: number) => string }) {
+export async function YearView({ year, rows, today, dayHref, monthHref }: { year: number; rows: CalendarRow[]; today: string; dayHref: (d: string) => string; monthHref: (m: number) => string }) {
+  const tt = await getTT();
   const count = new Map<string, number>();
   for (const c of flatten(rows)) count.set(c.day, (count.get(c.day) ?? 0) + 1);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -110,7 +113,7 @@ export function YearView({ year, rows, today, dayHref, monthHref }: { year: numb
           <section key={m} className="rounded-2xl border border-line bg-glass p-4">
             <Link href={monthHref(m)} className="mb-3 flex items-center justify-between text-sm font-medium hover:text-neon-pink">
               {monthName(m)}
-              <span className="text-[12px] font-normal text-fg-muted tabular-nums">{total} paylaşım</span>
+              <span className="text-[12px] font-normal text-fg-muted tabular-nums">{total}{" "}{tt("paylaşım")}</span>
             </Link>
             <div className="grid grid-cols-7 gap-1 text-center text-[10px]">
               {WEEKDAYS.map((w) => (

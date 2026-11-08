@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { startTransition, useActionState, useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/form";
 import { idleState, type ActionState } from "@/lib/action-state";
@@ -35,6 +36,7 @@ export function ActionForm({
   footer?: ReactNode;
   "aria-label"?: string;
 }) {
+  const tt = useTT();
   const [state, formAction, pending] = useActionState(action, idleState);
   const ref = useRef<HTMLFormElement>(null);
   const onSuccessRef = useRef(onSuccess);
@@ -69,7 +71,7 @@ export function ActionForm({
         <div className="flex flex-wrap items-center gap-2">
           {submitLabel ? (
             <Button type="submit" variant={submitVariant} size={submitSize} disabled={pending}>
-              {pending ? "İşleniyor…" : submitLabel}
+              {pending ? tt("İşleniyor…") : submitLabel}
             </Button>
           ) : null}
           {footer}
@@ -80,10 +82,11 @@ export function ActionForm({
 }
 
 export function FormMessage({ state }: { state: ActionState }) {
+  const tt = useTT();
   if (state.error) {
     return (
       <div role="alert" className="flex flex-col gap-2 rounded-[8px] border border-critical/40 px-3 py-2 text-[13px] text-critical">
-        <p>{state.conflicts?.length ? "Marka çakışması bulundu:" : state.error}</p>
+        <p>{state.conflicts?.length ? tt("Marka çakışması bulundu:") : state.error}</p>
         {state.conflicts?.length ? (
           <ul className="list-disc pl-4 text-fg-muted">
             {state.conflicts.map((c) => (

@@ -1,10 +1,12 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { BRAND_NAME } from "@/lib/brand";
 import { NordvowMark } from "@/components/brand/logo";
 /** Girişsiz erişilebilen yasal sayfalar (Meta/TikTok App Review için menüye girmeden görünür). */
-export default function PublicLayout({ children }: { children: ReactNode }) {
+export default async function PublicLayout({ children }: { children: ReactNode }) {
+  const tt = await getTT();
   return (
     <div className="min-h-screen bg-canvas text-fg">
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/80 backdrop-blur-xl">
@@ -13,13 +15,9 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             <NordvowMark size={24} />
             {BRAND_NAME}
           </Link>
-          <nav aria-label="Genel" className="flex items-center gap-5 text-sm text-fg-muted">
-            <Link href="/" className="hidden hover:text-fg sm:inline">
-              Ana sayfa
-            </Link>
-            <Link href="/giris" className="rounded-full bg-fg px-4 py-1.5 font-medium text-bg">
-              Giriş
-            </Link>
+          <nav aria-label={tt("Genel")} className="flex items-center gap-5 text-sm text-fg-muted">
+            <Link href="/" className="hidden hover:text-fg sm:inline">{tt("Ana sayfa")}</Link>
+            <Link href="/giris" className="rounded-full bg-fg px-4 py-1.5 font-medium text-bg">{tt("Giriş")}</Link>
             <ThemeToggle />
           </nav>
         </div>

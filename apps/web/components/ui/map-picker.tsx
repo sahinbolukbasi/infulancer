@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 /* eslint-disable @typescript-eslint/no-explicit-any -- Leaflet CDN'den global olarak yüklenir, tip paketi yok */
 import { useEffect, useRef, useState } from "react";
 
@@ -28,6 +29,7 @@ function loadLeaflet(): Promise<void> {
 }
 
 export function MapPicker({ latName = "latitude", lngName = "longitude", defaultLat, defaultLng }: { latName?: string; lngName?: string; defaultLat?: number | null; defaultLng?: number | null }) {
+  const tt = useTT();
   const ref = useRef<HTMLDivElement>(null);
   const [lat, setLat] = useState<number | null>(defaultLat ?? null);
   const [lng, setLng] = useState<number | null>(defaultLng ?? null);
@@ -65,15 +67,15 @@ export function MapPicker({ latName = "latitude", lngName = "longitude", default
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-label text-fg-muted">Konum (haritaya tıklayarak seçin)</span>
+      <span className="text-label text-fg-muted">{tt("Konum (haritaya tıklayarak seçin)")}</span>
       <input type="hidden" name={latName} value={lat ?? ""} />
       <input type="hidden" name={lngName} value={lng ?? ""} />
       <div ref={ref} className="h-64 w-full overflow-hidden rounded-xl border border-line" style={{ background: "#0b0b14" }} />
       {err ? <span className="text-[12px] text-neon-amber">{err}</span> : null}
       {lat != null && lng != null ? (
-        <span className="text-[12px] text-fg-muted">Seçilen konum: {lat}, {lng}</span>
+        <span className="text-[12px] text-fg-muted">{tt("Seçilen konum:")}{" "}{lat}, {lng}</span>
       ) : ready ? (
-        <span className="text-[12px] text-fg-passive">Henüz konum seçilmedi (opsiyonel).</span>
+        <span className="text-[12px] text-fg-passive">{tt("Henüz konum seçilmedi (opsiyonel).")}</span>
       ) : null}
     </div>
   );

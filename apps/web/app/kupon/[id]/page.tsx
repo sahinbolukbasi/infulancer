@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
@@ -18,6 +19,7 @@ const grantStatus: Record<string, string> = { GONDERILDI: "Kullanılabilir", GOR
  * Gösterilen kod: ortak kod varsa o, yoksa kişiye özel kod. QR her zaman takip kodunu taşır.
  */
 export default async function CouponPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   const { id } = await params;
   const grant = await prisma.couponGrant.findUnique({ where: { id }, include: { coupon: true } });
   const coupon = grant?.coupon ?? (await prisma.coupon.findUnique({ where: { id } }));
@@ -48,19 +50,17 @@ export default async function CouponPage({ params }: { params: Promise<{ id: str
           qr={<QrImage dataUrl={links.qrDataUrl} alt={`Kupon QR kodu ${code}`} />}
         />
 
-        <section className="w-full rounded-2xl border border-line bg-surface p-4" aria-label="Cüzdana ekle">
+        <section className="w-full rounded-2xl border border-line bg-surface p-4" aria-label={tt("Cüzdana ekle")}>
           <WalletButtons appleUrl={links.appleUrl} googleUrl={links.googleUrl} live={links.live} />
-          <a href={`/api/kupon/${id}/pdf`} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-[13px] font-medium text-fg hover:border-line-strong">
-            PDF olarak indir
-          </a>
+          <a href={`/api/kupon/${id}/pdf`} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-[13px] font-medium text-fg hover:border-line-strong">{tt("PDF olarak indir")}</a>
         </section>
 
         {coupon.description || coupon.terms ? (
-          <section className="flex w-full flex-col gap-3 rounded-2xl border border-line bg-surface p-4" aria-label="Kupon ayrıntıları">
+          <section className="flex w-full flex-col gap-3 rounded-2xl border border-line bg-surface p-4" aria-label={tt("Kupon ayrıntıları")}>
             {coupon.description ? <p className="text-[14px] text-fg">{coupon.description}</p> : null}
             {coupon.terms ? (
               <div>
-                <h2 className="text-[12px] font-medium text-fg-muted">Kullanım koşulları</h2>
+                <h2 className="text-[12px] font-medium text-fg-muted">{tt("Kullanım koşulları")}</h2>
                 <p className="mt-1 whitespace-pre-line text-[13px] text-fg-muted">{coupon.terms}</p>
               </div>
             ) : null}

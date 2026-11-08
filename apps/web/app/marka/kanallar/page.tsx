@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 /** WhatsApp ve Instagram DM kurulumu + bu kanallarda çalışan sohbet asistanları tek sayfada. */
 export default async function BrandChannelsPage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const { sekme } = await searchParams;
   const t = actor.brandId!;
@@ -37,14 +39,10 @@ export default async function BrandChannelsPage({ searchParams }: { searchParams
   const igOk = ig?.status === "ACTIVE";
   const plan = num ? planCampaign(5000, num.messagingLimit) : null;
   const goAssistant = (
-    <Link href="/marka/kanallar?sekme=asistan" className={buttonClass("primary", "sm")}>
-      Asistanı aç →
-    </Link>
+    <Link href="/marka/kanallar?sekme=asistan" className={buttonClass("primary", "sm")}>{tt("Asistanı aç →")}</Link>
   );
   const goLive = (
-    <Link href="/marka/uyum" className={buttonClass("primary", "sm")}>
-      Uyum adımlarına git →
-    </Link>
+    <Link href="/marka/uyum" className={buttonClass("primary", "sm")}>{tt("Uyum adımlarına git →")}</Link>
   );
 
   const overview = [
@@ -55,7 +53,7 @@ export default async function BrandChannelsPage({ searchParams }: { searchParams
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Kanallar ve asistan" description="WhatsApp ve Instagram'ı bağlayın; asistan iki kanalda da ilk cevabı versin." />
+      <PageHeader title={tt("Kanallar ve asistan")} description={tt("WhatsApp ve Instagram'ı bağlayın; asistan iki kanalda da ilk cevabı versin.")} />
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {overview.map((o) => (
           <li key={o.title}>
@@ -69,10 +67,10 @@ export default async function BrandChannelsPage({ searchParams }: { searchParams
           </li>
         ))}
       </ul>
-      {!live ? <InfoNote>Hesabınız deneme modunda: mesajlar gerçek alıcılara gitmez. KVKK adımları tamamlanınca canlıya geçin.</InfoNote> : null}
+      {!live ? <InfoNote>{tt("Hesabınız deneme modunda: mesajlar gerçek alıcılara gitmez. KVKK adımları tamamlanınca canlıya geçin.")}</InfoNote> : null}
       <Tabs
         key={sekme ?? "whatsapp"}
-        label="Kanal bölümleri"
+        label={tt("Kanal bölümleri")}
         defaultTab={sekme}
         tabs={[
           {
@@ -81,11 +79,11 @@ export default async function BrandChannelsPage({ searchParams }: { searchParams
             content: (
               <div className="flex flex-col gap-4">
                 <SetupWizard
-                  title="WhatsApp kurulumu"
+                  title={tt("WhatsApp kurulumu")}
                   doneText="WhatsApp hazır. Mesajlar Gelen kutusu'na düşüyor."
                   steps={[
-                    { key: "numara", title: "Numaranızı bağlayın", done: !!num, hint: "Meta ile giriş yapın, işletme numaranızı seçin.", content: num ? <p className="text-sm text-fg-muted">Bağlı: {num.displayNumber ?? num.phoneNumberId}</p> : <WhatsAppSignupForm /> },
-                    { key: "odeme", title: "Ödeme yöntemini ekleyin", done: paid, hint: "Mesaj ücretini Meta doğrudan sizden alır.", content: num?.onboardingStep === "identity_verification" ? <InfoNote>Meta iş doğrulaması istiyor; WhatsApp Manager&apos;da tamamlayın.</InfoNote> : <ConfirmPaymentButton /> },
+                    { key: "numara", title: "Numaranızı bağlayın", done: !!num, hint: "Meta ile giriş yapın, işletme numaranızı seçin.", content: num ? <p className="text-sm text-fg-muted">{tt("Bağlı:")}{" "}{num.displayNumber ?? num.phoneNumberId}</p> : <WhatsAppSignupForm /> },
+                    { key: "odeme", title: "Ödeme yöntemini ekleyin", done: paid, hint: "Mesaj ücretini Meta doğrudan sizden alır.", content: num?.onboardingStep === "identity_verification" ? <InfoNote>{tt("Meta iş doğrulaması istiyor; WhatsApp Manager'da tamamlayın.")}</InfoNote> : <ConfirmPaymentButton /> },
                     {
                       key: "sablon",
                       title: "Bir mesaj şablonu onaylatın",
@@ -110,7 +108,7 @@ export default async function BrandChannelsPage({ searchParams }: { searchParams
                     { key: "canli", title: "Canlıya geçin", done: live, hint: "KVKK bildirimi tamamlanınca açılır.", content: goLive },
                   ]}
                 />
-                {plan ? <p className="text-[13px] text-fg-muted">Günlük kademe {num!.messagingLimit}: 5.000 kişilik gönderim ≈ {plan.estimatedDays} gün.</p> : null}
+                {plan ? <p className="text-[13px] text-fg-muted">{tt("Günlük kademe")}{" "}{num!.messagingLimit}{tt(": 5.000 kişilik gönderim ≈")}{" "}{plan.estimatedDays}{" "}{tt("gün.")}</p> : null}
               </div>
             ),
           },
@@ -119,11 +117,11 @@ export default async function BrandChannelsPage({ searchParams }: { searchParams
             label: "Instagram",
             content: (
               <SetupWizard
-                title="Instagram DM kurulumu"
+                title={tt("Instagram DM kurulumu")}
                 doneText="Instagram hazır. DM'ler Gelen kutusu'na düşüyor."
                 steps={[
                   { key: "pro", title: "Hesabı Professional yapın", done: igOk, hint: "Instagram ayarlarından Business veya Creator hesaba geçin ve bir Facebook Sayfasına bağlayın." },
-                  { key: "bagla", title: "Instagram'ı bağlayın", done: igOk, hint: "Meta ile giriş yapıp mesaj izni verin.", content: igOk ? <p className="text-sm text-fg-muted">Bağlı.</p> : <InstagramConnectForm /> },
+                  { key: "bagla", title: "Instagram'ı bağlayın", done: igOk, hint: "Meta ile giriş yapıp mesaj izni verin.", content: igOk ? <p className="text-sm text-fg-muted">{tt("Bağlı.")}</p> : <InstagramConnectForm /> },
                   { key: "asistan", title: "Asistanı Instagram'da açın", done: igOk && assistantOn, hint: "Aynı asistan iki kanalda da çalışır.", content: goAssistant },
                   { key: "canli", title: "Canlıya geçin", done: live, content: goLive },
                 ]}
@@ -136,18 +134,18 @@ export default async function BrandChannelsPage({ searchParams }: { searchParams
             label: `DM başvuruları (${candidates.length})`,
             content: (
               <Card interactive={false} className="flex flex-col gap-3">
-                <CardTitle>DM&apos;den gelen içerik üreticisi başvuruları</CardTitle>
+                <CardTitle>{tt("DM'den gelen içerik üreticisi başvuruları")}</CardTitle>
                 {candidates.length === 0 ? (
-                  <p className="text-sm text-fg-passive">Henüz başvuru yok.</p>
+                  <p className="text-sm text-fg-passive">{tt("Henüz başvuru yok.")}</p>
                 ) : (
                   <ul className="flex flex-col divide-y divide-line text-sm">
                     {candidates.map((c) => (
                       <li key={c.id} className="flex flex-col py-2">
                         <span>
-                          @{c.handle ?? "?"} · {c.category ?? "kategori yok"}
+                          @{c.handle ?? "?"} · {c.category ?? tt("kategori yok")}
                         </span>
                         <span className="text-[13px] text-fg-muted">
-                          {c.followers ? `${c.followers.toLocaleString("tr-TR")} takipçi` : "takipçi bilinmiyor"} · {c.priceExpectation ?? "fiyat yok"} · {c.contact ?? "iletişim yok"}
+                          {c.followers ? `${c.followers.toLocaleString("tr-TR")} takipçi` : tt("takipçi bilinmiyor")} · {c.priceExpectation ?? tt("fiyat yok")} · {c.contact ?? tt("iletişim yok")}
                         </span>
                       </li>
                     ))}

@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { AssetKind } from "@infulancer/core/enums";
 import { assetKindLabels } from "@infulancer/core/domain/labels";
 import { FileIcon } from "@/components/icons";
@@ -15,10 +16,11 @@ function fmtSize(bytes: number): string {
  * (302 → kısa ömürlü imzalı URL) gösterilir; diğer dosyalar indirme bağlantısıdır.
  * canDelete: verilen kullanıcı kendi yüklediğini (ya da ajans her dosyayı) silebilir.
  */
-export function CampaignMedia({ items, canDelete, emptyText = "Henüz fotoğraf veya video yok." }: { items: MediaItem[]; canDelete?: (m: MediaItem) => boolean; emptyText?: string }) {
+export async function CampaignMedia({ items, canDelete, emptyText = "Henüz fotoğraf veya video yok." }: { items: MediaItem[]; canDelete?: (m: MediaItem) => boolean; emptyText?: string }) {
+  const tt = await getTT();
   if (items.length === 0) return <p className="text-[13px] text-fg-passive">{emptyText}</p>;
   return (
-    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" aria-label="Kampanya medyası">
+    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" aria-label={tt("Kampanya medyası")}>
       {items.map((m) => {
         const src = `/api/assets/${m.id}/download`;
         return (
@@ -32,7 +34,7 @@ export function CampaignMedia({ items, canDelete, emptyText = "Henüz fotoğraf 
             ) : (
               <a href={src} className="flex aspect-square w-full flex-col items-center justify-center gap-2 bg-bg text-fg-muted hover:text-fg">
                 <FileIcon size={28} />
-                <span className="text-[12px]">İndir</span>
+                <span className="text-[12px]">{tt("İndir")}</span>
               </a>
             )}
             <div className="flex items-start justify-between gap-2 p-2.5">

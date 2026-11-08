@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
 import { formatKurus, payoutStatusLabels } from "@infulancer/core/domain/labels";
@@ -12,6 +13,7 @@ const PUBLISHED = new Set(["YAYINLANDI", "METRIK_BEKLIYOR", "TAMAMLANDI"]);
  * aynı veriyle gösterilir. `mode="admin"` kampanya/teslim bağlantılarını admin sayfalarına verir.
  */
 export async function WorkHistory({ influencerId, mode }: { influencerId: string; mode: "admin" | "influencer" }) {
+  const tt = await getTT();
   const [assignments, payouts] = await Promise.all([
     prisma.assignment.findMany({
       where: { influencerId },
@@ -56,11 +58,9 @@ export async function WorkHistory({ influencerId, mode }: { influencerId: string
       </dl>
 
       <section aria-labelledby="wh-jobs" className="flex flex-col gap-2">
-        <h3 id="wh-jobs" className="text-sm font-medium">
-          İşler
-        </h3>
+        <h3 id="wh-jobs" className="text-sm font-medium">{tt("İşler")}</h3>
         {assignments.length === 0 ? (
-          <p className="text-sm text-fg-passive">Henüz iş yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Henüz iş yok.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line">
             {assignments.map((a) => {
@@ -84,24 +84,22 @@ export async function WorkHistory({ influencerId, mode }: { influencerId: string
                       </span>
                     </span>
                     <span className="flex items-center gap-4 text-[13px] tabular-nums">
-                      <span className="text-fg-muted">Bedel {formatKurus(a.feeKurus)}</span>
-                      <span className="text-fg">Hakediş {formatKurus(got)}</span>
+                      <span className="text-fg-muted">{tt("Bedel")}{" "}{formatKurus(a.feeKurus)}</span>
+                      <span className="text-fg">{tt("Hakediş")}{" "}{formatKurus(got)}</span>
                       <StatusDot tone={contractTone(a.contractStatus)}>{contractUiLabels[a.contractStatus]}</StatusDot>
                     </span>
                   </div>
                   {live.length ? (
                     <div className="flex flex-wrap items-center gap-2 text-[12px]">
                       <span className="text-fg-passive tabular-nums">
-                        {pub.length}/{live.length} yayında
-                      </span>
+                        {pub.length}/{live.length}{" "}{tt("yayında")}</span>
                       {live.map((d) => (
                         <Link
                           key={d.id}
                           href={jobHref(d.id)}
                           className={`rounded-full border px-2 py-0.5 ${PUBLISHED.has(d.status) ? "border-neon-lime/50 text-fg" : "border-line text-fg-muted"} hover:border-neon-pink`}
                         >
-                          {PUBLISHED.has(d.status) ? "✓ " : ""}İş
-                        </Link>
+                          {PUBLISHED.has(d.status) ? "✓ " : ""}{tt("İş")}</Link>
                       ))}
                     </div>
                   ) : null}
@@ -113,17 +111,14 @@ export async function WorkHistory({ influencerId, mode }: { influencerId: string
       </section>
 
       <section aria-labelledby="wh-pay" className="flex flex-col gap-2">
-        <h3 id="wh-pay" className="text-sm font-medium">
-          Ödemeler
-        </h3>
+        <h3 id="wh-pay" className="text-sm font-medium">{tt("Ödemeler")}</h3>
         {payouts.length === 0 ? (
-          <p className="text-sm text-fg-passive">Henüz ödeme talebi yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Henüz ödeme talebi yok.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line">
             {payouts.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-[13px]">
-                <span className="tabular-nums text-fg-muted">
-                  Talep {fmtDate(p.createdAt)}
+                <span className="tabular-nums text-fg-muted">{tt("Talep")}{" "}{fmtDate(p.createdAt)}
                   {p.sentAt ? ` · gönderildi ${fmtDate(p.sentAt)}` : ""}
                 </span>
                 <span className="flex items-center gap-4">

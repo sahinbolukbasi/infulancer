@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { RotatingWord } from "@/components/landing/motion";
@@ -43,6 +44,7 @@ export const AUDIENCES = [
 
 /** Hero: Ajans / Marka / İçerik üreticisi bölümlemesi — sekme değişince başlık, metin ve çağrılar değişir. */
 export function AudienceHero() {
+  const tt = useTT();
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const a = AUDIENCES[active]!;
@@ -57,7 +59,7 @@ export function AudienceHero() {
   };
   return (
     <div className="flex flex-col gap-7">
-      <div ref={listRef} role="tablist" aria-label="Kimin için" onKeyDown={onKey} className="relative inline-flex w-fit rounded-full border border-line bg-glass p-1 backdrop-blur">
+      <div ref={listRef} role="tablist" aria-label={tt("Kimin için")} onKeyDown={onKey} className="relative inline-flex w-fit rounded-full border border-line bg-glass p-1 backdrop-blur">
         <span
           aria-hidden
           className="bg-neon neon-glow absolute top-1 bottom-1 rounded-full transition-all duration-500 ease-out"
@@ -75,7 +77,7 @@ export function AudienceHero() {
             onClick={() => setActive(i)}
             className={cn("relative z-10 min-w-[110px] rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-300", i === active ? "text-black" : "text-fg-muted hover:text-fg")}
           >
-            {x.tab}
+            {tt(x.tab)}
           </button>
         ))}
       </div>
@@ -85,21 +87,21 @@ export function AudienceHero() {
             <span className="absolute inline-flex h-full w-full rounded-full bg-neon-lime animate-ping-slow" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-neon-lime" />
           </span>
-          {a.eyebrow}
+          {tt(a.eyebrow)}
         </span>
         <h1 className="text-[44px] leading-[1.03] font-semibold tracking-[-0.03em] sm:text-[64px]">
-          {a.title}
+          {tt(a.title)}
           <br />
           <span className="neon-text">
-            <RotatingWord words={[...a.words]} />
+            <RotatingWord words={a.words.map((w) => tt(w))} />
           </span>
         </h1>
-        <p className="max-w-xl text-lg leading-relaxed text-fg-muted">{a.text}</p>
+        <p className="max-w-xl text-lg leading-relaxed text-fg-muted">{tt(a.text)}</p>
         <ul className="flex flex-col gap-2 text-[15px]">
           {a.bullets.map((b, i) => (
             <li key={b} className="flex items-center gap-3 animate-enter" style={{ animationDelay: `${120 + i * 90}ms` }}>
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neon-lime/15 text-[11px] text-neon-lime">✓</span>
-              {b}
+              {tt(b)}
             </li>
           ))}
         </ul>
@@ -108,17 +110,17 @@ export function AudienceHero() {
             href={a.cta.href}
             className="bg-neon neon-glow inline-flex h-12 items-center justify-center rounded-full px-7 text-[15px] font-semibold text-black transition-transform duration-300 hover:scale-[1.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neon-pink"
           >
-            {a.cta.label} →
+            {tt(a.cta.label)} →
           </Link>
           <a
             href={a.alt.href}
             className="inline-flex h-12 items-center justify-center rounded-full border border-line-strong bg-glass px-7 text-[15px] text-fg backdrop-blur transition-standard hover:border-neon-cyan hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neon-pink"
           >
-            {a.alt.label}
+            {tt(a.alt.label)}
           </a>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-fg-passive">
-          <span className="text-[12px]">Resmî API ile bağlanır:</span>
+          <span className="text-[12px]">{tt("Resmî API ile bağlanır:")}</span>
           {(["instagram", "tiktok", "youtube", "whatsapp", "meta"] as BrandLogoName[]).map((n) => (
             <span key={n} className="inline-flex items-center gap-1.5 text-[12px] transition-colors hover:text-fg">
               <BrandLogo name={n} size={16} />

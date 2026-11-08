@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -105,6 +106,7 @@ export function DataTable({
   emptyText?: string;
   initialSort?: { key: string; dir: "asc" | "desc" };
 }) {
+  const tt = useTT();
   const [sort, setSort] = useState(initialSort ?? null);
   const hasActions = rows.some((r) => r.actions && r.actions.length > 0);
 
@@ -161,7 +163,7 @@ export function DataTable({
             })}
             {hasActions ? (
               <th scope="col" className="w-px px-2">
-                <span className="sr-only">İşlemler</span>
+                <span className="sr-only">{tt("İşlemler")}</span>
               </th>
             ) : null}
           </tr>

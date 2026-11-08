@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma, type ContentType, type Platform } from "@infulancer/core/db";
 import { categoryLabel } from "@infulancer/core/domain/categories";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 /** Marka: içerik üreticisi keşfi ve teklif gönderimi. Yalnız herkese açık profil bilgisi ve fiyat listesi gösterilir. */
 export default async function BrandDiscoverPage({ searchParams }: { searchParams: Promise<{ sec?: string; ulke?: string }> }) {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const { sec, ulke } = await searchParams;
   // Ülke ayrımı: varsayılan markanın kayıtlı ülkesi; ?ulke= ile başka bölge seçilir.
@@ -60,8 +62,8 @@ export default async function BrandDiscoverPage({ searchParams }: { searchParams
   );
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Influencer bul" description={`${countryLabel(country)} kayıtlı içerik üreticileri; fiyatlar ${currencyOf(country)} cinsinden. Seçin, içerikleri belirleyin, tek tıkla teklif gönderin.`} />
-      <nav aria-label="Ülke" className="flex flex-wrap gap-2">
+      <PageHeader title={tt("Influencer bul")} description={`${countryLabel(country)} kayıtlı içerik üreticileri; fiyatlar ${currencyOf(country)} cinsinden. Seçin, içerikleri belirleyin, tek tıkla teklif gönderin.`} />
+      <nav aria-label={tt("Ülke")} className="flex flex-wrap gap-2">
         {REGIONS.map((r) => {
           const n = counts.find((c) => c.country === r.code)?._count ?? 0;
           const on = r.code === country;

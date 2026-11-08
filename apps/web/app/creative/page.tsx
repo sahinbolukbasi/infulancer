@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -46,6 +47,7 @@ type Tab = "uret" | "studyo" | "galeri" | "metin" | "yonetim";
 type SP = { sekme?: string; tur?: string; asset?: string; prompt?: string; hesap?: string; dosya?: string; hata?: string };
 /** Creative: tüm roller için tek stüdyo (üret · galeri · post/brief · yönetim). */
 export default async function CreativePage({ searchParams }: { searchParams: Promise<SP> }) {
+  const tt = await getTT();
   const actor = await requireActor();
   const sp = await searchParams;
   const isAdmin = actor.role === "ADMIN";
@@ -135,21 +137,21 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
         <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-gradient-to-br from-fuchsia-500/30 via-violet-500/20 to-sky-400/10 blur-3xl" aria-hidden />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex max-w-2xl flex-col gap-2">
-            <span className="w-fit rounded-full border border-line px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-fg-muted">AI stüdyo</span>
-            <h1 className="text-title text-fg">Creative</h1>
+            <span className="w-fit rounded-full border border-line px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-fg-muted">{tt("AI stüdyo")}</span>
+            <h1 className="text-title text-fg">{tt("Creative")}</h1>
             <p className="text-sm text-fg-muted">{description}</p>
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
-            <span className="text-[12px] text-fg-muted">{isAdmin ? "Ajans hesabının bakiyesi" : "Kullanılabilir bakiyeniz"}</span>
+            <span className="text-[12px] text-fg-muted">{isAdmin ? tt("Ajans hesabının bakiyesi") : tt("Kullanılabilir bakiyeniz")}</span>
             <span className="text-3xl font-semibold tabular-nums text-fg">{money(available)}</span>
-            <span className="text-[11px] text-fg-passive">{isAdmin ? "Her üretim yalnız işlemi yapan hesabın bakiyesinden düşer." : "Bakiye yüklemek için “Bakiye talebi” gönderin."}</span>
+            <span className="text-[11px] text-fg-passive">{isAdmin ? tt("Her üretim yalnız işlemi yapan hesabın bakiyesinden düşer.") : tt("Bakiye yüklemek için “Bakiye talebi” gönderin.")}</span>
           </div>
         </div>
       </header>
       {!isAdmin ? <CreditRequestForm pending={pendingCreditReq} currency={currency} /> : null}
       {!isAdmin && ledger.length ? (
         <details className="rounded-2xl border border-line bg-surface">
-          <summary className="cursor-pointer px-4 py-3 text-[13px] font-medium text-fg">Bakiye hareketleri</summary>
+          <summary className="cursor-pointer px-4 py-3 text-[13px] font-medium text-fg">{tt("Bakiye hareketleri")}</summary>
           <LedgerList rows={ledger} currencyOf={() => currency} />
         </details>
       ) : null}
@@ -170,10 +172,10 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
             />
             <Inspiration />
           </div>
-          <aside className="flex flex-col gap-4" aria-label="Son üretimler">
-            <SectionHead title="Son üretimler" action={jobs.length ? <Link href="/creative?sekme=galeri" className="text-[12px] text-fg-muted hover:text-fg">Galeri →</Link> : null} />
+          <aside className="flex flex-col gap-4" aria-label={tt("Son üretimler")}>
+            <SectionHead title={tt("Son üretimler")} action={jobs.length ? <Link href="/creative?sekme=galeri" className="text-[12px] text-fg-muted hover:text-fg">{tt("Galeri →")}</Link> : null} />
             {jobs.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-line p-5 text-center text-[13px] text-fg-muted">Henüz üretim yok. İlk isteğinizi yazın; sonuç burada ve galeride görünür.</p>
+              <p className="rounded-2xl border border-dashed border-line p-5 text-center text-[13px] text-fg-muted">{tt("Henüz üretim yok. İlk isteğinizi yazın; sonuç burada ve galeride görünür.")}</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {jobs.slice(0, 6).map((j) => {
@@ -200,11 +202,11 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
               </ul>
             )}
             <div className="rounded-2xl border border-line p-4 text-[13px] text-fg-muted">
-              <p className="mb-2 font-medium text-fg">Nasıl çalışır?</p>
+              <p className="mb-2 font-medium text-fg">{tt("Nasıl çalışır?")}</p>
               <ol className="flex list-decimal flex-col gap-1 pl-4">
-                <li>Tür seçin, ne istediğinizi yazın.</li>
-                <li>Format ve stili belirleyin; maliyet anında görünür.</li>
-                <li>Hazır olan içerik galeriye düşer; post metni {adBase ? "veya reklam " : ""}tek tıkla.</li>
+                <li>{tt("Tür seçin, ne istediğinizi yazın.")}</li>
+                <li>{tt("Format ve stili belirleyin; maliyet anında görünür.")}</li>
+                <li>{tt("Hazır olan içerik galeriye düşer; post metni")}{" "}{adBase ? tt("veya reklam ") : ""}{tt("tek tıkla.")}</li>
               </ol>
             </div>
           </aside>
@@ -220,7 +222,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
       ) : null}
       {tab === "metin" ? (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-fg-muted">Galerideki bir içerikten veya serbest bir konudan yayına hazır post metni ve içerik üreticisine verilecek brief taslağı oluşturun.</p>
+          <p className="text-sm text-fg-muted">{tt("Galerideki bir içerikten veya serbest bir konudan yayına hazır post metni ve içerik üreticisine verilecek brief taslağı oluşturun.")}</p>
           <PostBriefStudio
             defaultAssetId={sp.asset}
             assets={assets.map((a) => {
@@ -245,19 +247,17 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           />
           <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-              <SectionHead title="Fiyatlandırma" />
-              <p className="text-[12px] text-fg-muted">
-                Fiyat = sağlayıcı USD maliyeti × kur ({pricing.usdTry.toLocaleString("tr-TR")} TL{pricing.fxUpdatedAt ? `, ${fmtDateTime(new Date(pricing.fxUpdatedAt))}` : ""}) × {pricing.markup} · iş başına en az {fmtTl(pricing.minTry)}. Kur her açılışta güncellenir.
-              </p>
+              <SectionHead title={tt("Fiyatlandırma")} />
+              <p className="text-[12px] text-fg-muted">{tt("Fiyat = sağlayıcı USD maliyeti × kur (")}{pricing.usdTry.toLocaleString("tr-TR")}{" "}{tt("TL")}{pricing.fxUpdatedAt ? `, ${fmtDateTime(new Date(pricing.fxUpdatedAt))}` : ""}) × {pricing.markup}{" "}{tt("· iş başına en az")}{" "}{fmtTl(pricing.minTry)}{tt(". Kur her açılışta güncellenir.")}</p>
               <PricingForm markup={pricing.markup} minTry={pricing.minTry} usdTry={pricing.usdTry} autoFx={pricing.autoFx} />
-              <SectionHead title="Bakiye yükle" />
-              <TopUpForm label="Hesap" brands={tenants.map((t) => ({ id: t.id, name: t.group === "Ajans" ? t.name : `${t.group === "Markalar" ? "Marka" : "Influencer"} · ${t.name}` }))} />
-              <p className="text-[12px] text-fg-passive">Tutarlar TL cinsindendir. Yeni marka/influencer ilk girişte {fmtTl(Number(process.env.CREATIVE_STARTER_CREDITS ?? "250"))} hoş geldin bakiyesi alır.</p>
+              <SectionHead title={tt("Bakiye yükle")} />
+              <TopUpForm label={tt("Hesap")} brands={tenants.map((t) => ({ id: t.id, name: t.group === "Ajans" ? t.name : `${t.group === "Markalar" ? "Marka" : "Influencer"} · ${t.name}` }))} />
+              <p className="text-[12px] text-fg-passive">{tt("Tutarlar TL cinsindendir. Yeni marka/influencer ilk girişte")}{" "}{fmtTl(Number(process.env.CREATIVE_STARTER_CREDITS ?? "250"))}{" "}{tt("hoş geldin bakiyesi alır.")}</p>
             </div>
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-              <SectionHead title="Bakiyeler" />
+              <SectionHead title={tt("Bakiyeler")} />
               <ul className="flex max-h-72 flex-col divide-y divide-line overflow-y-auto text-sm">
-                {accounts.length === 0 ? <li className="py-2 text-fg-muted">Henüz hesap yok.</li> : null}
+                {accounts.length === 0 ? <li className="py-2 text-fg-muted">{tt("Henüz hesap yok.")}</li> : null}
                 {accounts.map((a) => (
                   <li key={a.tenantId} className="flex justify-between gap-2 py-2">
                     <span className="truncate">{nameOf.get(a.tenantId) ?? a.tenantId.slice(-6)}</span>
@@ -273,24 +273,24 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           {ledger.length ? (
             <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface">
               <div className="px-4 pt-4">
-                <SectionHead title="Son bakiye hareketleri (tüm hesaplar)" />
+                <SectionHead title={tt("Son bakiye hareketleri (tüm hesaplar)")} />
               </div>
               <LedgerList currencyOf={(t) => accounts.find((a) => a.tenantId === t)?.currency ?? "TRY"} rows={ledger.map((r) => ({ ...r, note: `${nameOf.get(r.tenantId) ?? r.tenantId.slice(-6)}${r.note ? ` · ${r.note}` : ""}` }))} />
             </section>
           ) : null}
           <section className="flex flex-col gap-3">
-            <SectionHead title="Model kaydı" action={<DocLink slug="model-kaydi-ve-lisans" />} />
+            <SectionHead title={tt("Model kaydı")} action={<DocLink slug="model-kaydi-ve-lisans" />} />
             <div className="overflow-x-auto rounded-2xl border border-line">
               <table className="w-full min-w-[640px] text-sm">
-                <caption className="sr-only">Model listesi ve fiyatları</caption>
+                <caption className="sr-only">{tt("Model listesi ve fiyatları")}</caption>
                 <thead className="bg-fg/[0.03]">
                   <tr className="text-left text-[12px] text-fg-muted">
-                    <th className="px-4 py-2 font-medium">Model</th>
-                    <th className="px-4 py-2 font-medium">Tür</th>
-                    <th className="px-4 py-2 font-medium">Birim fiyat</th>
-                    <th className="px-4 py-2 font-medium">Fiyat</th>
-                    <th className="px-4 py-2 font-medium">Lisans</th>
-                    <th className="px-4 py-2 font-medium">Durum</th>
+                    <th className="px-4 py-2 font-medium">{tt("Model")}</th>
+                    <th className="px-4 py-2 font-medium">{tt("Tür")}</th>
+                    <th className="px-4 py-2 font-medium">{tt("Birim fiyat")}</th>
+                    <th className="px-4 py-2 font-medium">{tt("Fiyat")}</th>
+                    <th className="px-4 py-2 font-medium">{tt("Lisans")}</th>
+                    <th className="px-4 py-2 font-medium">{tt("Durum")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -304,13 +304,13 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
                       <td className="px-4 py-2 tabular-nums">{withUnverified(`${usd.format(Number(m.unitPriceUsd))} / ${m.unit}`, m.priceVerified)}</td>
                       <td className="px-4 py-2 tabular-nums">{fmtTl(Number(m.creditsPerUnit))}</td>
                       <td className="px-4 py-2">
-                        <Pill tone={m.licenseStatus === "cleared" ? "green" : "amber"}>{m.licenseStatus === "cleared" ? "Onaylı" : "Bekliyor"}</Pill>
+                        <Pill tone={m.licenseStatus === "cleared" ? "green" : "amber"}>{m.licenseStatus === "cleared" ? tt("Onaylı") : tt("Bekliyor")}</Pill>
                       </td>
                       <td className="px-4 py-2">
                         <span className="inline-flex items-center gap-1">
-                          {m.status === "active" ? "Aktif" : m.status}
+                          {m.status === "active" ? tt("Aktif") : m.status}
                           {m.replacementKey ? ` → ${m.replacementKey}` : ""}
-                          {m.emitsC2pa == null ? <UnverifiedBadge title="Çıktının C2PA taşıyıp taşımadığı ampirik olarak test edilmedi." /> : null}
+                          {m.emitsC2pa == null ? <UnverifiedBadge title={tt("Çıktının C2PA taşıyıp taşımadığı ampirik olarak test edilmedi.")} /> : null}
                         </span>
                       </td>
                     </tr>
@@ -320,7 +320,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
             </div>
           </section>
           <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-            <SectionHead title="AI açıklama kontrol listesi" action={<DocLink slug="ai-icerik-aciklamasi" />} />
+            <SectionHead title={tt("AI açıklama kontrol listesi")} action={<DocLink slug="ai-icerik-aciklamasi" />} />
             <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-fg-muted">
               {aiDisclosureChecklist.map((c) => (
                 <li key={c}>{c}</li>
@@ -333,7 +333,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   );
 }
 /** Galeri: üretilen içerikler; tür filtresi ve hızlı eylemler. */
-function Gallery({
+async function Gallery({
   assets,
   kindOf,
   jobPrompt,
@@ -348,6 +348,7 @@ function Gallery({
   filter?: string;
   completed: number;
 }) {
+  const tt = await getTT();
   const active: CreativeKind | "hepsi" = filter === "image" || filter === "video" || filter === "audio" ? filter : "hepsi";
   const list = assets.filter((a) => active === "hepsi" || (kindOf.get(a.modelKey) ?? "image") === active);
   const count = (k: CreativeKind) => assets.filter((a) => (kindOf.get(a.modelKey) ?? "image") === k).length;
@@ -363,15 +364,13 @@ function Gallery({
             { id: "audio", label: "Ses", href: "/creative?sekme=galeri&tur=audio", count: count("audio") },
           ]}
         />
-        <span className="text-[12px] text-fg-passive">{completed} tamamlanan üretim · hepsi C2PA &quot;AI ile üretildi&quot; etiketli</span>
+        <span className="text-[12px] text-fg-passive">{completed}{" "}{tt("tamamlanan üretim · hepsi C2PA \"AI ile üretildi\" etiketli")}</span>
       </div>
       {list.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line px-6 py-14 text-center">
-          <p className="text-base font-medium text-fg">Galeri boş</p>
-          <p className="max-w-sm text-sm text-fg-muted">Ürettiğiniz görsel, video ve sesler burada toplanır.</p>
-          <Link href="/creative" className="rounded-full bg-fg px-5 py-2 text-[13px] font-semibold text-bg hover:opacity-90">
-            İlk içeriği üret
-          </Link>
+          <p className="text-base font-medium text-fg">{tt("Galeri boş")}</p>
+          <p className="max-w-sm text-sm text-fg-muted">{tt("Ürettiğiniz görsel, video ve sesler burada toplanır.")}</p>
+          <Link href="/creative" className="rounded-full bg-fg px-5 py-2 text-[13px] font-semibold text-bg hover:opacity-90">{tt("İlk içeriği üret")}</Link>
         </div>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -387,7 +386,7 @@ function Gallery({
                     <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium backdrop-blur">
                       <KindIcon kind={k} size={12} /> {KIND_LABEL[k]}
                     </span>
-                    <span className="rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-black">AI</span>
+                    <span className="rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-black">{tt("AI")}</span>
                   </div>
                   <div className="relative flex justify-center opacity-80" aria-hidden>
                     <KindIcon kind={k} size={40} />
@@ -400,31 +399,23 @@ function Gallery({
                       {modelName(a.modelKey)}
                     </span>
                     <span>
-                      {fmtDateTime(a.createdAt)} · C2PA {a.c2paManifestId.slice(0, 6)}
+                      {fmtDateTime(a.createdAt)}{" "}{tt("· C2PA")}{" "}{a.c2paManifestId.slice(0, 6)}
                     </span>
                   </div>
                   <div className="mt-auto flex flex-wrap gap-1.5">
                     {k !== "audio" ? <PhonePreviewButton src={`/api/creative/file/${a.id}?t=asset`} kind={k === "video" ? "video" : "image"} caption={basePrompt.slice(0, 120)} /> : null}
-                    <Link href={`/creative?sekme=metin&asset=${a.id}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">
-                      Post yaz
-                    </Link>
+                    <Link href={`/creative?sekme=metin&asset=${a.id}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">{tt("Post yaz")}</Link>
                     {adBase ? (
-                      <Link href={`${adBase}?asset=${a.id}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">
-                        Reklam
-                      </Link>
+                      <Link href={`${adBase}?asset=${a.id}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">{tt("Reklam")}</Link>
                     ) : null}
                     {k === "image" ? (
                       <form action={openAssetInStudioAction}>
                         <input type="hidden" name="assetId" value={a.id} />
-                        <button type="submit" className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">
-                          Stüdyoda düzenle
-                        </button>
+                        <button type="submit" className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">{tt("Stüdyoda düzenle")}</button>
                       </form>
                     ) : null}
                     {basePrompt ? (
-                      <Link href={`/creative?prompt=${encodeURIComponent(basePrompt)}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg-muted hover:text-fg">
-                        Benzerini üret
-                      </Link>
+                      <Link href={`/creative?prompt=${encodeURIComponent(basePrompt)}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg-muted hover:text-fg">{tt("Benzerini üret")}</Link>
                     ) : null}
                   </div>
                 </div>
@@ -438,16 +429,17 @@ function Gallery({
 }
 /** İlham şeridi: örnek işlerden birine tıklayınca istek o tarzda doldurulur. */
 async function Inspiration() {
+  const tt = await getTT();
   const examples = toVideos(await getLandingContent()).slice(0, 4);
   if (!examples.length) return null;
   return (
-    <section className="flex flex-col gap-3" aria-label="İlham">
-      <SectionHead title="İlham al" />
+    <section className="flex flex-col gap-3" aria-label={tt("İlham")}>
+      <SectionHead title={tt("İlham al")} />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {examples.map((v, i) => (
           <Link key={`${v.handle}-${i}`} href={`/creative?prompt=${encodeURIComponent(`${v.caption.replace(/#\S+/g, "").trim()}, ${v.platform} için dikey video, aynı tarzda`)}`} className="group" aria-label={`${v.caption}: bu tarzda üret`}>
             <ReelCard video={v} delay={i * 600} className="transition-transform group-hover:scale-[1.02]" />
-            <span className="mt-1 block text-[11px] text-fg-muted group-hover:text-fg">Bu tarzda üret →</span>
+            <span className="mt-1 block text-[11px] text-fg-muted group-hover:text-fg">{tt("Bu tarzda üret →")}</span>
           </Link>
         ))}
       </div>
@@ -456,7 +448,8 @@ async function Inspiration() {
 }
 const LEDGER_LABEL: Record<string, string> = { STARTER: "Hoş geldin bakiyesi", TOPUP: "Yükleme", CHARGE: "Üretim", REFUND: "İade", ADJUST: "Düzeltme" };
 /** Bakiye hareketleri: her yükleme ve tahsilat, işlem sonrası bakiyeyle. */
-function LedgerList({ rows, currencyOf }: { rows: { id: string; tenantId?: string; kind: string; amount: unknown; balanceAfter: unknown; note: string | null; createdAt: Date }[]; currencyOf: (tenantId?: string) => string }) {
+async function LedgerList({ rows, currencyOf }: { rows: { id: string; tenantId?: string; kind: string; amount: unknown; balanceAfter: unknown; note: string | null; createdAt: Date }[]; currencyOf: (tenantId?: string) => string }) {
+  const tt = await getTT();
   return (
     <ul className="flex max-h-80 flex-col divide-y divide-line overflow-y-auto border-t border-line text-[13px]">
       {rows.map((r) => {
@@ -472,7 +465,7 @@ function LedgerList({ rows, currencyOf }: { rows: { id: string; tenantId?: strin
             </span>
             <span className="flex shrink-0 flex-col items-end tabular-nums">
               <span className={amt < 0 ? "text-fg" : "text-emerald-600"}>{amt > 0 ? "+" : "−"}{fmtTl(Math.abs(amt), currencyOf(r.tenantId))}</span>
-              <span className="text-[11px] text-fg-passive">Bakiye {fmtTl(Number(r.balanceAfter), currencyOf(r.tenantId))}</span>
+              <span className="text-[11px] text-fg-passive">{tt("Bakiye")}{" "}{fmtTl(Number(r.balanceAfter), currencyOf(r.tenantId))}</span>
             </span>
           </li>
         );

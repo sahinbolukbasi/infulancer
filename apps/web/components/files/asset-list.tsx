@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { AssetDirection, AssetKind, UsageChannel } from "@infulancer/core/enums";
 import { assetDirectionLabels, assetKindLabels, usageChannelLabels } from "@infulancer/core/domain/labels";
 import { FileIcon } from "@/components/icons";
@@ -25,7 +26,8 @@ function fmtSize(bytes: number): string {
 }
 
 /** Dosya listesi: indirme bağlantısı (yetki + 302), kullanım hakları; admin için hak düzenleme. */
-export function AssetList({ assets, editableRights = false, emptyText = "Dosya yok." }: { assets: AssetRow[]; editableRights?: boolean; emptyText?: string }) {
+export async function AssetList({ assets, editableRights = false, emptyText = "Dosya yok." }: { assets: AssetRow[]; editableRights?: boolean; emptyText?: string }) {
+  const tt = await getTT();
   if (assets.length === 0) return <p className="text-sm text-fg-passive">{emptyText}</p>;
   const now = new Date().getTime();
   return (
@@ -47,14 +49,14 @@ export function AssetList({ assets, editableRights = false, emptyText = "Dosya y
             </div>
             {rightsKind && (a.usageEndsAt || a.usageChannel || a.usageGeography.length) ? (
               <p className={expired ? "text-[13px] text-fg" : "text-[13px] text-fg-muted"}>
-                {expired ? "Kullanım hakkı sona erdi" : `Kullanım hakkı${a.usageEndsAt ? ` ${fmtDate(a.usageEndsAt)} tarihine kadar` : ""}`}
+                {expired ? tt("Kullanım hakkı sona erdi") : `Kullanım hakkı${a.usageEndsAt ? ` ${fmtDate(a.usageEndsAt)} tarihine kadar` : ""}`}
                 {a.usageChannel ? ` · ${usageChannelLabels[a.usageChannel]}` : ""}
                 {a.usageGeography.length ? ` · ${a.usageGeography.join(", ")}` : ""}
               </p>
             ) : null}
             {editableRights && rightsKind ? (
               <details className="group">
-                <summary className="cursor-pointer text-[13px] text-fg-muted hover:text-fg">Kullanım haklarını düzenle</summary>
+                <summary className="cursor-pointer text-[13px] text-fg-muted hover:text-fg">{tt("Kullanım haklarını düzenle")}</summary>
                 <div className="pt-3">
                   <UsageRightsForm
                     assetId={a.id}

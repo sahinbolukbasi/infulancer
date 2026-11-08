@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useMemo, useState } from "react";
 
 export type PickItem = { id: string; name: string; category?: string | null };
@@ -8,6 +9,7 @@ export type PickItem = { id: string; name: string; category?: string | null };
  * form gönderilince sunucu id listesini alır (elle ID yazmaya gerek yok).
  */
 export function InfluencerPicker({ items, allLabel = "Tümünü seç" }: { items: PickItem[]; allLabel?: string }) {
+  const tt = useTT();
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
@@ -23,18 +25,18 @@ export function InfluencerPicker({ items, allLabel = "Tümünü seç" }: { items
         <input key={id} type="hidden" name="influencerId" value={id} />
       ))}
       <div className="flex items-center gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ara (ad veya kategori)" className="h-9 flex-1 rounded-[8px] border border-line bg-surface px-3 text-sm" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tt("Ara (ad veya kategori)")} className="h-9 flex-1 rounded-[8px] border border-line bg-surface px-3 text-sm" />
         <button
           type="button"
           onClick={() => setSel((s) => { const n = new Set(s); const everyone = filtered.every((i) => n.has(i.id)); filtered.forEach((i) => (everyone ? n.delete(i.id) : n.add(i.id))); return n; })}
           className="rounded-full border border-line px-3 py-1.5 text-[12px] hover:border-neon-pink"
         >
-          {allFilteredSelected ? "Seçimi kaldır" : allLabel}
+          {allFilteredSelected ? tt("Seçimi kaldır") : allLabel}
         </button>
       </div>
       <div className="max-h-56 overflow-y-auto rounded-[8px] border border-line">
         {filtered.length === 0 ? (
-          <p className="p-3 text-[13px] text-fg-passive">Eşleşen içerik üreticisi yok.</p>
+          <p className="p-3 text-[13px] text-fg-passive">{tt("Eşleşen içerik üreticisi yok.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-line">
             {filtered.map((i) => (
@@ -49,7 +51,7 @@ export function InfluencerPicker({ items, allLabel = "Tümünü seç" }: { items
           </ul>
         )}
       </div>
-      <span className="text-[12px] text-fg-muted">{sel.size} kişi seçildi</span>
+      <span className="text-[12px] text-fg-muted">{sel.size}{" "}{tt("kişi seçildi")}</span>
     </div>
   );
 }

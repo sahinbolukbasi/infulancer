@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import Link from "next/link";
 import type { Platform } from "@infulancer/core/db";
 import { platformLabels } from "@infulancer/core/domain/labels";
@@ -22,7 +23,7 @@ type Period = ReturnType<typeof resolvePeriod>;
  * Takvim ekranı (ajans, marka, influencer ortak): Gün / Hafta / Ay / Yıl görünümü, dönem gezinmesi,
  * platform filtresi. Veri sorgusu sayfada yapılır; bu bileşen yalnız gösterir.
  */
-export function CalendarScreen({
+export async function CalendarScreen({
   basePath,
   per,
   platforms,
@@ -38,6 +39,7 @@ export function CalendarScreen({
   /** Ay görünümünde kartta yazan: influencer adı (ajans/marka) ya da kampanya adı (influencer). */
   labelBy?: "influencer" | "campaign";
 }) {
+  const tt = await getTT();
   const all = platforms.length === CALENDAR_PLATFORMS.length;
   const href = (tarih: string, view: CalendarView = per.view, pl: Platform[] = platforms) => {
     const q = new URLSearchParams({ gorunum: view, tarih });
@@ -55,7 +57,7 @@ export function CalendarScreen({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <nav aria-label="Görünüm" className="inline-flex rounded-full border border-line bg-glass p-1">
+          <nav aria-label={tt("Görünüm")} className="inline-flex rounded-full border border-line bg-glass p-1">
             {CALENDAR_VIEWS.map((v) => (
               <Link
                 key={v.id}
@@ -67,20 +69,18 @@ export function CalendarScreen({
               </Link>
             ))}
           </nav>
-          <nav aria-label="Dönem" className="flex items-center gap-2">
-            <Link href={href(per.prev)} className={buttonClass("secondary", "sm")} aria-label="Önceki">
+          <nav aria-label={tt("Dönem")} className="flex items-center gap-2">
+            <Link href={href(per.prev)} className={buttonClass("secondary", "sm")} aria-label={tt("Önceki")}>
               <ChevronLeftIcon size={16} />
             </Link>
             <span className="min-w-40 text-center text-sm font-medium tabular-nums">{title}</span>
-            <Link href={href(per.next)} className={buttonClass("secondary", "sm")} aria-label="Sonraki">
+            <Link href={href(per.next)} className={buttonClass("secondary", "sm")} aria-label={tt("Sonraki")}>
               <ChevronRightIcon size={16} />
             </Link>
-            <Link href={href(per.today)} className={buttonClass("ghost", "sm")}>
-              Bugün
-            </Link>
+            <Link href={href(per.today)} className={buttonClass("ghost", "sm")}>{tt("Bugün")}</Link>
           </nav>
         </div>
-        <div role="group" aria-label="Platform filtresi" className="flex flex-wrap gap-2">
+        <div role="group" aria-label={tt("Platform filtresi")} className="flex flex-wrap gap-2">
           {CALENDAR_PLATFORMS.map((p) => {
             const on = all || platforms.includes(p);
             return (
@@ -101,9 +101,9 @@ export function CalendarScreen({
         </div>
       </div>
       {per.view === "hafta" ? (
-        <WeekCalendar days={per.days} rows={rows} today={per.today} editable={editable} emptyText="Bu hafta planlanmış paylaşım yok." />
+        <WeekCalendar days={per.days} rows={rows} today={per.today} editable={editable} emptyText={tt("Bu hafta planlanmış paylaşım yok.")} />
       ) : per.view === "gun" ? (
-        <DayView rows={rows} emptyText="Bu gün planlanmış paylaşım yok." />
+        <DayView rows={rows} emptyText={tt("Bu gün planlanmış paylaşım yok.")} />
       ) : per.view === "ay" ? (
         <MonthView days={per.days} rows={rows} month={per.month} today={per.today} dayHref={(d) => href(d, "gun")} labelBy={labelBy} />
       ) : (

@@ -1,9 +1,11 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useActionState } from "react";
 import { deleteCampaignAsset } from "@/lib/actions/assets";
 import { idleState } from "@/lib/action-state";
 
 export function DeleteMediaButton({ assetId, name }: { assetId: string; name: string }) {
+  const tt = useTT();
   const [state, action, pending] = useActionState(deleteCampaignAsset, idleState);
   return (
     <form
@@ -14,7 +16,7 @@ export function DeleteMediaButton({ assetId, name }: { assetId: string; name: st
     >
       <input type="hidden" name="assetId" value={assetId} />
       <button type="submit" disabled={pending} aria-label={`${name} dosyasını sil`} className="rounded-full px-2 py-0.5 text-[11px] text-fg-muted hover:bg-red-500/10 hover:text-critical disabled:opacity-40">
-        {pending ? "…" : "Sil"}
+        {pending ? "…" : tt("Sil")}
       </button>
       {state.error ? (
         <span role="alert" className="sr-only">

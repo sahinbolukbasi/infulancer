@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon, XIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
@@ -14,6 +15,7 @@ type Row = { key: string; label: string; state: "done" | "active" | "wait" | "fa
  * ~0,5 sn arayla açılır. Hata olursa ilgili adımın blokesi iade edilir ve bu açıkça yazılır.
  */
 export function JobProgress({ jobId, onDone, className }: { jobId: string; onDone?: (assetId: string | null) => void; className?: string }) {
+  const tt = useTT();
   const [p, setP] = useState<Progress | null>(null);
   const [shown, setShown] = useState(1);
   const doneRef = useRef(onDone);
@@ -72,7 +74,7 @@ export function JobProgress({ jobId, onDone, className }: { jobId: string; onDon
     return () => clearTimeout(t);
   }, [shown, rows.length]);
   return (
-    <ol className={cn("flex flex-col gap-2 rounded-2xl border border-line bg-bg/60 p-4", className)} aria-live="polite" aria-label="İşlem adımları">
+    <ol className={cn("flex flex-col gap-2 rounded-2xl border border-line bg-bg/60 p-4", className)} aria-live="polite" aria-label={tt("İşlem adımları")}>
       {rows.slice(0, Math.max(1, shown)).map((r) => (
         <li key={r.key} className="flex items-start gap-3 text-[13px]">
           <span

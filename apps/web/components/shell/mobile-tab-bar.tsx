@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@infulancer/core/enums";
@@ -11,13 +12,14 @@ import type { PermCtx } from "./sidebar";
 
 /** Mobilde (< md) kenar çubuğunun yerini alan alt sekme çubuğu. */
 export function MobileTabBar({ role, perm }: { role: Role; perm?: PermCtx }) {
+  const tt = useTT();
   const pathname = usePathname();
   const t = useT();
   // Admin'de öğe çok: alt çubukta ilk 5, gerisi kenar çubuğu/arama ile.
   const items = navByRole[role].filter((i) => !perm?.perms.length || !isPathHidden(perm.perms, perm.role, perm.userId, i.href)).slice(0, 5);
   return (
     <nav
-      aria-label="Alt gezinme"
+      aria-label={tt("Alt gezinme")}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="flex">

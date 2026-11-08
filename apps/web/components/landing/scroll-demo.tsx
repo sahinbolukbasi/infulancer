@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
@@ -26,13 +27,14 @@ const STEPS = [
 ];
 
 function Mock({ step }: { step: number }) {
+  const tt = useTT();
   const box = "rounded-2xl border border-line bg-glass-strong p-4";
   if (step === 0)
     return (
       <div className="flex flex-col gap-3">
         <div className={box}>
-          <p className="text-[11px] text-fg-passive uppercase">Kampanya</p>
-          <p className="text-lg font-medium">Yaz koleksiyonu lansmanı</p>
+          <p className="text-[11px] text-fg-passive uppercase">{tt("Kampanya")}</p>
+          <p className="text-lg font-medium">{tt("Yaz koleksiyonu lansmanı")}</p>
           <div className="mt-3 grid grid-cols-3 gap-2 text-[12px]">
             {[
               ["Bütçe", "450 bin TL"],
@@ -40,7 +42,7 @@ function Mock({ step }: { step: number }) {
               ["Hedef", "Erişim %60"],
             ].map(([k, v]) => (
               <div key={k} className="rounded-xl bg-glass p-2">
-                <p className="text-fg-passive">{k}</p>
+                <p className="text-fg-passive">{tt(String(k))}</p>
                 <p className="tabular-nums">{v}</p>
               </div>
             ))}
@@ -70,14 +72,14 @@ function Mock({ step }: { step: number }) {
             <span className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-400 to-indigo-500" />
             <span className="flex min-w-0 flex-1 flex-col leading-tight">
               <span className="truncate text-sm">{h}</span>
-              <span className="text-[11px] text-fg-passive">{n}</span>
+              <span className="text-[11px] text-fg-passive">{tt(String(n))}</span>
             </span>
             <span className="shrink-0 text-[12px] tabular-nums text-fg-muted">
               {f} · {e}
             </span>
           </div>
         ))}
-        <div className="mt-1 rounded-xl bg-fg px-4 py-2 text-center text-[13px] font-medium text-bg">2 influencer ekle ve teklif gönder</div>
+        <div className="mt-1 rounded-xl bg-fg px-4 py-2 text-center text-[13px] font-medium text-bg">{tt("2 influencer ekle ve teklif gönder")}</div>
       </div>
     );
   if (step === 2)
@@ -86,8 +88,8 @@ function Mock({ step }: { step: number }) {
         <div className="aspect-[9/16] w-full self-start overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500/70 via-fuchsia-600/50 to-indigo-700/70 animate-reel-pan" />
         <div className="flex min-w-0 flex-col gap-2 text-[13px]">
           <div className={box}>
-            <p className="text-fg-passive text-[11px] uppercase">Taslak · Story 3 kare</p>
-            <p>Sabah rutinimde yeni serum ✨ #işbirliği</p>
+            <p className="text-fg-passive text-[11px] uppercase">{tt("Taslak · Story 3 kare")}</p>
+            <p>{tt("Sabah rutinimde yeni serum ✨ #işbirliği")}</p>
           </div>
           {[
             ["Reklam açıklaması", "Uygun", "text-neon-lime"],
@@ -95,12 +97,12 @@ function Mock({ step }: { step: number }) {
             ["Kare 2 etiket", "Eksik", "text-neon-amber"],
           ].map(([k, v, c], i) => (
             <p key={k} className="flex justify-between rounded-xl bg-glass px-3 py-2 animate-enter" style={{ animationDelay: `${i * 150}ms` }}>
-              {k} <span className={c}>{v}</span>
+              {tt(String(k))} <span className={c}>{tt(String(v))}</span>
             </p>
           ))}
           <div className="flex gap-2">
-            <span className="flex-1 rounded-xl border border-line-strong px-3 py-2 text-center">Revizyon iste</span>
-            <span className="flex-1 rounded-xl bg-fg px-3 py-2 text-center font-medium text-bg">Onayla</span>
+            <span className="flex-1 rounded-xl border border-line-strong px-3 py-2 text-center">{tt("Revizyon iste")}</span>
+            <span className="flex-1 rounded-xl bg-fg px-3 py-2 text-center font-medium text-bg">{tt("Onayla")}</span>
           </div>
         </div>
       </div>
@@ -114,7 +116,7 @@ function Mock({ step }: { step: number }) {
           ["Skor", "%92"],
         ].map(([k, v]) => (
           <div key={k} className={box}>
-            <p className="text-[11px] text-fg-passive">{k}</p>
+            <p className="text-[11px] text-fg-passive">{tt(String(k))}</p>
             <p className="text-gradient text-2xl font-semibold tabular-nums">{v}</p>
           </div>
         ))}
@@ -124,8 +126,7 @@ function Mock({ step }: { step: number }) {
           <span key={i} className="w-full origin-bottom rounded-t-md bg-gradient-to-t from-violet-500/40 to-fuchsia-400 animate-bar" style={{ height: `${h}%`, animationDelay: `${i * 90}ms` }} />
         ))}
       </div>
-      <p className="flex justify-between rounded-xl bg-glass px-3 py-2 text-[13px]">
-        Ödeme listesi hazır <span className="tabular-nums text-neon-lime">12 influencer · 318.000 TL</span>
+      <p className="flex justify-between rounded-xl bg-glass px-3 py-2 text-[13px]">{tt("Ödeme listesi hazır")}{" "}<span className="tabular-nums text-neon-lime">{tt("12 influencer · 318.000 TL")}</span>
       </p>
     </div>
   );
@@ -133,6 +134,7 @@ function Mock({ step }: { step: number }) {
 
 /** Kaydırdıkça ilerleyen demo: soldaki adımlar görünür oldukça sağdaki yapışkan ekran değişir. */
 export function ScrollDemo() {
+  const tt = useTT();
   const [active, setActive] = useState(0);
   const refs = useRef<(HTMLLIElement | null)[]>([]);
   useEffect(() => {
@@ -150,16 +152,16 @@ export function ScrollDemo() {
       <ol className="flex flex-col">
         {STEPS.map((s, i) => (
           <li
-            key={s.tag}
+            key={tt(s.tag)}
             ref={(el) => {
               refs.current[i] = el;
             }}
             data-step={i}
             className={cn("flex min-h-[48vh] flex-col justify-center gap-3 border-l-2 py-10 pl-6 transition-colors duration-500 lg:min-h-[78vh]", i === active ? "border-neon-pink" : "border-line")}
           >
-            <span className={cn("text-[12px] tracking-wide uppercase transition-colors", i === active ? "text-neon-pink" : "text-fg-passive")}>{s.tag}</span>
-            <h3 className={cn("text-[28px] leading-tight font-semibold tracking-tight transition-colors", i === active ? "text-fg" : "text-fg-passive")}>{s.title}</h3>
-            <p className={cn("max-w-md transition-colors", i === active ? "text-fg-muted" : "text-fg-passive")}>{s.text}</p>
+            <span className={cn("text-[12px] tracking-wide uppercase transition-colors", i === active ? "text-neon-pink" : "text-fg-passive")}>{tt(s.tag)}</span>
+            <h3 className={cn("text-[28px] leading-tight font-semibold tracking-tight transition-colors", i === active ? "text-fg" : "text-fg-passive")}>{tt(s.title)}</h3>
+            <p className={cn("max-w-md transition-colors", i === active ? "text-fg-muted" : "text-fg-passive")}>{tt(s.text)}</p>
             {/* Mobilde ekran adımın altında */}
             <div className="mt-4 rounded-3xl border border-line bg-glass p-5 lg:hidden" aria-hidden>
               <Mock step={i} />
@@ -174,10 +176,10 @@ export function ScrollDemo() {
               <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
               <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
               <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
-              <span className="ml-3 truncate text-[11px] text-fg-passive">panel.infulancer · {STEPS[active]!.tag}</span>
+              <span className="ml-3 truncate text-[11px] text-fg-passive">{tt("panel.infulancer ·")}{" "}{STEPS[active]!.tag}</span>
               <span className="ml-auto flex gap-1.5">
                 {STEPS.map((x, i) => (
-                  <span key={x.tag} className={cn("h-1.5 rounded-full transition-all duration-500", i === active ? "w-6 bg-neon-pink" : "w-1.5 bg-line-strong")} />
+                  <span key={tt(x.tag)} className={cn("h-1.5 rounded-full transition-all duration-500", i === active ? "w-6 bg-neon-pink" : "w-1.5 bg-line-strong")} />
                 ))}
               </span>
             </div>

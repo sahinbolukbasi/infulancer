@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -46,6 +47,7 @@ function setCollapsed(value: boolean) {
 
 /** Sol sabit kenar çubuğu: 240px, 64px'e daraltılabilir (durum localStorage'da). md altında gizli. */
 export function Sidebar({ role, perm }: { role: Role; perm?: PermCtx }) {
+  const tt = useTT();
   const pathname = usePathname();
   const t = useT();
   const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
@@ -72,14 +74,14 @@ export function Sidebar({ role, perm }: { role: Role; perm?: PermCtx }) {
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? "Kenar çubuğunu genişlet" : "Kenar çubuğunu daralt"}
+          aria-label={collapsed ? tt("Kenar çubuğunu genişlet") : tt("Kenar çubuğunu daralt")}
           aria-expanded={!collapsed}
           className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
         >
           <PanelIcon size={18} />
         </button>
       </div>
-      <nav aria-label="Ana gezinme" className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+      <nav aria-label={tt("Ana gezinme")} className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {items.map((item, idx) => {
           const active = isActive(pathname, item);
           const showSection = !collapsed && item.section && item.section !== items[idx - 1]?.section;

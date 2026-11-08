@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import { kpiLabels, kpiStatusLabels, type CampaignScore, type KpiStatus } from "@infulancer/core/domain/campaign-score";
 import { ProgressBar, ScoreRing } from "@/components/ui/progress";
 import { StatusDot, type StatusTone } from "@/components/ui/status";
@@ -12,9 +13,10 @@ const tone: Record<KpiStatus, StatusTone> = {
 };
 
 /** Skor halkası + KPI kırılımı (hedef, gerçekleşen, oran çubuğu, durum, projeksiyon). */
-export function KpiBreakdown({ score, large = false }: { score: CampaignScore; large?: boolean }) {
+export async function KpiBreakdown({ score, large = false }: { score: CampaignScore; large?: boolean }) {
+  const tt = await getTT();
   if (score.kpis.length === 0) {
-    return <p className="text-sm text-fg-passive">Bu kampanyada hedef tanımlı değil; skor hesaplanamaz.</p>;
+    return <p className="text-sm text-fg-passive">{tt("Bu kampanyada hedef tanımlı değil; skor hesaplanamaz.")}</p>;
   }
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
@@ -26,7 +28,7 @@ export function KpiBreakdown({ score, large = false }: { score: CampaignScore; l
           <li key={k.kpi} className="flex flex-col gap-2 py-4 first:pt-0">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-sm text-fg">
-                {kpiLabels[k.kpi]} <span className="text-[12px] text-fg-passive">· ağırlık {k.weight}</span>
+                {kpiLabels[k.kpi]} <span className="text-[12px] text-fg-passive">{tt("· ağırlık")}{" "}{k.weight}</span>
               </span>
               <StatusDot tone={tone[k.status]}>{kpiStatusLabels[k.status]}</StatusDot>
             </div>

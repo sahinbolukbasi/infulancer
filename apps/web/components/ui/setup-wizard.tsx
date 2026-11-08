@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -7,7 +8,8 @@ export type WizardStep = { key: string; title: string; done: boolean; hint?: str
  * Adım adım kurulum: ilerleme çubuğu + sıradaki adım açık, diğerleri tek satır.
  * Tamamlanan adımlar tıklanınca açılır (düzenleme için). Sunucu bileşeni.
  */
-export function SetupWizard({ title, steps, doneText }: { title: string; steps: WizardStep[]; doneText: string }) {
+export async function SetupWizard({ title, steps, doneText }: { title: string; steps: WizardStep[]; doneText: string }) {
+  const tt = await getTT();
   const doneCount = steps.filter((s) => s.done).length;
   const current = steps.findIndex((s) => !s.done);
   return (
@@ -15,8 +17,7 @@ export function SetupWizard({ title, steps, doneText }: { title: string; steps: 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">{title}</h2>
         <span className="text-[13px] tabular-nums text-fg-muted">
-          {doneCount}/{steps.length} tamam
-        </span>
+          {doneCount}/{steps.length}{" "}{tt("tamam")}</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
         <div className="bg-neon h-full rounded-full transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
@@ -56,7 +57,7 @@ export function SetupWizard({ title, steps, doneText }: { title: string; steps: 
                 <summary className={cn("flex list-none items-center gap-3 [&::-webkit-details-marker]:hidden", s.content && !locked ? "cursor-pointer" : "pointer-events-none")}>
                   {badge}
                   <span className={s.done ? "text-fg" : "text-fg-muted"}>{s.title}</span>
-                  {s.done && s.content ? <span className="ml-auto text-[12px] text-fg-passive group-open:hidden">Düzenle</span> : null}
+                  {s.done && s.content ? <span className="ml-auto text-[12px] text-fg-passive group-open:hidden">{tt("Düzenle")}</span> : null}
                 </summary>
                 {s.content && !locked ? <div className="mt-3 pl-10">{s.content}</div> : null}
               </details>

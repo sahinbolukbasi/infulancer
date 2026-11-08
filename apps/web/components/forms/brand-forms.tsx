@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { ActionForm } from "@/components/forms/action-form";
 import { Field, Input, Select } from "@/components/ui/form";
 import { createBrandUser, saveBrand } from "@/lib/actions/brands";
@@ -26,14 +27,15 @@ export type BrandFormValues = {
 
 /** Marka oluşturma/düzenleme formu. */
 export function BrandForm({ brand, otherBrands, categories }: { brand?: BrandFormValues; otherBrands: { id: string; name: string; category: string }[]; categories: CategoryNode[] }) {
+  const tt = useTT();
   return (
-    <ActionForm action={saveBrand} submitLabel={brand ? "Değişiklikleri kaydet" : "Markayı oluştur"} aria-label="Marka bilgileri">
+    <ActionForm action={saveBrand} submitLabel={brand ? tt("Değişiklikleri kaydet") : tt("Markayı oluştur")} aria-label={tt("Marka bilgileri")}>
       {brand ? <input type="hidden" name="id" value={brand.id} /> : null}
       <CategoryPicker tree={categories} selected={brand?.categoryIds ?? []} primaryId={brand?.primaryCategoryId} />
-      <p className="-mt-2 text-[12px] text-fg-passive">Ana kategori rakip/münhasırlık tespitinde kullanılır.</p>
+      <p className="-mt-2 text-[12px] text-fg-passive">{tt("Ana kategori rakip/münhasırlık tespitinde kullanılır.")}</p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label="Marka adı">{(p) => <Input {...p} name="name" required defaultValue={brand?.name} />}</Field>
-        <Field label="Ülke" hint="Kampanya para birimi ve varsayılan bölge (tutarlar çevrilmez).">
+        <Field label={tt("Marka adı")}>{(p) => <Input {...p} name="name" required defaultValue={brand?.name} />}</Field>
+        <Field label={tt("Ülke")} hint={tt("Kampanya para birimi ve varsayılan bölge (tutarlar çevrilmez).")}>
           {(p) => (
             <Select {...p} name="country" defaultValue={brand?.country ?? "TR"}>
               {REGIONS.map((r) => (
@@ -44,24 +46,24 @@ export function BrandForm({ brand, otherBrands, categories }: { brand?: BrandFor
             </Select>
           )}
         </Field>
-        <Field label="Vergi dairesi">{(p) => <Input {...p} name="taxOffice" required defaultValue={brand?.taxOffice} />}</Field>
-        <Field label="Vergi numarası">
+        <Field label={tt("Vergi dairesi")}>{(p) => <Input {...p} name="taxOffice" required defaultValue={brand?.taxOffice} />}</Field>
+        <Field label={tt("Vergi numarası")}>
           {(p) => <Input {...p} name="taxNumber" required inputMode="numeric" defaultValue={brand?.taxNumber} />}
         </Field>
-        <Field label="Yetkili">{(p) => <Input {...p} name="contactName" required defaultValue={brand?.contactName} />}</Field>
-        <Field label="Yetkili e-postası">
+        <Field label={tt("Yetkili")}>{(p) => <Input {...p} name="contactName" required defaultValue={brand?.contactName} />}</Field>
+        <Field label={tt("Yetkili e-postası")}>
           {(p) => <Input {...p} name="contactEmail" type="email" required defaultValue={brand?.contactEmail} />}
         </Field>
-        <Field label="Telefon">{(p) => <Input {...p} name="contactPhone" type="tel" required defaultValue={brand?.contactPhone} />}</Field>
-        <Field label="Sözleşme no">{(p) => <Input {...p} name="contractRef" defaultValue={brand?.contractRef ?? ""} />}</Field>
-        <Field label="Sözleşme başlangıcı">
+        <Field label={tt("Telefon")}>{(p) => <Input {...p} name="contactPhone" type="tel" required defaultValue={brand?.contactPhone} />}</Field>
+        <Field label={tt("Sözleşme no")}>{(p) => <Input {...p} name="contractRef" defaultValue={brand?.contractRef ?? ""} />}</Field>
+        <Field label={tt("Sözleşme başlangıcı")}>
           {(p) => <Input {...p} name="contractStartsAt" type="date" defaultValue={brand?.contractStartsAt ?? ""} />}
         </Field>
       </div>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-label text-fg-muted">Rakip markalar</legend>
+        <legend className="mb-2 text-label text-fg-muted">{tt("Rakip markalar")}</legend>
         {otherBrands.length === 0 ? (
-          <p className="text-[13px] text-fg-passive">Başka marka yok.</p>
+          <p className="text-[13px] text-fg-passive">{tt("Başka marka yok.")}</p>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {otherBrands.map((b) => (
@@ -85,13 +87,14 @@ export function BrandForm({ brand, otherBrands, categories }: { brand?: BrandFor
 
 /** Marka kullanıcısı: e-posta + geçici şifre. */
 export function BrandUserForm({ brandId }: { brandId: string }) {
+  const tt = useTT();
   return (
-    <ActionForm action={createBrandUser} submitLabel="Kullanıcı oluştur" submitVariant="secondary" resetOnSuccess aria-label="Marka kullanıcısı">
+    <ActionForm action={createBrandUser} submitLabel={tt("Kullanıcı oluştur")} submitVariant="secondary" resetOnSuccess aria-label={tt("Marka kullanıcısı")}>
       <input type="hidden" name="brandId" value={brandId} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Field label="Ad soyad">{(p) => <Input {...p} name="name" required />}</Field>
-        <Field label="E-posta">{(p) => <Input {...p} name="email" type="email" required autoComplete="off" />}</Field>
-        <Field label="Geçici şifre" hint="En az 8 karakter; ilk girişte paylaşın.">
+        <Field label={tt("Ad soyad")}>{(p) => <Input {...p} name="name" required />}</Field>
+        <Field label={tt("E-posta")}>{(p) => <Input {...p} name="email" type="email" required autoComplete="off" />}</Field>
+        <Field label={tt("Geçici şifre")} hint={tt("En az 8 karakter; ilk girişte paylaşın.")}>
           {(p) => <Input {...p} name="password" type="text" required minLength={8} autoComplete="new-password" />}
         </Field>
       </div>

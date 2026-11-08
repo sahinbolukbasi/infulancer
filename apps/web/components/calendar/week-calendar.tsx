@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -64,6 +65,7 @@ export function WeekCalendar({
   editable?: boolean;
   emptyText?: string;
 }) {
+  const tt = useTT();
   const [override, setOverride] = useState<Override>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
@@ -113,11 +115,9 @@ export function WeekCalendar({
 
   const grid = (
     <div className="overflow-x-auto rounded-[8px] border border-border">
-      <div role="grid" aria-label="Haftalık paylaşım takvimi" className="grid min-w-[1020px] grid-cols-[180px_repeat(7,minmax(118px,1fr))]">
+      <div role="grid" aria-label={tt("Haftalık paylaşım takvimi")} className="grid min-w-[1020px] grid-cols-[180px_repeat(7,minmax(118px,1fr))]">
         <div role="row" className="contents">
-          <div role="columnheader" className="sticky left-0 z-10 border-b border-border bg-surface px-4 py-3 text-label text-fg-muted">
-            Influencer
-          </div>
+          <div role="columnheader" className="sticky left-0 z-10 border-b border-border bg-surface px-4 py-3 text-label text-fg-muted">{tt("Influencer")}</div>
           {days.map((d) => (
             <div
               key={d}
@@ -125,7 +125,7 @@ export function WeekCalendar({
               className={cn("border-b border-l border-border bg-surface px-3 py-3 text-label", d === today ? "text-fg" : "text-fg-muted")}
             >
               {fmtDayLabel(d)}
-              {d === today ? <span className="sr-only"> (bugün)</span> : null}
+              {d === today ? <span className="sr-only">{" "}{tt("(bugün)")}</span> : null}
             </div>
           ))}
         </div>
@@ -190,7 +190,7 @@ export function WeekCalendar({
         grid
       )}
       <p aria-live="polite" className={cn("min-h-5 text-[13px]", message?.error ? "text-critical" : "text-fg-muted")}>
-        {isPending ? "Kaydediliyor…" : (message?.text ?? "")}
+        {isPending ? tt("Kaydediliyor…") : (message?.text ?? "")}
       </p>
       {editable ? <TimeModal card={timeCard} onClose={() => setTimeCard(null)} onSave={(c, t) => move(c, c.day, t)} /> : null}
     </div>
@@ -309,8 +309,9 @@ function TimeModal({
   onClose: () => void;
   onSave: (card: CalendarCard, time: string) => void;
 }) {
+  const tt = useTT();
   return (
-    <Modal open={!!card} onClose={onClose} title="Paylaşım saatini değiştir" description="Saat influencer kitlesinin saat diliminde girilir. Influencer'a bildirim gider.">
+    <Modal open={!!card} onClose={onClose} title={tt("Paylaşım saatini değiştir")} description={tt("Saat influencer kitlesinin saat diliminde girilir. Influencer'a bildirim gider.")}>
       {card ? (
         <form
           key={card.id}
@@ -329,10 +330,8 @@ function TimeModal({
             <Input type="time" name="time" defaultValue={card.time} required />
           </label>
           <div className="flex gap-2">
-            <Button type="submit">Kaydet</Button>
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Vazgeç
-            </Button>
+            <Button type="submit">{tt("Kaydet")}</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>{tt("Vazgeç")}</Button>
           </div>
         </form>
       ) : null}
@@ -342,9 +341,10 @@ function TimeModal({
 
 /** Mobil için liste görünümü (günlere göre gruplu). */
 export function WeekAgenda({ days, cards, today }: { days: string[]; cards: CalendarCard[]; today?: string }) {
+  const tt = useTT();
   const byDay = days.map((d) => ({ day: d, items: cards.filter((c) => c.day === d).sort((a, b) => a.time.localeCompare(b.time)) }));
   if (cards.length === 0) {
-    return <p className="rounded-[8px] border border-border px-6 py-8 text-center text-sm text-fg-passive">Bu hafta paylaşımınız yok.</p>;
+    return <p className="rounded-[8px] border border-border px-6 py-8 text-center text-sm text-fg-passive">{tt("Bu hafta paylaşımınız yok.")}</p>;
   }
   return (
     <ol className="flex flex-col gap-4">
@@ -354,7 +354,7 @@ export function WeekAgenda({ days, cards, today }: { days: string[]; cards: Cale
           <li key={g.day} className="flex flex-col gap-2">
             <h3 className={cn("text-label", g.day === today ? "text-fg" : "text-fg-muted")}>
               {fmtDayLabel(g.day)}
-              {g.day === today ? " · bugün" : ""}
+              {g.day === today ? tt(" · bugün") : ""}
             </h3>
             <ul className="flex flex-col gap-2">
               {g.items.map((c) => (

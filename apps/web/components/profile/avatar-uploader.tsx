@@ -1,10 +1,12 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 
 /** Profil fotoğrafı yükleme: seç → S3'e yükle → kaydet. 5 MB, JPEG/PNG/WebP. */
 export function AvatarUploader({ name, current }: { name: string; current: string | null }) {
+  const tt = useTT();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -60,15 +62,13 @@ export function AvatarUploader({ name, current }: { name: string; current: strin
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => inputRef.current?.click()} disabled={busy} className="rounded-full border border-line-strong px-4 py-1.5 text-[13px] font-medium transition-standard hover:border-neon-pink disabled:opacity-50">
-            {busy ? "Yükleniyor…" : current || preview ? "Değiştir" : "Fotoğraf yükle"}
+            {busy ? tt("Yükleniyor…") : current || preview ? tt("Değiştir") : tt("Fotoğraf yükle")}
           </button>
           {current || preview ? (
-            <button type="button" onClick={remove} disabled={busy} className="rounded-full px-3 py-1.5 text-[13px] text-fg-muted hover:text-fg disabled:opacity-50">
-              Kaldır
-            </button>
+            <button type="button" onClick={remove} disabled={busy} className="rounded-full px-3 py-1.5 text-[13px] text-fg-muted hover:text-fg disabled:opacity-50">{tt("Kaldır")}</button>
           ) : null}
         </div>
-        <span className={msg ? (msg.ok ? "text-[12px] text-neon-lime" : "text-[12px] text-critical") : "text-[12px] text-fg-passive"}>{msg?.text ?? "JPEG, PNG veya WebP · en çok 5 MB"}</span>
+        <span className={msg ? (msg.ok ? "text-[12px] text-neon-lime" : "text-[12px] text-critical") : "text-[12px] text-fg-passive"}>{msg?.text ?? tt("JPEG, PNG veya WebP · en çok 5 MB")}</span>
       </div>
       <input
         ref={inputRef}

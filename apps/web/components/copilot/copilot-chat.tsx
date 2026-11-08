@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import Link from "next/link";
 import { ActionForm } from "@/components/forms/action-form";
@@ -39,21 +40,19 @@ function Steps({ steps }: { steps: NextStep[] }) {
 }
 
 function CampaignStartForm({ brands }: { brands: { id: string; name: string }[] }) {
+  const tt = useTT();
   if (brands.length === 0)
     return (
-      <p className="text-[13px] text-fg-muted">
-        Önce bir marka ekleyin:{" "}
-        <Link href="/admin/markalar/yeni" className="underline underline-offset-4">
-          Yeni marka
-        </Link>
+      <p className="text-[13px] text-fg-muted">{tt("Önce bir marka ekleyin:")}{" "}
+        <Link href="/admin/markalar/yeni" className="underline underline-offset-4">{tt("Yeni marka")}</Link>
       </p>
     );
   return (
-    <ActionForm action={saveCampaign} submitLabel="Taslağı oluştur ve kuruluma geç" submitSize="sm" aria-label="Hızlı kampanya başlat" className="gap-3">
+    <ActionForm action={saveCampaign} submitLabel={tt("Taslağı oluştur ve kuruluma geç")} submitSize="sm" aria-label={tt("Hızlı kampanya başlat")} className="gap-3">
       <input type="hidden" name="status" value="TASLAK" />
       <input type="hidden" name="targets" value={DEFAULT_TARGETS} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Marka">
+        <Field label={tt("Marka")}>
           {(p) => (
             <Select {...p} name="brandId" required defaultValue={brands[0]?.id}>
               {brands.map((b) => (
@@ -64,32 +63,33 @@ function CampaignStartForm({ brands }: { brands: { id: string; name: string }[] 
             </Select>
           )}
         </Field>
-        <Field label="Kampanya adı">{(p) => <Input {...p} name="name" required minLength={3} maxLength={140} placeholder="Yaz koleksiyonu lansmanı" />}</Field>
-        <Field label="Başlangıç">{(p) => <Input {...p} name="startsAt" type="date" required defaultValue={plusDays(7)} />}</Field>
-        <Field label="Bitiş">{(p) => <Input {...p} name="endsAt" type="date" required defaultValue={plusDays(28)} />}</Field>
-        <Field label="Influencer bütçesi (TL)">{(p) => <Input {...p} name="budget" required inputMode="decimal" placeholder="250000" />}</Field>
-        <Field label="Marka bedeli (TL)">{(p) => <Input {...p} name="brandTotalFee" required inputMode="decimal" placeholder="320000" />}</Field>
+        <Field label={tt("Kampanya adı")}>{(p) => <Input {...p} name="name" required minLength={3} maxLength={140} placeholder={tt("Yaz koleksiyonu lansmanı")} />}</Field>
+        <Field label={tt("Başlangıç")}>{(p) => <Input {...p} name="startsAt" type="date" required defaultValue={plusDays(7)} />}</Field>
+        <Field label={tt("Bitiş")}>{(p) => <Input {...p} name="endsAt" type="date" required defaultValue={plusDays(28)} />}</Field>
+        <Field label={tt("Influencer bütçesi (TL)")}>{(p) => <Input {...p} name="budget" required inputMode="decimal" placeholder="250000" />}</Field>
+        <Field label={tt("Marka bedeli (TL)")}>{(p) => <Input {...p} name="brandTotalFee" required inputMode="decimal" placeholder="320000" />}</Field>
       </div>
-      <p className="text-[12px] text-fg-passive">Varsayılan hedef: 30 günde 100.000 erişim. Kurulum adımlarında hedefleri, influencerları ve brief&apos;i düzenleyebilirsiniz.</p>
+      <p className="text-[12px] text-fg-passive">{tt("Varsayılan hedef: 30 günde 100.000 erişim. Kurulum adımlarında hedefleri, influencerları ve brief'i düzenleyebilirsiniz.")}</p>
     </ActionForm>
   );
 }
 
 function CampaignRequestForm() {
+  const tt = useTT();
   return (
-    <ActionForm action={requestCampaignAction} submitLabel="Talebi ajansa gönder" submitSize="sm" resetOnSuccess aria-label="Kampanya talebi" className="gap-3">
+    <ActionForm action={requestCampaignAction} submitLabel={tt("Talebi ajansa gönder")} submitSize="sm" resetOnSuccess aria-label={tt("Kampanya talebi")} className="gap-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Kampanya adı" className="sm:col-span-2">
-          {(p) => <Input {...p} name="title" required minLength={3} maxLength={140} placeholder="Yeni ürün lansmanı" />}
+        <Field label={tt("Kampanya adı")} className="sm:col-span-2">
+          {(p) => <Input {...p} name="title" required minLength={3} maxLength={140} placeholder={tt("Yeni ürün lansmanı")} />}
         </Field>
-        <Field label="Hedef ve beklentiler" className="sm:col-span-2" hint="Kitle, içerik türü, istediğiniz/istemediğiniz profiller…">
+        <Field label={tt("Hedef ve beklentiler")} className="sm:col-span-2" hint={tt("Kitle, içerik türü, istediğiniz/istemediğiniz profiller…")}>
           {(p) => <Textarea {...p} name="goal" required minLength={10} maxLength={2000} rows={3} />}
         </Field>
-        <Field label="Başlangıç">{(p) => <Input {...p} name="startsAt" type="date" required defaultValue={plusDays(14)} min={today()} />}</Field>
-        <Field label="Bitiş">{(p) => <Input {...p} name="endsAt" type="date" required defaultValue={plusDays(35)} min={today()} />}</Field>
-        <Field label="Yaklaşık bütçe (TL, isteğe bağlı)">{(p) => <Input {...p} name="budget" inputMode="decimal" />}</Field>
+        <Field label={tt("Başlangıç")}>{(p) => <Input {...p} name="startsAt" type="date" required defaultValue={plusDays(14)} min={today()} />}</Field>
+        <Field label={tt("Bitiş")}>{(p) => <Input {...p} name="endsAt" type="date" required defaultValue={plusDays(35)} min={today()} />}</Field>
+        <Field label={tt("Yaklaşık bütçe (TL, isteğe bağlı)")}>{(p) => <Input {...p} name="budget" inputMode="decimal" />}</Field>
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-label text-fg-muted">Platformlar</legend>
+          <legend className="text-label text-fg-muted">{tt("Platformlar")}</legend>
           <div className="flex flex-wrap gap-3 text-[13px]">
             {[
               ["INSTAGRAM", "Instagram"],
@@ -113,6 +113,7 @@ function CampaignRequestForm() {
  * bağlantı eylemleri ve satır içi başlatma formları (ajans: kampanya taslağı, marka: kampanya talebi).
  */
 export function CopilotChat({ welcome, compact = false, onClose }: { welcome: CopilotWelcome; compact?: boolean; onClose?: () => void }) {
+  const tt = useTT();
   const storeKey = `infl-copilot:${welcome.userId}`;
   const [messages, setMessages] = useState<Msg[]>(() => [{ id: "w", from: "bot", text: welcome.greeting, steps: welcome.steps }]);
   const [text, setText] = useState("");
@@ -179,23 +180,21 @@ export function CopilotChat({ welcome, compact = false, onClose }: { welcome: Co
             <SparkleIcon size={18} />
           </span>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold">{BRAND_NAME} Asistan</span>
-            <span className="text-[11px] text-fg-passive">{welcome.role === "ADMIN" ? "Ajans" : welcome.role === "BRAND" ? "Marka" : "İçerik üreticisi"} modu · yönlendirme ve hızlı başlatma</span>
+            <span className="text-sm font-semibold">{BRAND_NAME}{" "}{tt("Asistan")}</span>
+            <span className="text-[11px] text-fg-passive">{welcome.role === "ADMIN" ? tt("Ajans") : welcome.role === "BRAND" ? tt("Marka") : tt("İçerik üreticisi")}{" "}{tt("modu · yönlendirme ve hızlı başlatma")}</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={reset} className="rounded-lg px-2 py-1 text-[12px] text-fg-muted hover:bg-surface-hover hover:text-fg">
-            Yeni sohbet
-          </button>
+          <button type="button" onClick={reset} className="rounded-lg px-2 py-1 text-[12px] text-fg-muted hover:bg-surface-hover hover:text-fg">{tt("Yeni sohbet")}</button>
           {onClose ? (
-            <button type="button" onClick={onClose} aria-label="Asistanı kapat" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-hover hover:text-fg">
+            <button type="button" onClick={onClose} aria-label={tt("Asistanı kapat")} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-hover hover:text-fg">
               <XIcon size={16} />
             </button>
           ) : null}
         </div>
       </div>
 
-      <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4", !compact && "max-h-[560px]")} role="log" aria-live="polite" aria-label="Asistan sohbeti">
+      <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4", !compact && "max-h-[560px]")} role="log" aria-live="polite" aria-label={tt("Asistan sohbeti")}>
         {messages.map((m) =>
           m.from === "user" ? (
             <div key={m.id} className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-fg px-3.5 py-2 text-[14px] text-bg">
@@ -229,12 +228,12 @@ export function CopilotChat({ welcome, compact = false, onClose }: { welcome: Co
                   ))}
                 </div>
               ) : null}
-              {m.source === "ai" ? <span className="text-[10px] text-fg-passive">Yapay zekâ yanıtı · kontrol ederek kullanın</span> : null}
+              {m.source === "ai" ? <span className="text-[10px] text-fg-passive">{tt("Yapay zekâ yanıtı · kontrol ederek kullanın")}</span> : null}
             </div>
           ),
         )}
         {pending ? (
-          <div className="flex items-center gap-1 px-1 text-fg-passive" aria-label="Asistan yazıyor">
+          <div className="flex items-center gap-1 px-1 text-fg-passive" aria-label={tt("Asistan yazıyor")}>
             {[0, 1, 2].map((i) => (
               <span key={i} className="h-1.5 w-1.5 rounded-full bg-current animate-blink" style={{ animationDelay: `${i * 200}ms` }} />
             ))}
@@ -244,7 +243,7 @@ export function CopilotChat({ welcome, compact = false, onClose }: { welcome: Co
       </div>
 
       <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
-        <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Hızlı sorular">
+        <div className="flex gap-2 overflow-x-auto pb-1" aria-label={tt("Hızlı sorular")}>
           {welcome.suggestions.map((s) => (
             <button
               key={s}
@@ -263,24 +262,20 @@ export function CopilotChat({ welcome, compact = false, onClose }: { welcome: Co
           </p>
         ) : null}
         <form onSubmit={onSubmit} className="flex items-center gap-2">
-          <label htmlFor={`copilot-input-${compact ? "d" : "i"}`} className="sr-only">
-            Asistana sorun
-          </label>
+          <label htmlFor={`copilot-input-${compact ? "d" : "i"}`} className="sr-only">{tt("Asistana sorun")}</label>
           <input
             id={`copilot-input-${compact ? "d" : "i"}`}
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={1000}
-            placeholder={welcome.role === "INFLUENCER" ? "Örn. ödememi nasıl alırım?" : "Örn. yeni kampanya başlat"}
+            placeholder={welcome.role === "INFLUENCER" ? tt("Örn. ödememi nasıl alırım?") : tt("Örn. yeni kampanya başlat")}
             className="h-11 flex-1 rounded-xl border border-line bg-bg px-3 text-[14px] text-fg placeholder:text-fg-passive focus:border-neon-pink focus:outline-none"
           />
           <button
             type="submit"
             disabled={pending || !text.trim()}
             className="bg-neon inline-flex h-11 items-center justify-center rounded-xl px-4 text-[14px] font-semibold text-black transition-transform hover:scale-[1.03] disabled:opacity-50"
-          >
-            Gönder
-          </button>
+          >{tt("Gönder")}</button>
         </form>
       </div>
     </div>

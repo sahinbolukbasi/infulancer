@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
@@ -9,21 +10,18 @@ export const dynamic = "force-dynamic";
 
 /** Marka: içerik üreticisinin detaylı profili (vitrin). Gizli profiller açılmaz. */
 export default async function CreatorProfileForBrand({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   await requireActor("BRAND");
   const { id } = await params;
   const inf = await prisma.influencer.findFirst({ where: { id, showcaseVisible: true, user: { status: "ACTIVE" } }, select: { id: true } });
   if (!inf) notFound();
   return (
     <div className="flex flex-col gap-4">
-      <ButtonLink href="/marka/kesfet" variant="ghost" size="sm" className="w-fit">
-        ← Influencer bul
-      </ButtonLink>
+      <ButtonLink href="/marka/kesfet" variant="ghost" size="sm" className="w-fit">{tt("← Influencer bul")}</ButtonLink>
       <CreatorShowcase
         influencerId={inf.id}
         actions={
-          <ButtonLink href={`/marka/kesfet?sec=${inf.id}`} className="bg-neon text-black">
-            Teklif gönder →
-          </ButtonLink>
+          <ButtonLink href={`/marka/kesfet?sec=${inf.id}`} className="bg-neon text-black">{tt("Teklif gönder →")}</ButtonLink>
         }
       />
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useState } from "react";
 import { ActionForm } from "@/components/forms/action-form";
 import { AlertIcon } from "@/components/icons";
@@ -34,29 +35,26 @@ export function PayoutRequestButton({
   maskedIban: string;
   holder: string;
 }) {
+  const tt = useTT();
   const [open, setOpen] = useState(false);
   const enough = cekilebilirKurus >= minKurus;
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="w-full sm:w-auto">
-        Çekim talebi oluştur
-      </Button>
+      <Button onClick={() => setOpen(true)} className="w-full sm:w-auto">{tt("Çekim talebi oluştur")}</Button>
       {!enough ? (
-        <p className="text-[13px] text-fg-passive">
-          Çekilebilir bakiyeniz en az {fmt(minKurus)} olduğunda talep oluşturabilirsiniz.
-        </p>
+        <p className="text-[13px] text-fg-passive">{tt("Çekilebilir bakiyeniz en az")}{" "}{fmt(minKurus)}{" "}{tt("olduğunda talep oluşturabilirsiniz.")}</p>
       ) : null}
-      <Modal open={open} onClose={() => setOpen(false)} title="Çekim talebi" description={`Çekilebilir bakiye: ${fmt(Math.max(cekilebilirKurus, 0))}`}>
-        <ActionForm action={createPayoutRequest} submitLabel="Talebi gönder" resetOnSuccess onSuccess={() => setOpen(false)} aria-label="Çekim talebi">
-          <Field label="Tutar (TL)" hint={`En az ${fmt(minKurus)}, en çok ${fmt(Math.max(cekilebilirKurus, 0))}.`}>
+      <Modal open={open} onClose={() => setOpen(false)} title={tt("Çekim talebi")} description={`Çekilebilir bakiye: ${fmt(Math.max(cekilebilirKurus, 0))}`}>
+        <ActionForm action={createPayoutRequest} submitLabel={tt("Talebi gönder")} resetOnSuccess onSuccess={() => setOpen(false)} aria-label={tt("Çekim talebi")}>
+          <Field label={tt("Tutar (TL)")} hint={`En az ${fmt(minKurus)}, en çok ${fmt(Math.max(cekilebilirKurus, 0))}.`}>
             {(p) => <Input {...p} name="amount" inputMode="decimal" autoComplete="off" placeholder="1.250,00" required />}
           </Field>
           <div className="flex flex-col gap-1 rounded-[8px] border border-border px-3 py-2 text-[13px]">
-            <span className="text-fg-passive">Ödeme yapılacak hesap</span>
+            <span className="text-fg-passive">{tt("Ödeme yapılacak hesap")}</span>
             <span className="font-mono text-fg">{maskedIban}</span>
             <span className="text-fg-muted">{holder}</span>
           </div>
-          <p className="text-[12px] text-fg-passive">IBAN değişikliği için ajansınızla iletişime geçin. Platform ödeme talimatı üretir, transferi banka yapar.</p>
+          <p className="text-[12px] text-fg-passive">{tt("IBAN değişikliği için ajansınızla iletişime geçin. Platform ödeme talimatı üretir, transferi banka yapar.")}</p>
         </ActionForm>
       </Modal>
     </>
@@ -65,17 +63,14 @@ export function PayoutRequestButton({
 
 /** Admin: talep onay / ret (+ not; ret için zorunlu). */
 export function PayoutDecision({ id }: { id: string }) {
+  const tt = useTT();
   return (
-    <ActionForm action={decidePayout} aria-label="Çekim talebi kararı" className="gap-2">
+    <ActionForm action={decidePayout} aria-label={tt("Çekim talebi kararı")} className="gap-2">
       <input type="hidden" name="id" value={id} />
-      <Input name="note" aria-label="Not" placeholder="Not (ret için zorunlu)" maxLength={1000} className="h-8 min-w-48" />
+      <Input name="note" aria-label={tt("Not")} placeholder={tt("Not (ret için zorunlu)")} maxLength={1000} className="h-8 min-w-48" />
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" name="decision" value="ONAYLA" size="sm">
-          Onayla
-        </Button>
-        <Button type="submit" name="decision" value="REDDET" variant="secondary" size="sm">
-          Reddet
-        </Button>
+        <Button type="submit" name="decision" value="ONAYLA" size="sm">{tt("Onayla")}</Button>
+        <Button type="submit" name="decision" value="REDDET" variant="secondary" size="sm">{tt("Reddet")}</Button>
       </div>
     </ActionForm>
   );
@@ -106,6 +101,7 @@ function SelectionTable({
   toggleAll: () => void;
   caption: string;
 }) {
+  const tt = useTT();
   const all = rows.length > 0 && rows.every((r) => selected.has(r.id));
   return (
     <div className="overflow-auto rounded-[8px] border border-border">
@@ -114,13 +110,13 @@ function SelectionTable({
         <thead className="bg-surface">
           <tr className="border-b border-border text-left text-label text-fg-muted">
             <th scope="col" className="w-10 px-4 py-3">
-              <input type="checkbox" checked={all} onChange={toggleAll} aria-label="Tümünü seç" className="accent-[var(--color-fg)]" />
+              <input type="checkbox" checked={all} onChange={toggleAll} aria-label={tt("Tümünü seç")} className="accent-[var(--color-fg)]" />
             </th>
-            <th scope="col" className="px-4 py-3 font-medium">Influencer</th>
-            <th scope="col" className="px-4 py-3 text-right font-medium">Tutar</th>
-            <th scope="col" className="px-4 py-3 font-medium">IBAN / Hesap sahibi</th>
-            <th scope="col" className="px-4 py-3 font-medium">Vergi durumu</th>
-            <th scope="col" className="px-4 py-3 font-medium">Tarih</th>
+            <th scope="col" className="px-4 py-3 font-medium">{tt("Influencer")}</th>
+            <th scope="col" className="px-4 py-3 text-right font-medium">{tt("Tutar")}</th>
+            <th scope="col" className="px-4 py-3 font-medium">{tt("IBAN / Hesap sahibi")}</th>
+            <th scope="col" className="px-4 py-3 font-medium">{tt("Vergi durumu")}</th>
+            <th scope="col" className="px-4 py-3 font-medium">{tt("Tarih")}</th>
           </tr>
         </thead>
         <tbody>
@@ -186,17 +182,16 @@ function useSelection(rows: PayoutRow[]) {
 
 /** Onaylanan talepler → "Seçilenleri listeye ekle". */
 export function ApprovedPayouts({ rows }: { rows: PayoutRow[] }) {
+  const tt = useTT();
   const sel = useSelection(rows);
-  if (rows.length === 0) return <p className="text-sm text-fg-passive">Listeye alınmayı bekleyen onaylı talep yok.</p>;
+  if (rows.length === 0) return <p className="text-sm text-fg-passive">{tt("Listeye alınmayı bekleyen onaylı talep yok.")}</p>;
   return (
-    <ActionForm action={addPayoutsToList} onSuccess={sel.clear} aria-label="Ödeme listesine ekle">
-      <SelectionTable rows={rows} caption="Onaylanan çekim talepleri" {...sel} />
+    <ActionForm action={addPayoutsToList} onSuccess={sel.clear} aria-label={tt("Ödeme listesine ekle")}>
+      <SelectionTable rows={rows} caption={tt("Onaylanan çekim talepleri")} {...sel} />
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={sel.selected.size === 0}>
-          Seçilenleri listeye ekle
-        </Button>
+        <Button type="submit" disabled={sel.selected.size === 0}>{tt("Seçilenleri listeye ekle")}</Button>
         <span className="text-[13px] text-fg-muted tabular-nums">
-          {sel.selected.size} seçili · {fmt(sel.total)}
+          {sel.selected.size}{" "}{tt("seçili ·")}{" "}{fmt(sel.total)}
         </span>
       </div>
     </ActionForm>
@@ -205,6 +200,7 @@ export function ApprovedPayouts({ rows }: { rows: PayoutRow[] }) {
 
 /** Bir ödeme listesi: banka dosyası indir + onay modalıyla "Gönderildi olarak işaretle". */
 export function BatchPayouts({ batchId, rows }: { batchId: string; rows: PayoutRow[] }) {
+  const tt = useTT();
   const sel = useSelection(rows);
   const [confirming, setConfirming] = useState(false);
   const file = (format: "csv" | "xml") => `/api/finans/odeme-dosyasi?batch=${encodeURIComponent(batchId)}&format=${format}`;
@@ -215,35 +211,27 @@ export function BatchPayouts({ batchId, rows }: { batchId: string; rows: PayoutR
         setConfirming(false);
         sel.clear();
       }}
-      aria-label="Gönderildi olarak işaretle"
+      aria-label={tt("Gönderildi olarak işaretle")}
     >
-      <SelectionTable rows={rows} caption="Ödeme listesindeki talepler" {...sel} />
+      <SelectionTable rows={rows} caption={tt("Ödeme listesindeki talepler")} {...sel} />
       <div className="flex flex-wrap items-center gap-2">
-        <a href={file("csv")} download className="inline-flex h-10 items-center rounded-[8px] border border-border px-4 text-sm transition-standard hover:border-border-strong hover:bg-surface-hover">
-          Banka dosyası indir (CSV)
-        </a>
-        <a href={file("xml")} download className="inline-flex h-10 items-center rounded-[8px] border border-border px-4 text-sm transition-standard hover:border-border-strong hover:bg-surface-hover">
-          Banka dosyası indir (XML)
-        </a>
-        <Button onClick={() => setConfirming(true)} disabled={sel.selected.size === 0}>
-          Gönderildi olarak işaretle
-        </Button>
+        <a href={file("csv")} download className="inline-flex h-10 items-center rounded-[8px] border border-border px-4 text-sm transition-standard hover:border-border-strong hover:bg-surface-hover">{tt("Banka dosyası indir (CSV)")}</a>
+        <a href={file("xml")} download className="inline-flex h-10 items-center rounded-[8px] border border-border px-4 text-sm transition-standard hover:border-border-strong hover:bg-surface-hover">{tt("Banka dosyası indir (XML)")}</a>
+        <Button onClick={() => setConfirming(true)} disabled={sel.selected.size === 0}>{tt("Gönderildi olarak işaretle")}</Button>
         <span className="text-[13px] text-fg-muted tabular-nums">
-          {sel.selected.size} seçili · {fmt(sel.total)}
+          {sel.selected.size}{" "}{tt("seçili ·")}{" "}{fmt(sel.total)}
         </span>
       </div>
       <Modal
         open={confirming}
         onClose={() => setConfirming(false)}
-        title="Ödemeler gönderildi mi?"
+        title={tt("Ödemeler gönderildi mi?")}
         description={`${sel.selected.size} ödeme (${fmt(sel.total)}) gönderildi olarak işaretlenecek ve deftere ödeme kaydı yazılacak. Bu işlem geri alınamaz.`}
       >
-        <p className="text-[13px] text-fg-muted">Yalnızca banka transferi gerçekleştikten sonra onaylayın. Platform para göndermez.</p>
+        <p className="text-[13px] text-fg-muted">{tt("Yalnızca banka transferi gerçekleştikten sonra onaylayın. Platform para göndermez.")}</p>
         <div className="flex flex-wrap gap-2">
-          <Button type="submit">Evet, gönderildi</Button>
-          <Button variant="ghost" onClick={() => setConfirming(false)}>
-            Vazgeç
-          </Button>
+          <Button type="submit">{tt("Evet, gönderildi")}</Button>
+          <Button variant="ghost" onClick={() => setConfirming(false)}>{tt("Vazgeç")}</Button>
         </div>
       </Modal>
     </ActionForm>

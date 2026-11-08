@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { formatMinor } from "@infulancer/core/i18n/regions";
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
@@ -32,6 +33,7 @@ const num = (v: string) => Number(v.replace(/\./g, "").replace(",", ".")) || 0;
 
 /** Marka: içerik üreticisi keşfi → seç → tek formla teklif gönder (her birine ayrı teklif ve bildirim). */
 export function BrandDiscover({ creators, options, campaigns, initialSelected = [], currency = "TRY" }: { creators: DiscoverCreator[]; options: ContentOption[]; campaigns: { id: string; name: string }[]; initialSelected?: string[]; currency?: string }) {
+  const tt = useTT();
   // Tutarlar bölgenin para biriminde (çevrim yok).
   const tl = (k: number) => formatMinor(k, currency);
   const cur = currency === "TRY" ? "TL" : currency;
@@ -94,29 +96,27 @@ export function BrandDiscover({ creators, options, campaigns, initialSelected = 
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[2fr_1fr_1fr_auto]">
           <label className="relative">
-            <span className="sr-only">Ara</span>
+            <span className="sr-only">{tt("Ara")}</span>
             <SearchIcon size={16} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-passive" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="İsim, şehir veya @kullanıcı" className="pl-9" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tt("İsim, şehir veya @kullanıcı")} className="pl-9" />
           </label>
-          <Select value={cat} onChange={(e) => setCat(e.target.value)} aria-label="Kategori">
-            <option value="">Tüm kategoriler</option>
+          <Select value={cat} onChange={(e) => setCat(e.target.value)} aria-label={tt("Kategori")}>
+            <option value="">{tt("Tüm kategoriler")}</option>
             {cats.map((c) => (
               <option key={c}>{c}</option>
             ))}
           </Select>
-          <Select value={platform} onChange={(e) => setPlatform(e.target.value as "" | Platform)} aria-label="Platform">
-            <option value="">Tüm platformlar</option>
-            <option value="INSTAGRAM">Instagram</option>
-            <option value="TIKTOK">TikTok</option>
-            <option value="YOUTUBE">YouTube</option>
+          <Select value={platform} onChange={(e) => setPlatform(e.target.value as "" | Platform)} aria-label={tt("Platform")}>
+            <option value="">{tt("Tüm platformlar")}</option>
+            <option value="INSTAGRAM">{tt("Instagram")}</option>
+            <option value="TIKTOK">{tt("TikTok")}</option>
+            <option value="YOUTUBE">{tt("YouTube")}</option>
           </Select>
           <label className="flex items-center gap-2 text-[13px] text-fg-muted">
-            <input type="checkbox" checked={priced} onChange={(e) => setPriced(e.target.checked)} className="h-4 w-4 accent-[var(--color-fg)]" /> Fiyatı olanlar
-          </label>
+            <input type="checkbox" checked={priced} onChange={(e) => setPriced(e.target.checked)} className="h-4 w-4 accent-[var(--color-fg)]" />{" "}{tt("Fiyatı olanlar")}</label>
         </div>
         <p className="text-[13px] text-fg-passive" aria-live="polite">
-          {list.length} içerik üreticisi · {sel.size} seçili
-        </p>
+          {list.length}{" "}{tt("içerik üreticisi ·")}{" "}{sel.size}{" "}{tt("seçili")}</p>
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
           {list.map((c) => {
             const on = sel.has(c.id);
@@ -146,12 +146,11 @@ export function BrandDiscover({ creators, options, campaigns, initialSelected = 
                     ))}
                   </span>
                   <span className="mt-auto flex items-center justify-between border-t border-line pt-2 text-[12px]">
-                    <span className="text-fg-muted">{c.rates.length ? `${c.rates.length} içerik fiyatı` : "Fiyat listesi yok"}</span>
-                    {from != null ? <span className="font-semibold text-fg">{tl(from)}&apos;den başlayan</span> : null}
+                    <span className="text-fg-muted">{c.rates.length ? `${c.rates.length} içerik fiyatı` : tt("Fiyat listesi yok")}</span>
+                    {from != null ? <span className="font-semibold text-fg">{tl(from)}{tt("'den başlayan")}</span> : null}
                   </span>
                 </button>
-                <Link href={`/marka/kesfet/${c.id}`} className="flex items-center justify-between border-t border-line px-4 py-2 text-[13px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg">
-                  Detaylı profil, iş birlikleri ve işler <span aria-hidden>→</span>
+                <Link href={`/marka/kesfet/${c.id}`} className="flex items-center justify-between border-t border-line px-4 py-2 text-[13px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg">{tt("Detaylı profil, iş birlikleri ve işler")}{" "}<span aria-hidden>→</span>
                 </Link>
               </li>
             );
@@ -161,8 +160,8 @@ export function BrandDiscover({ creators, options, campaigns, initialSelected = 
 
       <aside className="xl:sticky xl:top-24 xl:self-start">
         <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface/90 p-5 backdrop-blur">
-          <h2 className="text-lg font-semibold">Teklif gönder</h2>
-          {selected.length === 0 ? <p className="text-sm text-fg-muted">Soldan bir veya daha fazla içerik üreticisi seçin.</p> : null}
+          <h2 className="text-lg font-semibold">{tt("Teklif gönder")}</h2>
+          {selected.length === 0 ? <p className="text-sm text-fg-muted">{tt("Soldan bir veya daha fazla içerik üreticisi seçin.")}</p> : null}
           {selected.length ? (
             <ul className="flex flex-wrap gap-2">
               {selected.map((c) => (
@@ -175,46 +174,42 @@ export function BrandDiscover({ creators, options, campaigns, initialSelected = 
               ))}
             </ul>
           ) : null}
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Başlık (ör. Yaz koleksiyonu tanıtımı)" aria-label="Teklif başlığı" maxLength={140} />
-          <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder="Mesajınız: ürün, beklenti, teslim, kullanım hakkı…" aria-label="Mesaj" maxLength={3000} />
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tt("Başlık (ör. Yaz koleksiyonu tanıtımı)")} aria-label={tt("Teklif başlığı")} maxLength={140} />
+          <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder={tt("Mesajınız: ürün, beklenti, teslim, kullanım hakkı…")} aria-label={tt("Mesaj")} maxLength={3000} />
           <div className="flex flex-col gap-2">
-            <span className="text-label text-fg-muted">İçerikler</span>
+            <span className="text-label text-fg-muted">{tt("İçerikler")}</span>
             {items.map((it, i) => (
               <div key={i} className="grid grid-cols-[1fr_1.2fr_56px_auto] items-center gap-2">
-                <Select value={it.platform} aria-label="Platform" onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, platform: e.target.value as Platform, contentType: optFor(e.target.value as Platform)[0]?.contentType ?? "" } : y)))}>
-                  <option value="INSTAGRAM">Instagram</option>
-                  <option value="TIKTOK">TikTok</option>
-                  <option value="YOUTUBE">YouTube</option>
+                <Select value={it.platform} aria-label={tt("Platform")} onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, platform: e.target.value as Platform, contentType: optFor(e.target.value as Platform)[0]?.contentType ?? "" } : y)))}>
+                  <option value="INSTAGRAM">{tt("Instagram")}</option>
+                  <option value="TIKTOK">{tt("TikTok")}</option>
+                  <option value="YOUTUBE">{tt("YouTube")}</option>
                 </Select>
-                <Select value={it.contentType} aria-label="İçerik türü" onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, contentType: e.target.value } : y)))}>
+                <Select value={it.contentType} aria-label={tt("İçerik türü")} onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, contentType: e.target.value } : y)))}>
                   {optFor(it.platform).map((o) => (
                     <option key={o.contentType} value={o.contentType}>
                       {o.label}
                     </option>
                   ))}
                 </Select>
-                <Input type="number" min={1} max={20} value={it.qty} aria-label="Adet" onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, qty: Math.max(1, Number(e.target.value) || 1) } : y)))} />
-                <button type="button" onClick={() => setItems((x) => (x.length > 1 ? x.filter((_, k) => k !== i) : x))} aria-label="Satırı sil" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-hover">
+                <Input type="number" min={1} max={20} value={it.qty} aria-label={tt("Adet")} onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, qty: Math.max(1, Number(e.target.value) || 1) } : y)))} />
+                <button type="button" onClick={() => setItems((x) => (x.length > 1 ? x.filter((_, k) => k !== i) : x))} aria-label={tt("Satırı sil")} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-hover">
                   <XIcon size={14} />
                 </button>
-                {!useRates ? <Input className="col-span-4" value={it.priceTl} onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, priceTl: e.target.value } : y)))} placeholder={`Birim fiyat (${cur})`} inputMode="decimal" aria-label="Birim fiyat" /> : null}
+                {!useRates ? <Input className="col-span-4" value={it.priceTl} onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, priceTl: e.target.value } : y)))} placeholder={`Birim fiyat (${cur})`} inputMode="decimal" aria-label={tt("Birim fiyat")} /> : null}
               </div>
             ))}
-            <button type="button" onClick={() => setItems((x) => [...x, { platform: "TIKTOK", contentType: "VIDEO", qty: 1, priceTl: "" }])} className="w-fit text-[13px] text-fg-muted hover:text-fg">
-              + İçerik ekle
-            </button>
+            <button type="button" onClick={() => setItems((x) => [...x, { platform: "TIKTOK", contentType: "VIDEO", qty: 1, priceTl: "" }])} className="w-fit text-[13px] text-fg-muted hover:text-fg">{tt("+ İçerik ekle")}</button>
           </div>
           <label className="flex items-start gap-2 text-[13px] text-fg-muted">
-            <input type="checkbox" checked={useRates} onChange={(e) => setUseRates(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-fg)]" />
-            Her üreticinin kendi fiyatını kullan (listesi olmayana aşağıdaki fiyat)
-          </label>
+            <input type="checkbox" checked={useRates} onChange={(e) => setUseRates(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-fg)]" />{tt("Her üreticinin kendi fiyatını kullan (listesi olmayana aşağıdaki fiyat)")}</label>
           {useRates ? (
-            <Input value={items[0]?.priceTl ?? ""} onChange={(e) => setItems((x) => x.map((y) => ({ ...y, priceTl: e.target.value })))} placeholder={`Listesi olmayanlar için birim fiyat (${cur})`} inputMode="decimal" aria-label="Varsayılan birim fiyat" />
+            <Input value={items[0]?.priceTl ?? ""} onChange={(e) => setItems((x) => x.map((y) => ({ ...y, priceTl: e.target.value })))} placeholder={`Listesi olmayanlar için birim fiyat (${cur})`} inputMode="decimal" aria-label={tt("Varsayılan birim fiyat")} />
           ) : null}
           <div className="grid grid-cols-2 gap-2">
-            <Input type="date" value={publishBy} onChange={(e) => setPublishBy(e.target.value)} aria-label="En geç yayın tarihi" />
-            <Select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} aria-label="Kampanya (isteğe bağlı)">
-              <option value="">Kampanya seçme</option>
+            <Input type="date" value={publishBy} onChange={(e) => setPublishBy(e.target.value)} aria-label={tt("En geç yayın tarihi")} />
+            <Select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} aria-label={tt("Kampanya (isteğe bağlı)")}>
+              <option value="">{tt("Kampanya seçme")}</option>
               {campaigns.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -223,18 +218,18 @@ export function BrandDiscover({ creators, options, campaigns, initialSelected = 
             </Select>
           </div>
           <div className="flex items-center justify-between border-t border-line pt-3">
-            <span className="text-[13px] text-fg-muted">Tahmini toplam</span>
+            <span className="text-[13px] text-fg-muted">{tt("Tahmini toplam")}</span>
             <span className="text-xl font-semibold tabular-nums">{tl(total)}</span>
           </div>
           <Button onClick={send} disabled={pending || sel.size === 0 || title.trim().length < 3 || message.trim().length < 10}>
-            {pending ? "Gönderiliyor…" : `${sel.size || ""} teklif gönder`}
+            {pending ? tt("Gönderiliyor…") : `${sel.size || ""} teklif gönder`}
           </Button>
           {result ? (
             <p role="status" className={cn("text-[13px]", result.ok ? "text-neon-lime" : "text-critical")}>
               {result.text}
             </p>
           ) : null}
-          <p className="text-[11px] text-fg-passive">Teklif 7 gün geçerlidir. Kabul edilince ajans kampanyaya ekler ve brief paylaşılır.</p>
+          <p className="text-[11px] text-fg-passive">{tt("Teklif 7 gün geçerlidir. Kabul edilince ajans kampanyaya ekler ve brief paylaşılır.")}</p>
         </div>
       </aside>
     </div>

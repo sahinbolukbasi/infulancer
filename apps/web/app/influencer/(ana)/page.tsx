@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { toInfluencerAssignmentView } from "@infulancer/core/access/dto";
@@ -22,6 +23,7 @@ import { fmtDate, fmtDateTime } from "@/lib/time";
 export const metadata: Metadata = { title: "İşlerim" };
 
 export default async function InfluencerHomePage() {
+  const tt = await getTT();
   const actor = await requireActor("INFLUENCER");
   // Hakediş ve ödemeler influencer'ın kayıtlı ülkesinin para biriminde (çevrim yok).
   const myCountry = (await prisma.influencer.findUniqueOrThrow({ where: { id: actor.influencerId! }, select: { country: true } })).country;
@@ -51,32 +53,27 @@ export default async function InfluencerHomePage() {
 
   return (
     <Stagger className="flex flex-col gap-6">
-      <PageHeader title="İşlerim" description="Brief, dosyalar, yayın tarihleri ve metrik girişi." />
+      <PageHeader title={tt("İşlerim")} description={tt("Brief, dosyalar, yayın tarihleri ve metrik girişi.")} />
       <CopilotHome actor={actor} />
 
-      <section aria-label="Bakiye" className="flex flex-col gap-2">
+      <section aria-label={tt("Bakiye")} className="flex flex-col gap-2">
         <BalanceCards balances={balances} holdDays={holdDays()} currency={currencyOf(myCountry)} />
-        <Link href="/influencer/odemeler" className="text-[13px] text-fg-muted hover:text-fg">
-          Ödemeler ve çekim talebi →
-        </Link>
+        <Link href="/influencer/odemeler" className="text-[13px] text-fg-muted hover:text-fg">{tt("Ödemeler ve çekim talebi →")}</Link>
       </section>
 
       {offers.length > 0 ? (
         <Card interactive={false} className="flex flex-col gap-4">
-          <CardTitle>Bekleyen teklifler</CardTitle>
+          <CardTitle>{tt("Bekleyen teklifler")}</CardTitle>
           <ul className="flex flex-col divide-y divide-border">
             {offers.map((o) => (
               <li key={o.id} className="flex flex-col gap-3 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm text-fg">{o.campaign.name}</span>
                   <span className="text-[13px] text-fg-muted">
-                    {o.campaign.brandName} · {fmtDate(o.campaign.startsAt, tz)} – {fmtDate(o.campaign.endsAt, tz)} · {o.deliverables.length} iş
-                    {o.exclusivityDays ? ` · ${o.exclusivityDays} gün münhasırlık` : ""}
+                    {o.campaign.brandName} · {fmtDate(o.campaign.startsAt, tz)} – {fmtDate(o.campaign.endsAt, tz)} · {o.deliverables.length}{" "}{tt("iş")}{o.exclusivityDays ? ` · ${o.exclusivityDays} gün münhasırlık` : ""}
                   </span>
                   {o.deliverables[0] ? (
-                    <Link href={`/influencer/isler/${o.deliverables[0].id}`} className="text-[13px] text-fg-muted hover:text-fg">
-                      Brief&apos;i gör →
-                    </Link>
+                    <Link href={`/influencer/isler/${o.deliverables[0].id}`} className="text-[13px] text-fg-muted hover:text-fg">{tt("Brief'i gör →")}</Link>
                   ) : null}
                 </div>
                 <ContractDecision assignmentId={o.id} />
@@ -87,19 +84,19 @@ export default async function InfluencerHomePage() {
       ) : null}
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Bu hafta</CardTitle>
+        <CardTitle>{tt("Bu hafta")}</CardTitle>
         <div className="md:hidden">
           <WeekAgenda days={week.days} cards={weekCards} today={week.today} />
         </div>
         <div className="hidden md:block">
-          <WeekCalendar days={week.days} rows={rows} today={week.today} emptyText="Bu hafta paylaşımınız yok." />
+          <WeekCalendar days={week.days} rows={rows} today={week.today} emptyText={tt("Bu hafta paylaşımınız yok.")} />
         </div>
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>İşler</CardTitle>
+        <CardTitle>{tt("İşler")}</CardTitle>
         {active.length === 0 ? (
-          <EmptyState message="Kabul ettiğiniz bir iş olduğunda brief ve teslim tarihleri burada listelenir." />
+          <EmptyState message={tt("Kabul ettiğiniz bir iş olduğunda brief ve teslim tarihleri burada listelenir.")} />
         ) : (
           <div className="flex flex-col gap-6">
             {active.map((a) => (
@@ -123,7 +120,7 @@ export default async function InfluencerHomePage() {
                           <span className="text-[13px] tabular-nums text-fg-muted">{fmtDateTime(d.plannedAt, tz)}</span>
                           <StatusDot tone={deliverableTone(d.status, { overdue: late, violation: d.contractViolation })}>
                             {deliverableStatusLabels[d.status]}
-                            {late ? " · gecikti" : ""}
+                            {late ? tt(" · gecikti") : ""}
                           </StatusDot>
                         </Link>
                       </li>

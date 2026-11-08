@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { INFLUENCER_INVITE_LIMITS } from "@infulancer/core/access/invites";
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 /** Influencer, başka influencer'ları davet eder; başvurular ajans onayına düşer. */
 export default async function InfluencerInvitePage() {
+  const tt = await getTT();
   const actor = await requireActor("INFLUENCER");
   const now = new Date();
   const invites = await prisma.invite.findMany({
@@ -22,18 +24,15 @@ export default async function InfluencerInvitePage() {
   });
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Davet et" description="Tanıdığın influencer’ları davet et. Davet linkiyle kayıt olanlar ajans onayından sonra platforma katılır." />
+      <PageHeader title={tt("Davet et")} description={tt("Tanıdığın influencer’ları davet et. Davet linkiyle kayıt olanlar ajans onayından sonra platforma katılır.")} />
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Yeni davet linki</CardTitle>
-        <p className="text-[13px] text-fg-muted">
-          Aynı anda en fazla {INFLUENCER_INVITE_LIMITS.active} aktif davetin olabilir; her link en fazla {INFLUENCER_INVITE_LIMITS.maxUses} kişi tarafından, {INFLUENCER_INVITE_LIMITS.maxDays} gün içinde
-          kullanılabilir.
-        </p>
+        <CardTitle>{tt("Yeni davet linki")}</CardTitle>
+        <p className="text-[13px] text-fg-muted">{tt("Aynı anda en fazla")}{" "}{INFLUENCER_INVITE_LIMITS.active}{" "}{tt("aktif davetin olabilir; her link en fazla")}{" "}{INFLUENCER_INVITE_LIMITS.maxUses}{" "}{tt("kişi tarafından,")}{" "}{INFLUENCER_INVITE_LIMITS.maxDays}{" "}{tt("gün içinde kullanılabilir.")}</p>
         <CreateInviteForm allowBrand={false} appUrl={process.env.APP_URL ?? ""} limits={{ maxUses: INFLUENCER_INVITE_LIMITS.maxUses, maxDays: INFLUENCER_INVITE_LIMITS.maxDays }} />
       </Card>
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Davetlerin</CardTitle>
-        {invites.length === 0 ? <p className="text-sm text-fg-passive">Henüz davet oluşturmadın.</p> : null}
+        <CardTitle>{tt("Davetlerin")}</CardTitle>
+        {invites.length === 0 ? <p className="text-sm text-fg-passive">{tt("Henüz davet oluşturmadın.")}</p> : null}
         <ul className="flex flex-col divide-y divide-border text-sm">
           {invites.map((i) => {
             const active = !i.revokedAt && i.expiresAt > now && i.uses < i.maxUses;
@@ -42,9 +41,8 @@ export default async function InfluencerInvitePage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-mono tracking-widest">{i.code}</span>
                   <span className="text-[13px] text-fg-muted">
-                    {i.uses}/{i.maxUses} kullanım · {fmtDate(i.expiresAt)}’e kadar
-                  </span>
-                  <StatusDot tone={active ? "active" : "passive"}>{active ? "Aktif" : i.revokedAt ? "İptal" : "Kapandı"}</StatusDot>
+                    {i.uses}/{i.maxUses}{" "}{tt("kullanım ·")}{" "}{fmtDate(i.expiresAt)}{tt("’e kadar")}</span>
+                  <StatusDot tone={active ? "active" : "passive"}>{active ? tt("Aktif") : i.revokedAt ? tt("İptal") : tt("Kapandı")}</StatusDot>
                   {active ? (
                     <span className="flex gap-1">
                       <CopyLinkButton link={`${process.env.APP_URL ?? ""}/kayit?kod=${i.code}`} />
@@ -54,7 +52,7 @@ export default async function InfluencerInvitePage() {
                 </div>
                 {i.applications.map((a) => (
                   <span key={a.id} className="text-[13px] text-fg-muted">
-                    {a.user.name}: {a.status === "PENDING" ? "onay bekliyor" : a.status === "APPROVED" ? "katıldı" : "onaylanmadı"}
+                    {a.user.name}: {a.status === "PENDING" ? tt("onay bekliyor") : a.status === "APPROVED" ? tt("katıldı") : tt("onaylanmadı")}
                   </span>
                 ))}
               </li>

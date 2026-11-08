@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useEffect, useRef, useState } from "react";
 import type { LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
@@ -9,6 +10,7 @@ import { cn } from "@/lib/cn";
  * Video yoksa animasyonlu reel görünümü gösterilir.
  */
 export function ReelCard({ video, className, delay = 0 }: { video: LandingVideo; className?: string; delay?: number }) {
+  const tt = useTT();
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
@@ -60,7 +62,7 @@ export function ReelCard({ video, className, delay = 0 }: { video: LandingVideo;
           loop
           playsInline
           preload="metadata"
-          aria-label={`${video.creator} içeriği: ${video.caption}`}
+          aria-label={`${tt(video.creator)} içeriği: ${tt(video.caption)}`}
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
@@ -83,16 +85,16 @@ export function ReelCard({ video, className, delay = 0 }: { video: LandingVideo;
           <span aria-hidden className="h-6 w-6 rounded-full border border-white/50 bg-white/20" />
           {video.handle}
           <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wide">{video.platform}</span>
-          {video.sponsored ? <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-black">Reklam</span> : null}
+          {video.sponsored ? <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-black">{tt("Reklam")}</span> : null}
         </span>
-        <span className="text-[13px] leading-snug text-white/85">{video.caption}</span>
-        <span className="text-[12px] font-semibold tabular-nums">{video.metric}</span>
+        <span className="text-[13px] leading-snug text-white/85">{tt(video.caption)}</span>
+        <span className="text-[12px] font-semibold tabular-nums">{tt(video.metric)}</span>
       </figcaption>
       {video.src ? (
         <button
           type="button"
           onClick={toggle}
-          aria-label={playing ? "Videoyu durdur" : "Videoyu oynat"}
+          aria-label={playing ? tt("Videoyu durdur") : tt("Videoyu oynat")}
           className="absolute top-6 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-standard hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >
           {playing ? (

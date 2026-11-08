@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { CalendarScreen, parsePlatforms } from "@/components/calendar/calendar-screen";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 type SP = { tarih?: string | string[]; gorunum?: string | string[]; platform?: string | string[] };
 /** Marka takvimi: yalnız kendi kampanyalarının paylaşımları (salt okunur). */
 export default async function BrandCalendarPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const sp = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -43,7 +45,7 @@ export default async function BrandCalendarPage({ searchParams }: { searchParams
   const total = rows.reduce((s, r) => s + r.cards.length, 0);
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Takvim" description={`${total} paylaşım. Kampanyalarınızın yayın planı; saatler influencer kitlesinin saat dilimindedir.`} />
+      <PageHeader title={tt("Takvim")} description={`${total} paylaşım. Kampanyalarınızın yayın planı; saatler influencer kitlesinin saat dilimindedir.`} />
       <CalendarScreen basePath="/marka/takvim" per={per} platforms={platforms} rows={rows} />
     </div>
   );

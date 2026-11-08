@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useState } from "react";
 import type { ContentType, Platform } from "@infulancer/core/enums";
 import { contentTypeLabels, platformLabels } from "@infulancer/core/domain/labels";
@@ -48,36 +49,37 @@ function Check({ name, label, defaultChecked, hint }: { name: string; label: str
 }
 
 function AgencyTime({ value, tz }: { value: string; tz: string }) {
+  const tt = useTT();
   const parsed = parseLocalInput(value);
   if (!parsed || tz === AGENCY_TZ) return null;
-  return <span>İstanbul: {fmtDateTime(zonedToUtc(parsed.day, parsed.time, tz), AGENCY_TZ)}</span>;
+  return <span>{tt("İstanbul:")}{" "}{fmtDateTime(zonedToUtc(parsed.day, parsed.time, tz), AGENCY_TZ)}</span>;
 }
 
 /** Platform kuralı ipucu paneli: format, ibare, link yeri, kritik kısıt. */
 export function PlatformRulePanel({ platform, contentType }: { platform: Platform; contentType?: ContentType }) {
+  const tt = useTT();
   const rule = platformRules[platform];
   return (
     <aside className="flex flex-col gap-3 rounded-[8px] border border-border p-4 text-[13px]" aria-label={`${platformLabels[platform]} kuralları`}>
       <p className="flex items-center gap-2 text-sm text-fg">
-        <PlatformIcon platform={platform} size={16} /> {platformLabels[platform]} kuralları
-      </p>
+        <PlatformIcon platform={platform} size={16} /> {platformLabels[platform]}{" "}{tt("kuralları")}</p>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-fg-muted">
-        <dt className="text-fg-passive">Format</dt>
+        <dt className="text-fg-passive">{tt("Format")}</dt>
         <dd>{rule.formatConstraints.join(" · ")}</dd>
-        <dt className="text-fg-passive">İbare</dt>
+        <dt className="text-fg-passive">{tt("İbare")}</dt>
         <dd>{rule.disclosureLabel}</dd>
-        <dt className="text-fg-passive">Link yeri</dt>
+        <dt className="text-fg-passive">{tt("Link yeri")}</dt>
         <dd>{rule.linkPlacement}</dd>
-        <dt className="text-fg-passive">Ana metrik</dt>
+        <dt className="text-fg-passive">{tt("Ana metrik")}</dt>
         <dd>{rule.mainMetrics.join(", ")}</dd>
-        <dt className="text-fg-passive">Kritik</dt>
+        <dt className="text-fg-passive">{tt("Kritik")}</dt>
         <dd className="text-fg">{rule.criticalConstraint}</dd>
       </dl>
       {platform === "INSTAGRAM" && contentType === "STORY" ? (
-        <p className="text-fg">Story: yayından 20 saat sonra hatırlatma gider; ekran görüntülü metrik olmadan iş tamamlanamaz.</p>
+        <p className="text-fg">{tt("Story: yayından 20 saat sonra hatırlatma gider; ekran görüntülü metrik olmadan iş tamamlanamaz.")}</p>
       ) : null}
-      {platform === "TIKTOK" ? <p className="text-fg">TikTok: ham video dosyası arşiv için yüklenmeli (silinme riski).</p> : null}
-      {platform === "YOUTUBE" ? <p className="text-fg">YouTube: metrikler 48–72 saatte oturur; bu süre dolmadan “ulaşılamadı” denmez.</p> : null}
+      {platform === "TIKTOK" ? <p className="text-fg">{tt("TikTok: ham video dosyası arşiv için yüklenmeli (silinme riski).")}</p> : null}
+      {platform === "YOUTUBE" ? <p className="text-fg">{tt("YouTube: metrikler 48–72 saatte oturur; bu süre dolmadan “ulaşılamadı” denmez.")}</p> : null}
     </aside>
   );
 }
@@ -99,6 +101,7 @@ export function DeliverableForm({
   defaults: { hashtags: string[]; mentions: string[]; disclosureRequired: boolean; advertiser?: string };
   deliverable?: DeliverableFormValues;
 }) {
+  const tt = useTT();
   const [platform, setPlatform] = useState<Platform>(deliverable?.platform ?? "INSTAGRAM");
   const [contentType, setContentType] = useState<ContentType>(deliverable?.contentType ?? platformRules[platform].contentTypes[0]!);
   const [planned, setPlanned] = useState(deliverable?.plannedAt ?? "");
@@ -109,14 +112,14 @@ export function DeliverableForm({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
       <ActionForm
         action={saveDeliverable}
-        submitLabel={deliverable ? "İşi güncelle" : "İşi planla"}
+        submitLabel={deliverable ? tt("İşi güncelle") : tt("İşi planla")}
         resetOnSuccess={!deliverable}
-        aria-label="İş planı"
+        aria-label={tt("İş planı")}
       >
         {deliverable ? <input type="hidden" name="id" value={deliverable.id} /> : null}
         <input type="hidden" name="assignmentId" value={assignmentId} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Platform">
+          <Field label={tt("Platform")}>
             {(p) => (
               <Select
                 {...p}
@@ -136,7 +139,7 @@ export function DeliverableForm({
               </Select>
             )}
           </Field>
-          <Field label="İçerik tipi">
+          <Field label={tt("İçerik tipi")}>
             {(p) => (
               <Select {...p} name="contentType" value={contentType} onChange={(e) => setContentType(e.target.value as ContentType)}>
                 {types.map((t) => (
@@ -157,7 +160,7 @@ export function DeliverableForm({
               </div>
             )}
           </Field>
-          <Field label={`Onay son tarihi (${tzLabel})`} hint="Paylaşım zamanından önce olmalı.">
+          <Field label={`Onay son tarihi (${tzLabel})`} hint={tt("Paylaşım zamanından önce olmalı.")}>
             {(p) => (
               <div className="flex flex-col gap-1">
                 <Input {...p} name="approvalDeadline" type="datetime-local" required value={deadline} max={planned || undefined} onChange={(e) => setDeadline(e.target.value)} />
@@ -168,57 +171,55 @@ export function DeliverableForm({
             )}
           </Field>
         </div>
-        <Field label="Caption">{(p) => <Textarea {...p} name="caption" rows={4} defaultValue={deliverable?.caption} />}</Field>
+        <Field label={tt("Caption")}>{(p) => <Textarea {...p} name="caption" rows={4} defaultValue={deliverable?.caption} />}</Field>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Hashtagler" hint="Brief'ten önerildi.">
+          <Field label={tt("Hashtagler")} hint={tt("Brief'ten önerildi.")}>
             {(p) => <Input {...p} name="hashtags" defaultValue={(deliverable?.hashtags ?? defaults.hashtags).join(" ")} />}
           </Field>
-          <Field label="Bahsetmeler" hint="Brief'ten önerildi.">
+          <Field label={tt("Bahsetmeler")} hint={tt("Brief'ten önerildi.")}>
             {(p) => <Input {...p} name="mentions" defaultValue={(deliverable?.mentions ?? defaults.mentions).join(" ")} />}
           </Field>
         </div>
-        <Field label="Hedef bağlantı" hint="UTM parametreleri (kaynak, kampanya, influencer, iş) otomatik eklenir.">
+        <Field label={tt("Hedef bağlantı")} hint={tt("UTM parametreleri (kaynak, kampanya, influencer, iş) otomatik eklenir.")}>
           {(p) => <Input {...p} name="baseLink" type="url" placeholder="https://marka.com/urun" defaultValue={deliverable?.baseLink} />}
         </Field>
         {contentType === "STORY" ? (
           <fieldset className="flex flex-col gap-4 rounded-[8px] border border-border p-4">
-            <legend className="px-1 text-sm text-fg">Story kareleri</legend>
-            <p className="text-[13px] text-fg-muted">
-              md. 23/A story serisinde her kareyi ayrı denetler: her karede ilk unsur olarak “Reklam” veya “Tanıtım” ve reklam verenin adı görünmeli.
-            </p>
+            <legend className="px-1 text-sm text-fg">{tt("Story kareleri")}</legend>
+            <p className="text-[13px] text-fg-muted">{tt("md. 23/A story serisinde her kareyi ayrı denetler: her karede ilk unsur olarak “Reklam” veya “Tanıtım” ve reklam verenin adı görünmeli.")}</p>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[160px_1fr]">
-              <Field label="Kare sayısı">
+              <Field label={tt("Kare sayısı")}>
                 {(p) => <Input {...p} name="frameCount" type="number" min={1} max={30} defaultValue={deliverable?.frameCount ?? 3} />}
               </Field>
-              <Field label="Kare metinleri (her satır bir kare)" hint={`Örn: Reklam | ${defaults.advertiser ?? "Marka"} — ...`}>
+              <Field label={tt("Kare metinleri (her satır bir kare)")} hint={`Örn: Reklam | ${defaults.advertiser ?? "Marka"} — ...`}>
                 {(p) => <Textarea {...p} name="frameTexts" rows={4} defaultValue={(deliverable?.frameTexts ?? []).join("\n")} />}
               </Field>
             </div>
           </fieldset>
         ) : null}
         <fieldset className="flex flex-col gap-3 rounded-[8px] border border-border p-4">
-          <legend className="px-1 text-sm text-fg">Reklam açıklaması (md. 23/A)</legend>
+          <legend className="px-1 text-sm text-fg">{tt("Reklam açıklaması (md. 23/A)")}</legend>
           <Check name="disclosureRequired" label={`Reklam ibaresi zorunlu (${platformRules[platform].disclosureLabel})`} defaultChecked={deliverable?.disclosureRequired ?? defaults.disclosureRequired} />
-          {platform === "INSTAGRAM" ? <Check name="paidPartnershipToggle" label="Instagram “Ücretli ortaklık” etiketi açılacak" defaultChecked={deliverable?.paidPartnershipToggle ?? true} /> : null}
-          {platform === "TIKTOK" ? <Check name="commercialContentToggle" label="TikTok ticari içerik açıklaması açılacak" defaultChecked={deliverable?.commercialContentToggle ?? true} hint="Eksikse 24 saatte düzeltilmezse video For You akışından çıkarılabilir." /> : null}
-          <Check name="hasAudio" label="Sesli anlatım var" defaultChecked={deliverable?.hasAudio} />
-          <Check name="spokenDisclosure" label="Reklamdan önce sözlü açılış yapılacak (“… hakkında reklam/tanıtım içerir”)" defaultChecked={deliverable?.spokenDisclosure} />
+          {platform === "INSTAGRAM" ? <Check name="paidPartnershipToggle" label={tt("Instagram “Ücretli ortaklık” etiketi açılacak")} defaultChecked={deliverable?.paidPartnershipToggle ?? true} /> : null}
+          {platform === "TIKTOK" ? <Check name="commercialContentToggle" label={tt("TikTok ticari içerik açıklaması açılacak")} defaultChecked={deliverable?.commercialContentToggle ?? true} hint={tt("Eksikse 24 saatte düzeltilmezse video For You akışından çıkarılabilir.")} /> : null}
+          <Check name="hasAudio" label={tt("Sesli anlatım var")} defaultChecked={deliverable?.hasAudio} />
+          <Check name="spokenDisclosure" label={tt("Reklamdan önce sözlü açılış yapılacak (“… hakkında reklam/tanıtım içerir”)")} defaultChecked={deliverable?.spokenDisclosure} />
           {contentType === "LIVE" ? <input type="hidden" name="isLive" value="on" /> : null}
         </fieldset>
         <fieldset className="flex flex-col gap-3 rounded-[8px] border border-border p-4">
-          <legend className="px-1 text-sm text-fg">Kullanım hakkı</legend>
-          <p className="text-[13px] text-fg-muted">Süre, mecra ve coğrafya tanımlanmadan kampanya yayına alınamaz (faturayı ve fiyatı değiştirir).</p>
+          <legend className="px-1 text-sm text-fg">{tt("Kullanım hakkı")}</legend>
+          <p className="text-[13px] text-fg-muted">{tt("Süre, mecra ve coğrafya tanımlanmadan kampanya yayına alınamaz (faturayı ve fiyatı değiştirir).")}</p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Field label="Süre (gün)">{(p) => <Input {...p} name="usageRightsDays" type="number" min={0} max={3650} defaultValue={deliverable?.usageRightsDays ?? 365} />}</Field>
-            <Field label="Mecra">
+            <Field label={tt("Süre (gün)")}>{(p) => <Input {...p} name="usageRightsDays" type="number" min={0} max={3650} defaultValue={deliverable?.usageRightsDays ?? 365} />}</Field>
+            <Field label={tt("Mecra")}>
               {(p) => (
                 <Select {...p} name="usageRightsChannel" defaultValue={deliverable?.usageRightsChannel ?? "ORGANIK"}>
-                  <option value="ORGANIK">Yalnız organik</option>
-                  <option value="PAID_DAHIL">Reklam (paid) dahil</option>
+                  <option value="ORGANIK">{tt("Yalnız organik")}</option>
+                  <option value="PAID_DAHIL">{tt("Reklam (paid) dahil")}</option>
                 </Select>
               )}
             </Field>
-            <Field label="Coğrafya (ülke kodları)">{(p) => <Input {...p} name="usageRightsGeo" defaultValue={(deliverable?.usageRightsGeo?.length ? deliverable.usageRightsGeo : ["TR"]).join(" ")} />}</Field>
+            <Field label={tt("Coğrafya (ülke kodları)")}>{(p) => <Input {...p} name="usageRightsGeo" defaultValue={(deliverable?.usageRightsGeo?.length ? deliverable.usageRightsGeo : ["TR"]).join(" ")} />}</Field>
           </div>
         </fieldset>
       </ActionForm>

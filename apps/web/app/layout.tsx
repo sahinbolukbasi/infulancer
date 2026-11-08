@@ -6,6 +6,8 @@ import { CookieBanner } from "@/components/legal/cookie-banner";
 import { BRAND_NAME } from "@/lib/brand";
 import { getPreferences } from "@/lib/i18n/server";
 import { I18nProvider } from "@/lib/i18n/client";
+import { MessagesProvider } from "@/lib/i18n/tt-client";
+import { messagesFor } from "@/lib/i18n/messages";
 
 const geistSans = Geist({ subsets: ["latin", "latin-ext"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-geist-mono" });
@@ -44,8 +46,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <I18nProvider locale={locale} country={region.code} currency={region.currency}>
-          {children}
-          <CookieBanner />
+          <MessagesProvider messages={messagesFor(locale)}>
+            {children}
+            <CookieBanner />
+          </MessagesProvider>
         </I18nProvider>
       </body>
     </html>

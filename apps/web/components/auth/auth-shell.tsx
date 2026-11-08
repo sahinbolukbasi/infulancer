@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { RotatingWord } from "@/components/landing/motion";
@@ -28,6 +29,7 @@ export async function AuthShell({
   wide?: boolean;
   videos: LandingVideo[];
 }) {
+  const tt = await getTT();
   const t = await getT();
   return (
     <div className="relative isolate grid min-h-dvh grid-cols-1 overflow-hidden bg-canvas text-fg lg:grid-cols-[1fr_minmax(0,1.05fr)]">
@@ -86,7 +88,7 @@ export async function AuthShell({
             {children}
           </div>
           {footer ? <div className="text-center text-[13px] text-fg-muted">{footer}</div> : null}
-          <nav aria-label="Yasal" className="flex justify-center gap-5 text-[12px] text-fg-passive">
+          <nav aria-label={tt("Yasal")} className="flex justify-center gap-5 text-[12px] text-fg-passive">
             <Link href="/" className="hover:text-fg">
               {t("legal.home", "Ana sayfa")}
             </Link>

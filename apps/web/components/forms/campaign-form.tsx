@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useState, type ReactNode } from "react";
 import { KPI_KEYS, kpiLabels, type Kpi } from "@infulancer/core/domain/campaign-score";
 import { ActionForm } from "@/components/forms/action-form";
@@ -87,6 +88,7 @@ function Section({ n, title, children }: { n: number; title: string; children: R
 
 /** Kampanya formu: Hedef → Marka ve tarih → Bütçe; KPI ayrıntıları ve kısa ad "Gelişmiş"te. */
 export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { returnTo?: string; defaultBrandId?: string; campaign?: CampaignFormValues; brands: { id: string; name: string }[] }) {
+  const tt = useTT();
   const [rows, setRows] = useState<TargetRow[]>(
     campaign?.targets.map((t) => ({ kpi: t.kpi, target: String(t.target).replace(".", ","), weight: String(t.weight), windowDays: String(t.windowDays) })) ?? GOALS[0]!.rows,
   );
@@ -101,13 +103,13 @@ export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { r
   const days = Math.round((Date.parse(endsAt) - Date.parse(startsAt)) / 86_400_000) + 1;
 
   return (
-    <ActionForm action={saveCampaign} submitLabel={campaign ? "Kaydet" : "Oluştur ve influencer seçimine geç →"} aria-label="Kampanya bilgileri" className="gap-5">
+    <ActionForm action={saveCampaign} submitLabel={campaign ? tt("Kaydet") : tt("Oluştur ve influencer seçimine geç →")} aria-label={tt("Kampanya bilgileri")} className="gap-5">
       {campaign ? <input type="hidden" name="id" value={campaign.id} /> : null}
       {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       <input type="hidden" name="targets" value={JSON.stringify(rows)} />
 
-      <Section n={1} title="Kampanyanın hedefi ne?">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4" role="radiogroup" aria-label="Kampanya hedefi">
+      <Section n={1} title={tt("Kampanyanın hedefi ne?")}>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4" role="radiogroup" aria-label={tt("Kampanya hedefi")}>
           {GOALS.map((g) => (
             <button
               key={g.id}
@@ -129,19 +131,16 @@ export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { r
             </button>
           ))}
         </div>
-        <p className="text-[12px] text-fg-passive">
-          Hedefler: {rows.map((r) => `${kpiLabels[r.kpi]} ${r.target}`).join(" · ")}
+        <p className="text-[12px] text-fg-passive">{tt("Hedefler:")}{" "}{rows.map((r) => `${kpiLabels[r.kpi]} ${r.target}`).join(" · ")}
         </p>
       </Section>
 
-      <Section n={2} title="Marka ve tarih">
+      <Section n={2} title={tt("Marka ve tarih")}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Marka">
+          <Field label={tt("Marka")}>
             {(p) => (
               <Select {...p} name="brandId" required defaultValue={campaign?.brandId ?? defaultBrandId ?? ""}>
-                <option value="" disabled>
-                  Marka seçin
-                </option>
+                <option value="" disabled>{tt("Marka seçin")}</option>
                 {brands.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
@@ -150,9 +149,9 @@ export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { r
               </Select>
             )}
           </Field>
-          <Field label="Kampanya adı">{(p) => <Input {...p} name="name" required defaultValue={campaign?.name} placeholder="Yaz koleksiyonu lansmanı" />}</Field>
-          <Field label="Başlangıç">{(p) => <Input {...p} name="startsAt" type="date" required value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />}</Field>
-          <Field label="Bitiş">{(p) => <Input {...p} name="endsAt" type="date" required value={endsAt} min={startsAt} onChange={(e) => setEndsAt(e.target.value)} />}</Field>
+          <Field label={tt("Kampanya adı")}>{(p) => <Input {...p} name="name" required defaultValue={campaign?.name} placeholder={tt("Yaz koleksiyonu lansmanı")} />}</Field>
+          <Field label={tt("Başlangıç")}>{(p) => <Input {...p} name="startsAt" type="date" required value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />}</Field>
+          <Field label={tt("Bitiş")}>{(p) => <Input {...p} name="endsAt" type="date" required value={endsAt} min={startsAt} onChange={(e) => setEndsAt(e.target.value)} />}</Field>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {DURATIONS.map((d) => (
@@ -160,43 +159,43 @@ export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { r
               {d.label}
             </button>
           ))}
-          <span className="text-[12px] text-fg-passive tabular-nums">{days > 0 ? `${days} gün` : "Bitiş başlangıçtan önce olamaz"}</span>
+          <span className="text-[12px] text-fg-passive tabular-nums">{days > 0 ? `${days} gün` : tt("Bitiş başlangıçtan önce olamaz")}</span>
         </div>
       </Section>
 
-      <Section n={3} title="Bütçe">
+      <Section n={3} title={tt("Bütçe")}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Field label="Influencer bütçesi (TL)" hint="Yalnız ajans görür.">
+          <Field label={tt("Influencer bütçesi (TL)")} hint={tt("Yalnız ajans görür.")}>
             {(p) => <Input {...p} name="budget" required inputMode="decimal" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="450000" />}
           </Field>
-          <Field label="Marka bedeli (TL)" hint="Markanın ödediği tutar.">
+          <Field label={tt("Marka bedeli (TL)")} hint={tt("Markanın ödediği tutar.")}>
             {(p) => <Input {...p} name="brandTotalFee" required inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} placeholder="560000" />}
           </Field>
           <div className="flex flex-col justify-center gap-1 rounded-2xl border border-line p-4">
-            <span className="text-[12px] text-fg-muted">Brüt fark</span>
-            <span className={cn("text-xl font-semibold tabular-nums", margin < 0 ? "text-critical" : "text-neon-lime")}>{fmt(margin)} TL</span>
+            <span className="text-[12px] text-fg-muted">{tt("Brüt fark")}</span>
+            <span className={cn("text-xl font-semibold tabular-nums", margin < 0 ? "text-critical" : "text-neon-lime")}>{fmt(margin)}{" "}{tt("TL")}</span>
             <span className="text-[12px] text-fg-passive tabular-nums">{tl(fee) ? `%${fmt((margin / tl(fee)) * 100)} marj` : "—"}</span>
           </div>
         </div>
       </Section>
 
       <details className="rounded-3xl border border-line px-5 py-4">
-        <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">Gelişmiş: KPI ağırlıkları ve kısa ad</summary>
+        <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">{tt("Gelişmiş: KPI ağırlıkları ve kısa ad")}</summary>
         <div className="mt-4 flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="Kısa ad (UTM)" hint="Boşsa addan üretilir.">
+            <Field label={tt("Kısa ad (UTM)")} hint={tt("Boşsa addan üretilir.")}>
               {(p) => <Input {...p} name="slug" defaultValue={campaign?.slug} pattern="[a-z0-9\-]*" />}
             </Field>
             {campaign ? (
-              <Field label="Durum" hint="Kampanya, içerik kontrolünden sonra kampanya sayfasından yayına alınır.">
+              <Field label={tt("Durum")} hint={tt("Kampanya, içerik kontrolünden sonra kampanya sayfasından yayına alınır.")}>
                 {(p) =>
                   campaign.status === "KAPANDI" ? (
                     <Input {...p} value="Kapandı" disabled readOnly />
                   ) : (
                     <Select {...p} name="status" defaultValue={campaign.status}>
-                      <option value="TASLAK">Taslak</option>
-                      <option value="AKTIF">Aktif</option>
-                      <option value="IPTAL">İptal</option>
+                      <option value="TASLAK">{tt("Taslak")}</option>
+                      <option value="AKTIF">{tt("Aktif")}</option>
+                      <option value="IPTAL">{tt("İptal")}</option>
                     </Select>
                   )
                 }
@@ -206,7 +205,7 @@ export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { r
             )}
           </div>
           <fieldset className="flex flex-col gap-3">
-            <legend className="mb-2 text-label text-fg-muted">Hedefler (ağırlıklı skor)</legend>
+            <legend className="mb-2 text-label text-fg-muted">{tt("Hedefler (ağırlıklı skor)")}</legend>
             {rows.map((row, i) => (
               <div key={i} className="grid grid-cols-2 gap-3 md:grid-cols-[1.4fr_1fr_0.7fr_0.8fr_auto]">
                 <Select aria-label={`Hedef ${i + 1} KPI`} value={row.kpi} onChange={(e) => update(i, { kpi: e.target.value as Kpi })}>
@@ -219,16 +218,12 @@ export function CampaignForm({ campaign, brands, returnTo, defaultBrandId }: { r
                 <Input aria-label={`Hedef ${i + 1} değer`} inputMode="decimal" value={row.target} placeholder={row.kpi === "er" ? "0,045" : "250000"} onChange={(e) => update(i, { target: e.target.value })} required />
                 <Input aria-label={`Hedef ${i + 1} ağırlık`} inputMode="decimal" value={row.weight} onChange={(e) => update(i, { weight: e.target.value })} required />
                 <Input aria-label={`Hedef ${i + 1} pencere (gün)`} type="number" min={1} max={365} value={row.windowDays} onChange={(e) => update(i, { windowDays: e.target.value })} required />
-                <Button variant="ghost" size="md" onClick={() => setRows((r) => r.filter((_, j) => j !== i))} aria-label={`Hedef ${i + 1} sil`}>
-                  Sil
-                </Button>
+                <Button variant="ghost" size="md" onClick={() => setRows((r) => r.filter((_, j) => j !== i))} aria-label={`Hedef ${i + 1} sil`}>{tt("Sil")}</Button>
               </div>
             ))}
             {unused.length > 0 ? (
               <div>
-                <Button variant="secondary" size="sm" onClick={() => setRows((r) => [...r, { kpi: unused[0]!, target: "", weight: "1", windowDays: "30" }])}>
-                  Hedef ekle
-                </Button>
+                <Button variant="secondary" size="sm" onClick={() => setRows((r) => [...r, { kpi: unused[0]!, target: "", weight: "1", windowDays: "30" }])}>{tt("Hedef ekle")}</Button>
               </div>
             ) : null}
           </fieldset>

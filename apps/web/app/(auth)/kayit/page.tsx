@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { checkInvite } from "@infulancer/core/access/invites";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 /** Davetli kayıt: yalnız geçerli bir davet koduyla (özel link /kayit?kod=…). Kayıt sonrası admin onayı beklenir. */
 export default async function SignupPage({ searchParams }: { searchParams: Promise<{ kod?: string }> }) {
+  const tt = await getTT();
   const { kod } = await searchParams;
   const check = kod ? await checkInvite(kod) : null;
   const videos = toVideos(await getLandingContent());
@@ -22,18 +24,15 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
     <AuthShell
       videos={videos}
       wide={ok}
-      title={ok ? "Başvurunuzu tamamlayın" : "Davetli kayıt"}
+      title={ok ? tt("Başvurunuzu tamamlayın") : tt("Davetli kayıt")}
       subtitle={`${BRAND_NAME}’a yalnız davetle katılınır. Başvurunuz ajans tarafından incelenir; onaylanınca panelinize erişebilirsiniz.`}
       footer={
-        <>
-          Hesabınız var mı?{" "}
-          <Link href="/giris" className="text-fg underline-offset-4 hover:underline">
-            Giriş yapın →
-          </Link>
+        <>{tt("Hesabınız var mı?")}{" "}
+          <Link href="/giris" className="text-fg underline-offset-4 hover:underline">{tt("Giriş yapın →")}</Link>
         </>
       }
     >
-      <ol aria-label="Kayıt adımları" className="mb-6 flex items-center gap-2 text-[12px]">
+      <ol aria-label={tt("Kayıt adımları")} className="mb-6 flex items-center gap-2 text-[12px]">
         {steps.map((st, i) => (
           <li key={st} className="flex flex-1 items-center gap-2" aria-current={i === current ? "step" : undefined}>
             <span
@@ -49,16 +48,14 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         ))}
       </ol>
       {!check || !check.ok ? (
-        <form method="get" className="flex flex-col gap-4" aria-label="Davet kodu">
-          <label className="flex flex-col gap-2 text-label text-fg-muted">
-            Davet kodu
-            <input
+        <form method="get" className="flex flex-col gap-4" aria-label={tt("Davet kodu")}>
+          <label className="flex flex-col gap-2 text-label text-fg-muted">{tt("Davet kodu")}<input
               name="kod"
               defaultValue={kod ?? ""}
               required
               autoComplete="off"
               autoFocus
-              placeholder="ABCD1234"
+              placeholder={tt("ABCD1234")}
               className="h-14 rounded-xl border border-line bg-glass-strong px-4 text-center font-mono text-xl tracking-[0.4em] text-fg uppercase placeholder:text-fg-passive focus:border-neon-pink/60 focus:outline-none"
             />
           </label>
@@ -67,21 +64,20 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
               {check.reason}
             </p>
           ) : (
-            <p className="text-[13px] text-fg-passive">Kod, size gönderilen davet bağlantısında yer alır (/kayit?kod=…).</p>
+            <p className="text-[13px] text-fg-passive">{tt("Kod, size gönderilen davet bağlantısında yer alır (/kayit?kod=…).")}</p>
           )}
           <button
             type="submit"
             className="relative inline-flex h-12 items-center justify-center overflow-hidden rounded-xl text-[15px] font-medium text-black transition-transform hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neon-pink"
           >
             <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,#ff2bd6,#9d4dff,#00e5ff,#a3ff12,#ff2bd6)] bg-[length:300%_100%] animate-gradient-x" />
-            <span className="relative">Devam et →</span>
+            <span className="relative">{tt("Devam et →")}</span>
           </button>
         </form>
       ) : (
         <div className="flex flex-col gap-5">
           <p className="rounded-2xl border border-line bg-glass p-4 text-sm text-fg-muted">
-            <span className="text-fg">{check.invite.targetRole === "BRAND" ? "Marka hesabı" : "Influencer hesabı"}</span> davetiyle kayıt oluyorsunuz
-            {check.invite.inviterName ? ` · davet eden: ${check.invite.inviterName}` : ""}.
+            <span className="text-fg">{check.invite.targetRole === "BRAND" ? tt("Marka hesabı") : tt("Influencer hesabı")}</span>{" "}{tt("davetiyle kayıt oluyorsunuz")}{check.invite.inviterName ? ` · davet eden: ${check.invite.inviterName}` : ""}.
           </p>
           <SignupForm code={check.invite.code} kind={check.invite.targetRole === "BRAND" ? "BRAND" : "INFLUENCER"} categories={await categoryTree()} />
         </div>

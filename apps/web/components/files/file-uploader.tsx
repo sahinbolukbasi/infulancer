@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AssetKind } from "@infulancer/core/enums";
@@ -55,6 +56,7 @@ export function FileUploader({
   multiple?: boolean;
   onUploaded?: (asset: Uploaded) => void;
 }) {
+  const tt = useTT();
   const router = useRouter();
   const kindId = useId();
   const [kind, setKind] = useState<AssetKind>(kinds[0]!.value);
@@ -108,9 +110,7 @@ export function FileUploader({
     <div className="flex flex-col gap-3">
       {kinds.length > 1 ? (
         <div className="flex flex-col gap-2">
-          <label htmlFor={kindId} className="text-label text-fg-muted">
-            Dosya türü
-          </label>
+          <label htmlFor={kindId} className="text-label text-fg-muted">{tt("Dosya türü")}</label>
           <Select id={kindId} value={kind} onChange={(e) => setKind(e.target.value as AssetKind)} disabled={busy}>
             {kinds.map((k) => (
               <option key={k.value} value={k.value}>
@@ -122,7 +122,7 @@ export function FileUploader({
       ) : null}
       <FileDropzone
         label={label}
-        hint={hint ?? "50 MB üzeri dosyalar 10 MB'lık parçalar halinde yüklenir."}
+        hint={hint ?? tt("50 MB üzeri dosyalar 10 MB'lık parçalar halinde yüklenir.")}
         accept={accept}
         disabled={busy}
         multiple={multiple}

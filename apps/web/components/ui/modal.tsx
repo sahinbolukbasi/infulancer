@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { XIcon } from "@/components/icons";
 
@@ -20,6 +21,7 @@ export function Modal({
   description?: string;
   children: ReactNode;
 }) {
+  const tt = useTT();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -62,7 +64,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={tt("Kapat")}
             className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
           >
             <XIcon size={18} />

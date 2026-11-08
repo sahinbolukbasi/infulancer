@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { CountUp, Reveal, RevealRoot, Spotlight, Tilt } from "@/components/landing/motion";
@@ -69,7 +70,8 @@ function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: ReactN
 }
 
 /** Özellik kutularındaki küçük canlı görseller */
-function FeatureVisual({ i }: { i: number }) {
+async function FeatureVisual({ i }: { i: number }) {
+  const tt = await getTT();
   if (i === 0)
     return (
       <div aria-hidden className="flex h-24 items-end gap-2">
@@ -94,7 +96,7 @@ function FeatureVisual({ i }: { i: number }) {
             <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400/20 animate-pop" style={{ animationDelay: `${k * 400}ms` }}>
               ✓
             </span>
-            {t}
+            {tt(t)}
           </li>
         ))}
       </ul>
@@ -102,9 +104,8 @@ function FeatureVisual({ i }: { i: number }) {
   if (i === 3)
     return (
       <div aria-hidden className="flex h-24 flex-col justify-center gap-2 text-[12px]">
-        <span className="w-fit rounded-2xl rounded-bl-sm bg-surface-hover px-3 py-1.5">Kampanya kodu nedir?</span>
-        <span className="ml-auto w-fit rounded-2xl rounded-br-sm bg-violet-500/30 px-3 py-1.5">
-          Yazıyor<span className="animate-blink">…</span>
+        <span className="w-fit rounded-2xl rounded-bl-sm bg-surface-hover px-3 py-1.5">{tt("Kampanya kodu nedir?")}</span>
+        <span className="ml-auto w-fit rounded-2xl rounded-br-sm bg-violet-500/30 px-3 py-1.5">{tt("Yazıyor")}<span className="animate-blink">…</span>
         </span>
       </div>
     );
@@ -204,7 +205,8 @@ export type LandingData = {
   references: (LandingReference & { logo?: string })[];
   creators: { handle: string; niche: string; followers: string; tone: string; platform: string; city: string; engagement: string; brand: string }[];
 };
-export function LandingPage({ stats, data }: { stats: LandingStats; data: LandingData }) {
+export async function LandingPage({ stats, data }: { stats: LandingStats; data: LandingData }) {
+  const tt = await getTT();
   const vid = (i: number) => data.videos[i % data.videos.length]!;
   const statItems = [
     { label: "Influencer", value: stats.influencers },
@@ -217,9 +219,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
     <RevealRoot className="min-h-screen overflow-x-clip bg-canvas text-fg">
       {/* İlk boyamadan önce: kaydırma animasyonları JS varken etkin (JS yoksa içerik görünür kalır). */}
       <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js-reveal')" }} />
-      <a href="#icerik" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded focus:bg-fg focus:px-3 focus:py-2 focus:text-bg">
-        İçeriğe geç
-      </a>
+      <a href="#icerik" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded focus:bg-fg focus:px-3 focus:py-2 focus:text-bg">{tt("İçeriğe geç")}</a>
 
       {/* Üst menü */}
       <header className="fixed inset-x-0 top-4 z-50 px-4">
@@ -228,7 +228,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
             <NordvowMark size={24} />
             {BRAND_NAME}
           </Link>
-          <nav aria-label="Tanıtım" className="hidden gap-7 text-sm text-fg-muted md:flex">
+          <nav aria-label={tt("Tanıtım")} className="hidden gap-7 text-sm text-fg-muted md:flex">
             {[
               ["#kimler-icin", "Kimler için"],
               ["#ureticiler", "Üreticiler"],
@@ -237,15 +237,13 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
               ["#referanslar", "Referanslar"],
             ].map(([h, l]) => (
               <a key={h} href={h} className="transition-standard hover:text-fg">
-                {l}
+                {tt(l ?? "")}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Link href="/giris" className="inline-flex h-9 items-center rounded-full bg-fg px-4 text-sm font-medium text-bg transition-transform hover:scale-105">
-              Giriş yap
-            </Link>
+            <Link href="/giris" className="inline-flex h-9 items-center rounded-full bg-fg px-4 text-sm font-medium text-bg transition-transform hover:scale-105">{tt("Giriş yap")}</Link>
           </div>
         </div>
       </header>
@@ -265,8 +263,8 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
               <Reveal delay={320}>
                 <dl className="mt-2 grid grid-cols-2 gap-6 border-t border-line pt-6 sm:grid-cols-4">
                   {statItems.map((s) => (
-                    <div key={s.label} className="flex flex-col gap-1">
-                      <dt className="text-[12px] text-fg-passive">{s.label}</dt>
+                    <div key={tt(s.label)} className="flex flex-col gap-1">
+                      <dt className="text-[12px] text-fg-passive">{tt(s.label)}</dt>
                       <dd className="text-[28px] font-semibold">
                         <CountUp value={s.value} />
                       </dd>
@@ -293,21 +291,15 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                   <ReelCard video={vid(2)} delay={2400} />
                 </Tilt>
               </div>
-              <FloatChip className="top-6 -left-2" dot="bg-fuchsia-400">
-                +12,4B beğeni
-              </FloatChip>
-              <FloatChip className="top-[46%] -right-4" dot="bg-emerald-400" delay={900}>
-                Teklif kabul edildi
-              </FloatChip>
-              <FloatChip className="bottom-10 left-6" dot="bg-sky-400" delay={1800}>
-                Ödeme gönderildi · 45.000 TL
-              </FloatChip>
+              <FloatChip className="top-6 -left-2" dot="bg-fuchsia-400">{tt("+12,4B beğeni")}</FloatChip>
+              <FloatChip className="top-[46%] -right-4" dot="bg-emerald-400" delay={900}>{tt("Teklif kabul edildi")}</FloatChip>
+              <FloatChip className="bottom-10 left-6" dot="bg-sky-400" delay={1800}>{tt("Ödeme gönderildi · 45.000 TL")}</FloatChip>
             </Reveal>
           </div>
         </Spotlight>
 
         {/* Kayan içerik üreticileri */}
-        <section aria-label="Platformdaki içerik üreticileri" className="relative border-y border-line py-8 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
+        <section aria-label={tt("Platformdaki içerik üreticileri")} className="relative border-y border-line py-8 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
           {[false, true].map((rev) => (
             <div key={String(rev)} className={cn("flex w-max gap-4", rev ? "mt-4 animate-marquee-reverse" : "animate-marquee")} aria-hidden={rev || undefined}>
               {creators.map((c, k) => (
@@ -316,8 +308,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                   <span className="flex flex-col leading-tight">
                     <span className="text-sm text-fg">{c.handle}</span>
                     <span className="text-[11px] text-fg-passive">
-                      {c.niche} · {c.followers} takipçi
-                    </span>
+                      {tt(c.niche)} · {c.followers}{" "}{tt("takipçi")}</span>
                   </span>
                 </div>
               ))}
@@ -327,26 +318,26 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
         {/* Kimler için: ajans / marka / içerik üreticisi */}
         <section id="kimler-icin" className="mx-auto max-w-6xl px-6 pt-28">
-          <SectionTitle eyebrow="Kimler için" title="Üç taraf, tek platform" text="Her rol yalnız kendi ihtiyacını görür; veriler aynı kaynaktan gelir." />
+          <SectionTitle eyebrow={tt("Kimler için")} title={tt("Üç taraf, tek platform")} text={tt("Her rol yalnız kendi ihtiyacını görür; veriler aynı kaynaktan gelir.")} />
           <ul className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             {SEGMENTS.map((g, i) => (
-              <Reveal as="li" key={g.title} delay={i * 120}>
+              <Reveal as="li" key={tt(g.title)} delay={i * 120}>
                 <Tilt max={6} className="h-full">
                   <div className={cn("group relative flex h-full flex-col gap-5 overflow-hidden rounded-3xl border border-line bg-glass p-7 transition-all duration-300 hover:border-transparent", g.glow)}>
                     <div aria-hidden className={cn("absolute -top-24 -right-24 h-56 w-56 rounded-full opacity-40 blur-3xl transition-opacity duration-500 group-hover:opacity-80", g.blob)} />
-                    <span className={cn("relative w-fit rounded-full px-3 py-1 text-[12px] font-semibold text-black", g.badge)}>{g.badgeText}</span>
-                    <h3 className="relative text-[26px] leading-tight font-semibold tracking-tight">{g.title}</h3>
-                    <p className="relative text-sm leading-relaxed text-fg-muted">{g.text}</p>
+                    <span className={cn("relative w-fit rounded-full px-3 py-1 text-[12px] font-semibold text-black", g.badge)}>{tt(g.badgeText)}</span>
+                    <h3 className="relative text-[26px] leading-tight font-semibold tracking-tight">{tt(g.title)}</h3>
+                    <p className="relative text-sm leading-relaxed text-fg-muted">{tt(g.text)}</p>
                     <ul className="relative flex flex-col gap-2 text-[14px]">
                       {g.items.map((it) => (
                         <li key={it} className="flex items-start gap-2">
                           <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", g.dot)} />
-                          {it}
+                          {tt(it)}
                         </li>
                       ))}
                     </ul>
                     <Link href={g.href} className="relative mt-auto inline-flex w-fit items-center gap-1 text-sm font-medium text-fg underline-offset-4 hover:underline">
-                      {g.cta} →
+                      {tt(g.cta)} →
                     </Link>
                   </div>
                 </Tilt>
@@ -357,7 +348,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
         {/* İçerik üreticileri */}
         <section id="ureticiler" className="mx-auto max-w-6xl px-6 pt-28">
-          <SectionTitle eyebrow="Platformdaki içerik üreticileri" title="Markana uygun profili keşfet" text="Takipçi, etkileşim, şehir ve kategoriye göre karşılaştır; birlikte çalıştığı markaları gör." />
+          <SectionTitle eyebrow={tt("Platformdaki içerik üreticileri")} title={tt("Markana uygun profili keşfet")} text={tt("Takipçi, etkileşim, şehir ve kategoriye göre karşılaştır; birlikte çalıştığı markaları gör.")} />
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {data.creators.slice(0, 8).map((c, i) => (
               <Reveal as="li" key={`${c.handle}-${i}`} delay={(i % 4) * 90}>
@@ -376,18 +367,18 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                         </span>
                       </span>
                     </div>
-                    <span className="w-fit rounded-full border border-line px-2.5 py-0.5 text-[11px] text-fg-muted">{c.niche}</span>
+                    <span className="w-fit rounded-full border border-line px-2.5 py-0.5 text-[11px] text-fg-muted">{tt(c.niche)}</span>
                     <dl className="mt-auto grid grid-cols-2 gap-2 border-t border-line pt-3">
                       <div>
-                        <dt className="text-[11px] text-fg-passive">Takipçi</dt>
+                        <dt className="text-[11px] text-fg-passive">{tt("Takipçi")}</dt>
                         <dd className="text-lg font-semibold tabular-nums">{c.followers}</dd>
                       </div>
                       <div>
-                        <dt className="text-[11px] text-fg-passive">Etkileşim</dt>
+                        <dt className="text-[11px] text-fg-passive">{tt("Etkileşim")}</dt>
                         <dd className="text-gradient text-lg font-semibold tabular-nums">{c.engagement || "—"}</dd>
                       </div>
                     </dl>
-                    {c.brand ? <p className="text-[12px] text-fg-muted">Çalıştığı marka: {c.brand}</p> : null}
+                    {c.brand ? <p className="text-[12px] text-fg-muted">{tt("Çalıştığı marka:")}{" "}{c.brand}</p> : null}
                   </div>
                 </Tilt>
               </Reveal>
@@ -398,13 +389,12 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         {/* Video vitrini */}
         <section id="icerikler" className="relative mx-auto max-w-6xl px-6 py-28">
           <SectionTitle
-            eyebrow="Kampanyalardan içerikler"
+            eyebrow={tt("Kampanyalardan içerikler")}
             title={
-              <>
-                Planlandı, onaylandı, <span className="text-gradient">ölçüldü.</span>
+              <>{tt("Planlandı, onaylandı,")}{" "}<span className="text-gradient">{tt("ölçüldü.")}</span>
               </>
             }
-            text="Reels, TikTok ve YouTube içerikleri tek akışta: brief, taslak onayı, reklam açıklaması kontrolü ve yayın sonrası metrikler."
+            text={tt("Reels, TikTok ve YouTube içerikleri tek akışta: brief, taslak onayı, reklam açıklaması kontrolü ve yayın sonrası metrikler.")}
           />
           <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
             {data.videos.map((v, i) => (
@@ -421,14 +411,14 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         <section id="nasil" className="relative py-28">
           <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_60%)]" />
           <div className="mx-auto max-w-6xl px-6">
-            <SectionTitle eyebrow="Nasıl çalışır · kaydırdıkça demo ilerler" title="Brief'ten sonuca bir kampanya" text="Bir kampanyanın panelde nasıl ilerlediğini adım adım görün." />
+            <SectionTitle eyebrow={tt("Nasıl çalışır · kaydırdıkça demo ilerler")} title={tt("Brief'ten sonuca bir kampanya")} text={tt("Bir kampanyanın panelde nasıl ilerlediğini adım adım görün.")} />
             <ScrollDemo />
           </div>
         </section>
 
         {/* Entegrasyonlar */}
         <section id="entegrasyonlar" className="mx-auto max-w-6xl px-6 py-28">
-          <SectionTitle eyebrow="Entegrasyonlar" title="Kullandığın kanallarla çalışır" text="Veriler resmî API'lerden okunur; ekran görüntüsü toplamaya gerek kalmaz." />
+          <SectionTitle eyebrow={tt("Entegrasyonlar")} title={tt("Kullandığın kanallarla çalışır")} text={tt("Veriler resmî API'lerden okunur; ekran görüntüsü toplamaya gerek kalmaz.")} />
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {INTEGRATIONS.map((it, i) => (
               <Reveal as="li" key={it.name} delay={(i % 4) * 80}>
@@ -445,11 +435,11 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                       </span>
                     )}
                     <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide", it.soon ? "border border-neon-amber/50 text-neon-amber" : "bg-surface-hover text-fg-muted")}>
-                      {it.soon ? "Erken erişim" : it.kind}
+                      {it.soon ? tt("Erken erişim") : it.kind}
                     </span>
                   </div>
-                  <h3 className="font-medium">{it.name}</h3>
-                  <p className="text-[13px] leading-relaxed text-fg-muted">{it.text}</p>
+                  <h3 className="font-medium">{tt(it.name)}</h3>
+                  <p className="text-[13px] leading-relaxed text-fg-muted">{tt(it.text)}</p>
                 </div>
               </Reveal>
             ))}
@@ -458,10 +448,10 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
         {/* Özellikler (bento) */}
         <section id="ozellikler" className="mx-auto max-w-6xl px-6 py-28">
-          <SectionTitle eyebrow="Özellikler" title="Tek panelde her şey" text="Ajans, marka ve içerik üreticisi aynı veriye bakar; kimse e-posta ve Excel arasında kaybolmaz." />
+          <SectionTitle eyebrow={tt("Özellikler")} title={tt("Tek panelde her şey")} text={tt("Ajans, marka ve içerik üreticisi aynı veriye bakar; kimse e-posta ve Excel arasında kaybolmaz.")} />
           <ul className="grid grid-cols-1 gap-4 md:grid-cols-6">
             {LANDING_FEATURES.map((f, i) => (
-              <Reveal as="li" key={f.title} delay={(i % 3) * 100} className={BENTO[i]}>
+              <Reveal as="li" key={tt(f.title)} delay={(i % 3) * 100} className={BENTO[i]}>
                 <Tilt max={4} className="h-full">
                   <div
                     className={cn(
@@ -475,8 +465,8 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                       style={{ background: "radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.08), transparent 40%)" }}
                     />
                     <FeatureVisual i={i} />
-                    <h3 className="text-lg font-medium">{f.title}</h3>
-                    <p className="text-sm leading-relaxed text-fg-muted">{f.text}</p>
+                    <h3 className="text-lg font-medium">{tt(f.title)}</h3>
+                    <p className="text-sm leading-relaxed text-fg-muted">{tt(f.text)}</p>
                   </div>
                 </Tilt>
               </Reveal>
@@ -489,7 +479,7 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
         <section id="referanslar" className="relative py-28">
           <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom,rgba(255,43,214,0.16),transparent_60%)]" />
           <div className="mx-auto max-w-6xl px-6">
-            <SectionTitle eyebrow="Referanslar" title="Markalar sonuçla konuşuyor" />
+            <SectionTitle eyebrow={tt("Referanslar")} title={tt("Markalar sonuçla konuşuyor")} />
             <ul className="grid grid-cols-1 gap-5 lg:grid-cols-3">
               {data.references.map((r, i) => (
                 <Reveal as="li" key={`${r.brand}-${i}`} delay={i * 140}>
@@ -507,19 +497,19 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
                             <span aria-hidden className={cn("h-10 w-10 rounded-xl bg-gradient-to-br", ["from-rose-400 to-fuchsia-600", "from-sky-400 to-indigo-600", "from-amber-400 to-red-600"][i % 3])} />
                           )}
                           <div className="flex flex-col">
-                            <span className="font-medium">{r.brand}</span>
-                            <span className="text-[12px] text-fg-passive">{r.sector}</span>
+                            <span className="font-medium">{tt(r.brand)}</span>
+                            <span className="text-[12px] text-fg-passive">{tt(r.sector)}</span>
                           </div>
                         </div>
-                        {r.sample ? <span className="rounded-full border border-line-strong px-2 py-0.5 text-[11px] text-fg-muted">Örnek çalışma</span> : null}
+                        {r.sample ? <span className="rounded-full border border-line-strong px-2 py-0.5 text-[11px] text-fg-muted">{tt("Örnek çalışma")}</span> : null}
                       </div>
-                      <blockquote className="relative text-[16px] leading-relaxed">{r.quote}</blockquote>
-                      <figcaption className="text-[13px] text-fg-muted">— {r.person}</figcaption>
+                      <blockquote className="relative text-[16px] leading-relaxed">{tt(r.quote)}</blockquote>
+                      <figcaption className="text-[13px] text-fg-muted">— {tt(r.person)}</figcaption>
                       <dl className="mt-auto grid grid-cols-3 gap-3 border-t border-line pt-5">
                         {r.results.map((x) => (
-                          <div key={x.label} className="flex flex-col gap-1">
-                            <dt className="text-[11px] text-fg-passive">{x.label}</dt>
-                            <dd className="text-gradient text-xl font-semibold tabular-nums">{x.value}</dd>
+                          <div key={tt(x.label)} className="flex flex-col gap-1">
+                            <dt className="text-[11px] text-fg-passive">{tt(x.label)}</dt>
+                            <dd className="text-gradient text-xl font-semibold tabular-nums">{tt(String(x.value))}</dd>
                           </div>
                         ))}
                       </dl>
@@ -534,28 +524,28 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
         {/* Karşılaştırma */}
         <section className="mx-auto max-w-5xl px-6 py-28">
-          <SectionTitle eyebrow={`Neden ${BRAND_NAME}`} title="Kampanyanın her adımı tek yerde" />
+          <SectionTitle eyebrow={`Neden ${BRAND_NAME}`} title={tt("Kampanyanın her adımı tek yerde")} />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Reveal className="rounded-3xl border border-line bg-glass p-7">
-              <h3 className="mb-4 text-sm tracking-wide text-fg-passive uppercase">Platform olmadan</h3>
+              <h3 className="mb-4 text-sm tracking-wide text-fg-passive uppercase">{tt("Platform olmadan")}</h3>
               <ul className="flex flex-col gap-3 text-fg-muted">
                 {["Hashtag'lerde tek tek profil aramak", "Excel tabloları ve e-posta zincirleri", "Ekran görüntüsüyle toplanan sonuçlar", "Elle hesaplanan hakediş ve ödemeler"].map((t) => (
                   <li key={t} className="flex items-start gap-3">
                     <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-glass text-[11px] text-fg-passive">✕</span>
-                    {t}
+                    {tt(t)}
                   </li>
                 ))}
               </ul>
             </Reveal>
             <Reveal delay={120} className="relative overflow-hidden rounded-3xl border border-neon-pink/30 bg-gradient-to-br from-fuchsia-500/15 via-indigo-500/10 to-transparent p-7">
-              <h3 className="mb-4 text-sm tracking-wide text-fuchsia-200 uppercase">{BRAND_NAME} ile</h3>
+              <h3 className="mb-4 text-sm tracking-wide text-fuchsia-200 uppercase">{BRAND_NAME}{" "}{tt("ile")}</h3>
               <ul className="flex flex-col gap-3">
                 {["Filtreyle doğru profil, tek tıkla teklif", "Brief, onay ve takvim tek panelde", "Metrikler resmî API'lerden otomatik", "Hakediş, ödeme listesi ve marka raporu hazır"].map((t, i) => (
                   <li key={t} className="flex items-start gap-3">
                     <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-[11px] text-emerald-300 animate-pop" style={{ animationDelay: `${i * 300}ms` }}>
                       ✓
                     </span>
-                    {t}
+                    {tt(t)}
                   </li>
                 ))}
               </ul>
@@ -565,18 +555,18 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
 
         {/* SSS */}
         <section id="sss" className="mx-auto max-w-3xl px-6 py-28">
-          <SectionTitle eyebrow="Sık sorulan sorular" title="Merak edilenler" />
+          <SectionTitle eyebrow={tt("Sık sorulan sorular")} title={tt("Merak edilenler")} />
           <div className="flex flex-col gap-3">
             {FAQ.map((f, i) => (
-              <Reveal key={f.q} delay={i * 60}>
+              <Reveal key={tt(f.q)} delay={i * 60}>
                 <details className="group rounded-2xl border border-line bg-glass px-5 py-4 transition-colors open:border-neon-violet/50 hover:border-line-strong">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
-                    {f.q}
+                    {tt(f.q)}
                     <span aria-hidden className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line text-fg-muted transition-transform duration-300 group-open:rotate-45 group-open:border-neon-pink group-open:text-neon-pink">
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-fg-muted">{f.a}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-fg-muted">{tt(f.a)}</p>
                 </details>
               </Reveal>
             ))}
@@ -589,20 +579,18 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
             <div className="relative isolate overflow-hidden rounded-[32px] border border-line px-8 py-16 text-center sm:px-16">
               <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,#86198f,#4338ca,#0e7490,#047857,#86198f)] bg-[length:300%_300%] opacity-60 animate-gradient-x" />
               <div aria-hidden className="bg-grid absolute inset-0 -z-10 opacity-40" />
-              <h2 className="mx-auto max-w-2xl text-[34px] leading-tight font-semibold tracking-tight sm:text-[48px]">Bir sonraki kampanyanız burada başlıyor.</h2>
-              <p className="mx-auto mt-4 max-w-xl text-fg-muted">Üyelik davetle açılır. Davet kodunuz varsa kayıt olun, hesabınız varsa giriş yapın.</p>
+              <h2 className="mx-auto max-w-2xl text-[34px] leading-tight font-semibold tracking-tight sm:text-[48px]">{tt("Bir sonraki kampanyanız burada başlıyor.")}</h2>
+              <p className="mx-auto mt-4 max-w-xl text-fg-muted">{tt("Üyelik davetle açılır. Davet kodunuz varsa kayıt olun, hesabınız varsa giriş yapın.")}</p>
               <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 text-left md:grid-cols-2">
                 <div className="flex flex-col gap-3 rounded-2xl border border-line-strong bg-glass-strong p-6 backdrop-blur">
-                  <span className="text-[12px] tracking-wide text-fg-passive uppercase">Markalar ve ajanslar</span>
-                  <p className="text-lg font-medium">Kampanyanızı panelden yönetin</p>
-                  <GlowButton href="/giris" className="mt-auto w-full">
-                    Giriş yap
-                  </GlowButton>
+                  <span className="text-[12px] tracking-wide text-fg-passive uppercase">{tt("Markalar ve ajanslar")}</span>
+                  <p className="text-lg font-medium">{tt("Kampanyanızı panelden yönetin")}</p>
+                  <GlowButton href="/giris" className="mt-auto w-full">{tt("Giriş yap")}</GlowButton>
                 </div>
                 <div className="flex flex-col gap-3 rounded-2xl border border-line-strong bg-glass-strong p-6 backdrop-blur">
-                  <span className="text-[12px] tracking-wide text-fg-passive uppercase">İçerik üreticileri</span>
-                  <p className="text-lg font-medium">Davet kodunla katıl, işlerini ve ödemelerini takip et</p>
-                  <GhostButton href="/kayit">Davet koduyla kayıt ol</GhostButton>
+                  <span className="text-[12px] tracking-wide text-fg-passive uppercase">{tt("İçerik üreticileri")}</span>
+                  <p className="text-lg font-medium">{tt("Davet kodunla katıl, işlerini ve ödemelerini takip et")}</p>
+                  <GhostButton href="/kayit">{tt("Davet koduyla kayıt ol")}</GhostButton>
                 </div>
               </div>
             </div>
@@ -613,22 +601,12 @@ export function LandingPage({ stats, data }: { stats: LandingStats; data: Landin
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-[13px] text-fg-passive">
           <span>© {new Date().getFullYear()} {BRAND_NAME}</span>
-          <nav aria-label="Yasal" className="flex gap-6">
-            <Link href="/gizlilik" className="hover:text-fg">
-              Gizlilik
-            </Link>
-            <Link href="/kullanim-kosullari" className="hover:text-fg">
-              Kullanım koşulları
-            </Link>
-            <Link href="/kvkk" className="hover:text-fg">
-              KVKK
-            </Link>
-            <Link href="/cerez-politikasi" className="hover:text-fg">
-              Çerezler
-            </Link>
-            <Link href="/giris" className="hover:text-fg">
-              Giriş
-            </Link>
+          <nav aria-label={tt("Yasal")} className="flex gap-6">
+            <Link href="/gizlilik" className="hover:text-fg">{tt("Gizlilik")}</Link>
+            <Link href="/kullanim-kosullari" className="hover:text-fg">{tt("Kullanım koşulları")}</Link>
+            <Link href="/kvkk" className="hover:text-fg">{tt("KVKK")}</Link>
+            <Link href="/cerez-politikasi" className="hover:text-fg">{tt("Çerezler")}</Link>
+            <Link href="/giris" className="hover:text-fg">{tt("Giriş")}</Link>
           </nav>
         </div>
       </footer>

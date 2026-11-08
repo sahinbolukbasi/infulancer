@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useMemo, useState } from "react";
 import type { CategoryNode } from "@infulancer/core/domain/categories";
 import { cn } from "@/lib/cn";
@@ -9,6 +10,7 @@ const MAX = 8;
  * yıldıza basınca ana kategori olur. Form alanları: categoryIds (çoklu), primaryCategoryId.
  */
 export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree: CategoryNode[]; selected?: string[]; primaryId?: string | null }) {
+  const tt = useTT();
   const [ids, setIds] = useState<string[]>(selected);
   const [primary, setPrimary] = useState<string | null>(primaryId ?? selected[0] ?? null);
   const [openRoot, setOpenRoot] = useState<string | null>(() => tree.find((r) => r.id === selected[0] || r.children.some((c) => selected.includes(c.id)))?.id ?? tree[0]?.id ?? null);
@@ -34,9 +36,7 @@ export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree
 
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="mb-1 flex w-full items-center justify-between text-sm text-fg">
-        Kategoriler
-        <span className="text-[12px] text-fg-passive tabular-nums">
+      <legend className="mb-1 flex w-full items-center justify-between text-sm text-fg">{tt("Kategoriler")}<span className="text-[12px] text-fg-passive tabular-nums">
           {ids.length}/{MAX}
         </span>
       </legend>
@@ -46,8 +46,8 @@ export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree
       <input type="hidden" name="primaryCategoryId" value={primary ?? ""} />
 
       {/* Seçilenler */}
-      <div className="flex min-h-9 flex-wrap items-center gap-2" aria-label="Seçili kategoriler" aria-live="polite">
-        {ids.length === 0 ? <span className="text-[13px] text-critical">En az bir kategori seçin.</span> : null}
+      <div className="flex min-h-9 flex-wrap items-center gap-2" aria-label={tt("Seçili kategoriler")} aria-live="polite">
+        {ids.length === 0 ? <span className="text-[13px] text-critical">{tt("En az bir kategori seçin.")}</span> : null}
         {ids.map((id) => {
           const c = byId.get(id);
           const isPrimary = primary === id;
@@ -70,14 +70,14 @@ export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Kategori ara (ör. makyaj, oyun)"
-        aria-label="Kategori ara"
+        placeholder={tt("Kategori ara (ör. makyaj, oyun)")}
+        aria-label={tt("Kategori ara")}
         className="h-10 rounded-xl border border-line bg-bg px-3 text-sm text-fg placeholder:text-fg-passive focus:border-neon-pink focus:outline-none"
       />
 
       {needle ? (
         <div className="flex flex-wrap gap-2">
-          {hits.length === 0 ? <span className="text-[13px] text-fg-passive">Eşleşen kategori yok.</span> : null}
+          {hits.length === 0 ? <span className="text-[13px] text-fg-passive">{tt("Eşleşen kategori yok.")}</span> : null}
           {hits.map((c) => (
             <button key={c.id} type="button" onClick={() => toggle(c.id)} aria-pressed={ids.includes(c.id)} className={chip(ids.includes(c.id))}>
               {c.parent ? <span className="opacity-60">{c.parent} ›</span> : null}
@@ -88,7 +88,7 @@ export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree
       ) : (
         <>
           {/* Ana kategoriler */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" role="tablist" aria-label="Ana kategoriler">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" role="tablist" aria-label={tt("Ana kategoriler")}>
             {tree.map((r) => {
               const n = countIn(r);
               const active = r.id === openRoot;
@@ -113,8 +113,7 @@ export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree
           {/* Seçili ana kategorinin altları */}
           {root ? (
             <div className="flex flex-wrap gap-2 rounded-2xl border border-line bg-glass p-3" role="tabpanel" aria-label={`${root.name} alt kategorileri`}>
-              <button type="button" onClick={() => toggle(root.id)} aria-pressed={ids.includes(root.id)} className={chip(ids.includes(root.id))}>
-                Tümü: {root.name}
+              <button type="button" onClick={() => toggle(root.id)} aria-pressed={ids.includes(root.id)} className={chip(ids.includes(root.id))}>{tt("Tümü:")}{" "}{root.name}
               </button>
               {root.children.map((c) => (
                 <button key={c.id} type="button" onClick={() => toggle(c.id)} aria-pressed={ids.includes(c.id)} className={chip(ids.includes(c.id))}>
@@ -126,7 +125,7 @@ export function CategoryPicker({ tree, selected = [], primaryId = null }: { tree
           ) : null}
         </>
       )}
-      <p className="text-[12px] text-fg-passive">★ ana kategori: listelerde ve rakip marka kontrolünde kullanılır.</p>
+      <p className="text-[12px] text-fg-passive">{tt("★ ana kategori: listelerde ve rakip marka kontrolünde kullanılır.")}</p>
     </fieldset>
   );
 }

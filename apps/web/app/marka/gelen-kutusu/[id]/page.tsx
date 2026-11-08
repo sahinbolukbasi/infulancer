@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
@@ -15,6 +16,7 @@ export const metadata: Metadata = { title: "Konuşma" };
 export const dynamic = "force-dynamic";
 
 export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const { id } = await params;
   const conv = await prisma.conversation.findFirst({
@@ -30,18 +32,18 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={conv.contact.name ?? conv.contact.phoneE164 ?? "Konuşma"}
+        title={conv.contact.name ?? conv.contact.phoneE164 ?? tt("Konuşma")}
         description={`${conv.channel} · servis penceresi ${left && left > 0 ? `${left} dk sonra kapanıyor` : "kapalı"}`}
         actions={<ConversationActions conversationId={conv.id} status={conv.status} />}
       />
       <Card interactive={false} className="flex flex-col gap-3">
-        <ol className="flex flex-col gap-3" aria-label="Mesajlar">
+        <ol className="flex flex-col gap-3" aria-label={tt("Mesajlar")}>
           {conv.messages.map((m) => (
             <li key={m.id} className={m.direction === "OUTBOUND" ? "self-end text-right" : "self-start"}>
-              <p className={`inline-block max-w-md rounded-2xl px-4 py-2 text-sm ${m.direction === "OUTBOUND" ? "bg-fg text-bg" : "border border-border"}`}>{m.body ?? (m.templateId ? "[template]" : "[medya]")}</p>
+              <p className={`inline-block max-w-md rounded-2xl px-4 py-2 text-sm ${m.direction === "OUTBOUND" ? "bg-fg text-bg" : "border border-border"}`}>{m.body ?? (m.templateId ? tt("[template]") : tt("[medya]"))}</p>
               <p className="mt-1 text-[11px] text-fg-passive">
                 {fmtDateTime(m.createdAt)}
-                {m.fromAi ? " · AI" : ""}
+                {m.fromAi ? tt(" · AI") : ""}
                 {m.status ? ` · ${m.status}` : ""}
               </p>
             </li>

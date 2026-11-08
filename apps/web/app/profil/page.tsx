@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { audit } from "@infulancer/core/audit";
@@ -57,6 +58,7 @@ const humanize = (a: string) => ACTION_TR[a] ?? a.toLocaleLowerCase("tr").replac
  * Fiyat listesi + Para çekme + İş birlikleri + İşlemler hepsi buradadır (ayrı sayfalar yok).
  */
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
+  const tt = await getTT();
   const actor = await requireActor();
   const { sekme } = await searchParams;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: actor.userId }, select: { name: true, email: true, phone: true, role: true, createdAt: true, avatarKey: true, brand: { select: { name: true } } } });
@@ -83,7 +85,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     ]);
     avatar = pickAvatar(inf.socialAccounts, inf.avatarKey);
     headline = `İçerik üreticisi${inf.city ? ` · ${inf.city}` : ""}`;
-    const tt = accounts.find((a) => a.platform === "TIKTOK");
+    const tiktokAcc = accounts.find((a) => a.platform === "TIKTOK");
     const usedDeliverables = new Set(portfolio.map((i) => i.deliverableId).filter(Boolean));
     const rateRows: RateRow[] = (Object.entries(platformRules) as [Platform, { contentTypes: readonly ContentType[] }][]).flatMap(([p, r]) =>
       r.contentTypes.map((ct) => {
@@ -98,20 +100,20 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       label: "Vitrinim",
       content: (
         <div className="flex flex-col gap-4">
-          <InfoNote>{inf.showcaseVisible ? "Markalar profilinizi bu haliyle görür." : "Profiliniz şu an markalara gizli."}</InfoNote>
+          <InfoNote>{inf.showcaseVisible ? tt("Markalar profilinizi bu haliyle görür.") : tt("Profiliniz şu an markalara gizli.")}</InfoNote>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card interactive={false} className="flex flex-col gap-4">
-              <CardTitle>Profil ve görünürlük</CardTitle>
+              <CardTitle>{tt("Profil ve görünürlük")}</CardTitle>
               <ShowcaseSettingsForm v={inf} />
             </Card>
             <Card interactive={false} className="flex flex-col gap-4">
-              <CardTitle>Öne çıkan işler ({portfolio.length}/24)</CardTitle>
+              <CardTitle>{tt("Öne çıkan işler (")}{portfolio.length}/24)</CardTitle>
               <AddPortfolioForm published={published.filter((d) => !usedDeliverables.has(d.id)).map((d) => ({ id: d.id, label: `${d.assignment.campaign.brand.name} · ${platformLabels[d.platform]} ${contentTypeLabels[d.contentType]}${d.publishedAt ? ` · ${fmtDate(d.publishedAt)}` : ""}` }))} />
               <PortfolioList items={portfolio.map((i) => ({ id: i.id, title: i.title, url: i.url, platformLabel: platformLabels[i.platform], brandName: i.brandName }))} />
             </Card>
           </div>
           <details className="rounded-3xl border border-line px-5 py-4">
-            <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">Markaların gördüğü önizleme</summary>
+            <summary className="cursor-pointer text-sm text-fg-muted hover:text-fg">{tt("Markaların gördüğü önizleme")}</summary>
             <div className="mt-4">
               <CreatorShowcase influencerId={id} />
             </div>
@@ -128,14 +130,14 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         <div className="flex flex-col gap-4">
           <Card interactive={false} className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <CardTitle>Hesap bağla</CardTitle>
+              <CardTitle>{tt("Hesap bağla")}</CardTitle>
               {accounts.length ? <SyncOwnButton /> : null}
             </div>
-            <p className="text-[13px] text-fg-muted">Kullanıcı adını ekle; takipçi ve profil fotoğrafın otomatik gelsin.</p>
+            <p className="text-[13px] text-fg-muted">{tt("Kullanıcı adını ekle; takipçi ve profil fotoğrafın otomatik gelsin.")}</p>
             <OwnAccountForm />
           </Card>
           {accounts.length ? (
-            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Sosyal medya hesapları">
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label={tt("Sosyal medya hesapları")}>
               {accounts.map((a) => (
                 <Card key={a.id} interactive={false} className="flex flex-col gap-3">
                   <div className="flex items-center gap-3">
@@ -148,11 +150,11 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                   <p className="text-sm text-fg-muted">@{a.handle.replace(/^@/, "")}</p>
                   <dl className="grid grid-cols-2 gap-2">
                     <div>
-                      <dt className="text-label text-fg-muted">Takipçi</dt>
+                      <dt className="text-label text-fg-muted">{tt("Takipçi")}</dt>
                       <dd className="text-xl font-semibold tabular-nums">{compact.format(a.followers)}</dd>
                     </div>
                     <div>
-                      <dt className="text-label text-fg-muted">ER</dt>
+                      <dt className="text-label text-fg-muted">{tt("ER")}</dt>
                       <dd className="text-xl font-semibold tabular-nums">{pct1.format(Number(a.engagementRate))}</dd>
                     </div>
                   </dl>
@@ -165,13 +167,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               ))}
             </section>
           ) : (
-            <p className="text-sm text-fg-passive">Henüz hesap yok. Yukarıdan kullanıcı adını ekle.</p>
+            <p className="text-sm text-fg-passive">{tt("Henüz hesap yok. Yukarıdan kullanıcı adını ekle.")}</p>
           )}
           <Card interactive={false} className="flex flex-col gap-3">
-            <CardTitle>TikTok hesabını bağla</CardTitle>
-            <p className="text-sm text-fg-muted">TikTok istatistikleri yalnız senin onayınla, TikTok&apos;un resmî giriş ekranı üzerinden alınır. Şifren bizimle paylaşılmaz.</p>
-            <ButtonLink href="/api/tiktok/oauth/start" variant={tt?.tokenRef ? "secondary" : "primary"} className="w-fit">
-              {tt?.tokenRef ? "Bağlantıyı yenile" : "TikTok ile bağlan"}
+            <CardTitle>{tt("TikTok hesabını bağla")}</CardTitle>
+            <p className="text-sm text-fg-muted">{tt("TikTok istatistikleri yalnız senin onayınla, TikTok'un resmî giriş ekranı üzerinden alınır. Şifren bizimle paylaşılmaz.")}</p>
+            <ButtonLink href="/api/tiktok/oauth/start" variant={tiktokAcc?.tokenRef ? "secondary" : "primary"} className="w-fit">
+              {tiktokAcc?.tokenRef ? tt("Bağlantıyı yenile") : tt("TikTok ile bağlan")}
             </ButtonLink>
           </Card>
         </div>
@@ -184,8 +186,8 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       label: `Fiyat listem (${cards.length})`,
       content: (
         <Card interactive={false} className="flex flex-col gap-4">
-          <CardTitle>İçerik fiyatlarım</CardTitle>
-          <p className="text-[13px] text-fg-muted">Fiyatlarınız markalara yalnız vitrininizde &quot;fiyatları göster&quot; açıksa görünür. Teklifleri &quot;Teklifler&quot; sayfasından yanıtlarsınız.</p>
+          <CardTitle>{tt("İçerik fiyatlarım")}</CardTitle>
+          <p className="text-[13px] text-fg-muted">{tt("Fiyatlarınız markalara yalnız vitrininizde \"fiyatları göster\" açıksa görünür. Teklifleri \"Teklifler\" sayfasından yanıtlarsınız.")}</p>
           <RateCardForm rows={rateRows} />
         </Card>
       ),
@@ -210,9 +212,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               </div>
             ))}
           </dl>
-          <ButtonLink href="/influencer/odemeler" variant="primary" size="sm" className="w-fit">
-            Çekim talebi ve ödeme geçmişi →
-          </ButtonLink>
+          <ButtonLink href="/influencer/odemeler" variant="primary" size="sm" className="w-fit">{tt("Çekim talebi ve ödeme geçmişi →")}</ButtonLink>
         </div>
       ),
     });
@@ -222,9 +222,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       label: `Teklifler (${offers.length})`,
       content: (
         <div className="flex flex-col gap-3">
-          <ButtonLink href="/influencer/teklifler" variant="secondary" size="sm" className="w-fit">
-            Teklifleri yanıtla →
-          </ButtonLink>
+          <ButtonLink href="/influencer/teklifler" variant="secondary" size="sm" className="w-fit">{tt("Teklifleri yanıtla →")}</ButtonLink>
           <OfferRows offers={offers} />
         </div>
       ),
@@ -247,14 +245,14 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                 {c.name}
               </Link>
               <span className="flex items-center gap-4 text-[13px] text-fg-muted tabular-nums">
-                {fmtDate(c.startsAt)} – {fmtDate(c.endsAt)} · {c._count.assignments} influencer · {formatKurus(Number(c.brandTotalFeeKurus))}
+                {fmtDate(c.startsAt)} – {fmtDate(c.endsAt)} · {c._count.assignments}{" "}{tt("influencer ·")}{" "}{formatKurus(Number(c.brandTotalFeeKurus))}
                 <StatusDot tone={campaignTone(c.status)}>{campaignStatusLabels[c.status]}</StatusDot>
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-fg-passive">Henüz kampanya yok.</p>
+        <p className="text-sm text-fg-passive">{tt("Henüz kampanya yok.")}</p>
       ),
     });
     tabs.push({ id: "teklifler", label: `Teklifler (${offers.length})`, content: <OfferRows offers={offers} /> });
@@ -274,7 +272,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         ))}
       </ol>
     ) : (
-      <p className="text-sm text-fg-passive">Henüz kayıtlı işlem yok.</p>
+      <p className="text-sm text-fg-passive">{tt("Henüz kayıtlı işlem yok.")}</p>
     ),
   });
   tabs.unshift({
@@ -283,31 +281,27 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     content: (
       <div className="flex flex-col gap-4">
         <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Profil fotoğrafı</CardTitle>
+          <CardTitle>{tt("Profil fotoğrafı")}</CardTitle>
           <AvatarUploader name={user.name} current={avatar} />
         </Card>
         <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Kişisel bilgiler</CardTitle>
+          <CardTitle>{tt("Kişisel bilgiler")}</CardTitle>
           <ProfileForm name={user.name} phone={user.phone} />
-          <p className="text-[12px] text-fg-passive">E-posta ({user.email}) giriş adresinizdir; değiştirmek için ajansınıza yazın.</p>
+          <p className="text-[12px] text-fg-passive">{tt("E-posta (")}{user.email}{tt(") giriş adresinizdir; değiştirmek için ajansınıza yazın.")}</p>
         </Card>
         <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Güvenlik</CardTitle>
+          <CardTitle>{tt("Güvenlik")}</CardTitle>
           <PasswordForm />
         </Card>
         {actor.role === "INFLUENCER" || actor.role === "BRAND" ? (
           <Card interactive={false} className="flex flex-col gap-3">
-            <CardTitle>Hızlı erişim</CardTitle>
+            <CardTitle>{tt("Hızlı erişim")}</CardTitle>
             <div className="flex flex-wrap gap-2">
               {actor.role === "INFLUENCER" ? (
-                <ButtonLink href="/influencer/davet" variant="secondary" size="sm">
-                  Arkadaşını davet et →
-                </ButtonLink>
+                <ButtonLink href="/influencer/davet" variant="secondary" size="sm">{tt("Arkadaşını davet et →")}</ButtonLink>
               ) : null}
               {actor.role === "BRAND" ? (
-                <ButtonLink href="/marka/uyum" variant="secondary" size="sm">
-                  Uyum ve yasal gereklilikler →
-                </ButtonLink>
+                <ButtonLink href="/marka/uyum" variant="secondary" size="sm">{tt("Uyum ve yasal gereklilikler →")}</ButtonLink>
               ) : null}
             </div>
           </Card>
@@ -323,12 +317,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           <PageHeader title={user.name} description={`${headline} · ${user.email} · üye ${fmtDate(user.createdAt)}`} />
         </div>
       </div>
-      <Tabs key={sekme ?? "bilgiler"} label="Profil bölümleri" defaultTab={sekme} tabs={tabs} />
+      <Tabs key={sekme ?? "bilgiler"} label={tt("Profil bölümleri")} defaultTab={sekme} tabs={tabs} />
     </div>
   );
 }
-function OfferRows({ offers }: { offers: { id: string; title: string; totalKurus: number; status: string; createdAt: Date; items: unknown }[] }) {
-  if (!offers.length) return <p className="text-sm text-fg-passive">Henüz teklif yok.</p>;
+async function OfferRows({ offers }: { offers: { id: string; title: string; totalKurus: number; status: string; createdAt: Date; items: unknown }[] }) {
+  const tt = await getTT();
+  if (!offers.length) return <p className="text-sm text-fg-passive">{tt("Henüz teklif yok.")}</p>;
   return (
     <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line">
       {offers.map((o) => (

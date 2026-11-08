@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -30,6 +31,7 @@ function Stat({ label, value, href, hint }: { label: string; value: number | str
  * (/marka/kampanyalar); burada yalnız özet ve kısayollar durur.
  */
 export default async function BrandHomePage() {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const brandId = actor.brandId!;
   const now = new Date();
@@ -49,38 +51,36 @@ export default async function BrandHomePage() {
   return (
     <Stagger className="flex flex-col gap-8">
       <PageHeader
-        title="Genel bakış"
-        description="Kampanyalarınızın durumu, onayınızı bekleyenler ve bu haftanın paylaşımları."
+        title={tt("Genel bakış")}
+        description={tt("Kampanyalarınızın durumu, onayınızı bekleyenler ve bu haftanın paylaşımları.")}
         actions={
-          <ButtonLink href="/marka/kampanyalar/yeni">Yeni kampanya</ButtonLink>
+          <ButtonLink href="/marka/kampanyalar/yeni">{tt("Yeni kampanya")}</ButtonLink>
         }
       />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Aktif kampanya" value={count("AKTIF")} href="/marka/kampanyalar?durum=AKTIF" />
-        <Stat label="Taslak" value={count("TASLAK")} href="/marka/kampanyalar?durum=TASLAK" hint="Tamamlayıp ajansa gönderin" />
-        <Stat label="Onay bekleyen içerik" value={pending} href="/marka/kampanyalar?durum=AKTIF" hint="Taslağı açıp onaylayın" />
-        <Stat label="7 gün içinde paylaşım" value={upcoming.length} href="/marka/takvim?gorunum=hafta" />
+        <Stat label={tt("Aktif kampanya")} value={count("AKTIF")} href="/marka/kampanyalar?durum=AKTIF" />
+        <Stat label={tt("Taslak")} value={count("TASLAK")} href="/marka/kampanyalar?durum=TASLAK" hint={tt("Tamamlayıp ajansa gönderin")} />
+        <Stat label={tt("Onay bekleyen içerik")} value={pending} href="/marka/kampanyalar?durum=AKTIF" hint={tt("Taslağı açıp onaylayın")} />
+        <Stat label={tt("7 gün içinde paylaşım")} value={upcoming.length} href="/marka/takvim?gorunum=hafta" />
       </div>
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle>Taslak kampanyalar</CardTitle>
-            <Link href="/marka/kampanyalar?durum=TASLAK" className="text-[12px] text-fg-muted hover:text-fg">
-              Tümü →
-            </Link>
+            <CardTitle>{tt("Taslak kampanyalar")}</CardTitle>
+            <Link href="/marka/kampanyalar?durum=TASLAK" className="text-[12px] text-fg-muted hover:text-fg">{tt("Tümü →")}</Link>
           </div>
           {drafts.length === 0 ? (
-            <p className="text-sm text-fg-passive">Taslak yok. Yeni kampanyayı adım adım oluşturabilirsiniz.</p>
+            <p className="text-sm text-fg-passive">{tt("Taslak yok. Yeni kampanyayı adım adım oluşturabilirsiniz.")}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-line">
               {drafts.map((d) => (
                 <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="flex flex-col">
                     <span className="text-sm text-fg">{d.name}</span>
-                    <span className="text-[12px] text-fg-passive">{d.submittedAt ? "Ajansa gönderildi · kurulum bekliyor" : "Gönderilmedi"}</span>
+                    <span className="text-[12px] text-fg-passive">{d.submittedAt ? tt("Ajansa gönderildi · kurulum bekliyor") : tt("Gönderilmedi")}</span>
                   </span>
                   <Link href={`/marka/kampanyalar/${d.id}/olustur?adim=ozet`} className="text-[13px] font-medium underline-offset-4 hover:underline">
-                    {d.submittedAt ? "Düzenle" : "Devam et"}
+                    {d.submittedAt ? tt("Düzenle") : tt("Devam et")}
                   </Link>
                 </li>
               ))}
@@ -89,13 +89,11 @@ export default async function BrandHomePage() {
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle>Bu haftanın paylaşımları</CardTitle>
-            <Link href="/marka/takvim" className="text-[12px] text-fg-muted hover:text-fg">
-              Takvim →
-            </Link>
+            <CardTitle>{tt("Bu haftanın paylaşımları")}</CardTitle>
+            <Link href="/marka/takvim" className="text-[12px] text-fg-muted hover:text-fg">{tt("Takvim →")}</Link>
           </div>
           {upcoming.length === 0 ? (
-            <p className="text-sm text-fg-passive">Önümüzdeki 7 günde planlı paylaşım yok.</p>
+            <p className="text-sm text-fg-passive">{tt("Önümüzdeki 7 günde planlı paylaşım yok.")}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-line">
               {upcoming.map((d) => (

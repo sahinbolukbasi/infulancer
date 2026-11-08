@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { CookiePreferencesButton } from "@/components/legal/cookie-banner";
 import { LegalDoc } from "@/components/legal/legal-doc";
@@ -15,23 +16,21 @@ const ROWS = [
 ];
 
 export default async function CookiePolicyPage() {
+  const tt = await getTT();
   const e = await getLegalEntity();
   return (
     <LegalDoc
       current="/cerez-politikasi"
       entity={e}
-      title="Çerez Politikası"
+      title={tt("Çerez Politikası")}
       intro={
-        <p>
-          Bu politika, {e.shortName} web sitesinde ve panelinde kullanılan çerezleri ve benzeri teknolojileri (yerel depolama) açıklar. Reklam veya üçüncü taraf takip çerezi
-          kullanmıyoruz.
-        </p>
+        <p>{tt("Bu politika,")}{" "}{e.shortName}{" "}{tt("web sitesinde ve panelinde kullanılan çerezleri ve benzeri teknolojileri (yerel depolama) açıklar. Reklam veya üçüncü taraf takip çerezi kullanmıyoruz.")}</p>
       }
       sections={[
         {
           id: "nedir",
           title: "Çerez nedir?",
-          body: <p>Çerezler, ziyaret ettiğiniz site tarafından tarayıcınıza kaydedilen küçük metin dosyalarıdır. Oturum açma, güvenlik ve tercihlerin hatırlanması için kullanılır.</p>,
+          body: <p>{tt("Çerezler, ziyaret ettiğiniz site tarafından tarayıcınıza kaydedilen küçük metin dosyalarıdır. Oturum açma, güvenlik ve tercihlerin hatırlanması için kullanılır.")}</p>,
         },
         {
           id: "liste",
@@ -39,13 +38,13 @@ export default async function CookiePolicyPage() {
           body: (
             <div className="overflow-x-auto rounded-2xl border border-line">
               <table className="w-full text-[14px]">
-                <caption className="sr-only">Çerez listesi</caption>
+                <caption className="sr-only">{tt("Çerez listesi")}</caption>
                 <thead className="bg-surface text-left text-fg">
                   <tr>
-                    <th scope="col" className="px-4 py-2 font-medium">Ad</th>
-                    <th scope="col" className="px-4 py-2 font-medium">Tür</th>
-                    <th scope="col" className="px-4 py-2 font-medium">Amaç</th>
-                    <th scope="col" className="px-4 py-2 font-medium">Süre</th>
+                    <th scope="col" className="px-4 py-2 font-medium">{tt("Ad")}</th>
+                    <th scope="col" className="px-4 py-2 font-medium">{tt("Tür")}</th>
+                    <th scope="col" className="px-4 py-2 font-medium">{tt("Amaç")}</th>
+                    <th scope="col" className="px-4 py-2 font-medium">{tt("Süre")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -66,10 +65,7 @@ export default async function CookiePolicyPage() {
           id: "hukuki",
           title: "Hukuki sebep",
           body: (
-            <p>
-              Zorunlu çerezler, hizmetin sunulması ve güvenliği için gereklidir ve KVKK md. 5/2-c ile 5/2-f kapsamında rıza aranmadan kullanılır. İşlevsel çerezler yalnız
-              tercihlerinizi hatırlar. İleride analitik veya pazarlama çerezi eklenirse yalnız açık rızanızla etkinleşir.
-            </p>
+            <p>{tt("Zorunlu çerezler, hizmetin sunulması ve güvenliği için gereklidir ve KVKK md. 5/2-c ile 5/2-f kapsamında rıza aranmadan kullanılır. İşlevsel çerezler yalnız tercihlerinizi hatırlar. İleride analitik veya pazarlama çerezi eklenirse yalnız açık rızanızla etkinleşir.")}</p>
           ),
         },
         {
@@ -77,7 +73,7 @@ export default async function CookiePolicyPage() {
           title: "Çerezleri nasıl yönetirsiniz?",
           body: (
             <>
-              <p>Tercihinizi aşağıdaki düğmeyle istediğiniz zaman değiştirebilirsiniz. Tarayıcı ayarlarınızdan çerezleri silebilir veya engelleyebilirsiniz; zorunlu çerezler engellenirse giriş yapılamaz.</p>
+              <p>{tt("Tercihinizi aşağıdaki düğmeyle istediğiniz zaman değiştirebilirsiniz. Tarayıcı ayarlarınızdan çerezleri silebilir veya engelleyebilirsiniz; zorunlu çerezler engellenirse giriş yapılamaz.")}</p>
               <CookiePreferencesButton />
             </>
           ),

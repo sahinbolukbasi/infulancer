@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { listInbox, instagramInboxNotes } from "@infulancer/core/messaging/inbox";
@@ -23,14 +24,15 @@ function countdown(min: number | null) {
 }
 
 export default async function InboxPage() {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const now = new Date();
   const list = await listInbox(actor.brandId!);
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Gelen kutusu" description="WhatsApp, Instagram ve Messenger konuşmaları. Pencere kapandıktan sonra yanıt yalnız ücretli onaylı template ile mümkündür." />
+      <PageHeader title={tt("Gelen kutusu")} description={tt("WhatsApp, Instagram ve Messenger konuşmaları. Pencere kapandıktan sonra yanıt yalnız ücretli onaylı template ile mümkündür.")} />
       {list.length === 0 ? (
-        <EmptyState message="Henüz konuşma yok." />
+        <EmptyState message={tt("Henüz konuşma yok.")} />
       ) : (
         <ul className="flex flex-col gap-3">
           {list.map((c) => {
@@ -50,10 +52,9 @@ export default async function InboxPage() {
                         {statusLabels[c.status]}
                         {c.handoffReason ? ` · ${handoffReasonLabels[c.handoffReason as HandoffReason] ?? c.handoffReason}` : ""}
                       </StatusDot>
-                      <span className={min != null && min > 0 && min <= 15 ? "text-critical" : "text-fg-muted"} aria-label="Servis penceresi kalan süre">
-                        Pencere: {countdown(min)}
+                      <span className={min != null && min > 0 && min <= 15 ? "text-critical" : "text-fg-muted"} aria-label={tt("Servis penceresi kalan süre")}>{tt("Pencere:")}{" "}{countdown(min)}
                       </span>
-                      {fep ? <span className="text-fg">Reklam trafiği · 7 gün ücretsiz konuşma (kalan {countdown(minutesLeft(c.fepWindowExpiresAt, now))})</span> : null}
+                      {fep ? <span className="text-fg">{tt("Reklam trafiği · 7 gün ücretsiz konuşma (kalan")}{" "}{countdown(minutesLeft(c.fepWindowExpiresAt, now))})</span> : null}
                     </div>
                   </Card>
                 </Link>
@@ -62,8 +63,7 @@ export default async function InboxPage() {
           })}
         </ul>
       )}
-      <InfoNote>
-        Instagram notları: {instagramInboxNotes.join(" ")}
+      <InfoNote>{tt("Instagram notları:")}{" "}{instagramInboxNotes.join(" ")}
       </InfoNote>
     </div>
   );

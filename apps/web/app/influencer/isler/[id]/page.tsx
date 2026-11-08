@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,6 +37,7 @@ import { AGENCY_TZ, fmtDateTime, tzShort } from "@/lib/time";
 export const metadata: Metadata = { title: "İş detayı" };
 
 export default async function InfluencerJobPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   const actor = await requireActor("INFLUENCER");
   const { id } = await params;
   // Başka influencer'ın işi (veya olmayan iş) → 404.
@@ -92,15 +94,14 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
   return (
     <div className="flex flex-col gap-6">
       <Link href="/influencer" className="inline-flex items-center gap-1 text-[13px] text-fg-muted hover:text-fg">
-        <ChevronLeftIcon size={14} /> İşlerim
-      </Link>
+        <ChevronLeftIcon size={14} />{" "}{tt("İşlerim")}</Link>
       <PageHeader
         title={`${platformLabels[d.platform]} ${contentTypeLabels[d.contentType]}`}
         description={
           <span className="inline-flex flex-wrap items-center gap-3">
             <StatusDot tone={deliverableTone(d.status, { overdue, violation: d.contractViolation })}>
               {deliverableStatusLabels[d.status]}
-              {overdue ? " · gecikti" : ""}
+              {overdue ? tt(" · gecikti") : ""}
             </StatusDot>
             <span>
               {campaign.name} · {campaign.brandName}
@@ -111,49 +112,49 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
 
       {view.contractStatus === "TEKLIF" ? (
         <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Sözleşme teklifi</CardTitle>
-          <p className="text-sm text-fg-muted">Brief&apos;i inceleyip teklifi kabul ya da reddedin. Red durumunda işler iptal edilir.</p>
+          <CardTitle>{tt("Sözleşme teklifi")}</CardTitle>
+          <p className="text-sm text-fg-muted">{tt("Brief'i inceleyip teklifi kabul ya da reddedin. Red durumunda işler iptal edilir.")}</p>
           <ContractDecision assignmentId={view.id} />
         </Card>
       ) : null}
       {rejected ? (
         <Card interactive={false}>
-          <p className="text-sm text-fg-muted">Bu teklifi reddettiniz; iş iptal edildi.</p>
+          <p className="text-sm text-fg-muted">{tt("Bu teklifi reddettiniz; iş iptal edildi.")}</p>
         </Card>
       ) : null}
       {d.contractViolation ? (
         <Card interactive={false} className="border-critical/40">
-          <p className="text-sm text-critical">Paylaşım erişilemiyor: sözleşme ihlali olarak işaretlendi. Ajansla iletişime geçin.</p>
+          <p className="text-sm text-critical">{tt("Paylaşım erişilemiyor: sözleşme ihlali olarak işaretlendi. Ajansla iletişime geçin.")}</p>
         </Card>
       ) : null}
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-7">
-          <CardTitle>Plan</CardTitle>
+          <CardTitle>{tt("Plan")}</CardTitle>
           <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-            <dt className="text-fg-passive">Paylaşım</dt>
+            <dt className="text-fg-passive">{tt("Paylaşım")}</dt>
             <dd className="tabular-nums">
               {fmtDateTime(d.plannedAt, tz)} <span className="text-fg-muted">({tzLabel})</span>
             </dd>
-            <dt className="text-fg-passive">Taslak son tarihi</dt>
+            <dt className="text-fg-passive">{tt("Taslak son tarihi")}</dt>
             <dd className="tabular-nums">{fmtDateTime(d.approvalDeadline, tz)}</dd>
-            <dt className="text-fg-passive">Caption</dt>
+            <dt className="text-fg-passive">{tt("Caption")}</dt>
             <dd className="whitespace-pre-line">{d.caption || "—"}</dd>
-            <dt className="text-fg-passive">Etiketler</dt>
+            <dt className="text-fg-passive">{tt("Etiketler")}</dt>
             <dd>{[...d.hashtags, ...d.mentions].join(" ") || "—"}</dd>
-            <dt className="text-fg-passive">Bağlantı</dt>
+            <dt className="text-fg-passive">{tt("Bağlantı")}</dt>
             <dd className="font-mono text-[12px] break-all text-fg-muted">{d.link ?? "—"}</dd>
-            <dt className="text-fg-passive">Reklam ibaresi</dt>
-            <dd>{d.disclosureRequired ? `Zorunlu — ${rule.disclosureLabel}` : "Zorunlu değil"}</dd>
+            <dt className="text-fg-passive">{tt("Reklam ibaresi")}</dt>
+            <dd>{d.disclosureRequired ? `Zorunlu — ${rule.disclosureLabel}` : tt("Zorunlu değil")}</dd>
             {view.couponCode ? (
               <>
-                <dt className="text-fg-passive">Kupon</dt>
+                <dt className="text-fg-passive">{tt("Kupon")}</dt>
                 <dd className="font-mono">{view.couponCode}</dd>
               </>
             ) : null}
             {d.postUrl || published ? (
               <>
-                <dt className="text-fg-passive">Paylaşım</dt>
+                <dt className="text-fg-passive">{tt("Paylaşım")}</dt>
                 <dd>
                   <PostUrlForm deliverableId={d.id} current={d.postUrl} editable={published} />
                 </dd>
@@ -163,40 +164,39 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
         </Card>
         <Card interactive={false} className="flex flex-col gap-3 md:col-span-5">
           <CardTitle className="flex items-center gap-2">
-            <PlatformIcon platform={d.platform} size={18} /> Platform kuralları
-          </CardTitle>
+            <PlatformIcon platform={d.platform} size={18} />{" "}{tt("Platform kuralları")}</CardTitle>
           <ul className="flex flex-col gap-2 text-[13px] text-fg-muted">
-            <li>Format: {rule.formatConstraints.join(" · ")}</li>
-            <li>Link yeri: {rule.linkPlacement}</li>
+            <li>{tt("Format:")}{" "}{rule.formatConstraints.join(" · ")}</li>
+            <li>{tt("Link yeri:")}{" "}{rule.linkPlacement}</li>
             <li className="text-fg">{rule.criticalConstraint}</li>
-            {story ? <li className="text-fg">Story: yayından sonra 24 saat dolmadan istatistik ekran görüntüsünü yükleyin.</li> : null}
-            {d.platform === "TIKTOK" ? <li className="text-fg">TikTok: ham video dosyasını arşiv için yükleyin.</li> : null}
+            {story ? <li className="text-fg">{tt("Story: yayından sonra 24 saat dolmadan istatistik ekran görüntüsünü yükleyin.")}</li> : null}
+            {d.platform === "TIKTOK" ? <li className="text-fg">{tt("TikTok: ham video dosyasını arşiv için yükleyin.")}</li> : null}
           </ul>
         </Card>
       </div>
 
       {row.statusChanges.length > 0 ? (
         <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Revizyon notları</CardTitle>
+          <CardTitle>{tt("Revizyon notları")}</CardTitle>
           <ul className="flex flex-col gap-3">
             {row.statusChanges.map((s) => (
               <li key={s.id} className="flex flex-col gap-0.5 border-l border-border pl-4">
-                <span className="text-sm">{s.note ?? "Revizyon istendi"}</span>
+                <span className="text-sm">{s.note ?? tt("Revizyon istendi")}</span>
                 <span className="text-[12px] text-fg-passive">{fmtDateTime(s.at, tz)}</span>
               </li>
             ))}
           </ul>
-          <p className="text-[12px] text-fg-passive">Revizyon paylaşım zamanını değiştirmez.</p>
+          <p className="text-[12px] text-fg-passive">{tt("Revizyon paylaşım zamanını değiştirmez.")}</p>
         </Card>
       ) : null}
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Brief</CardTitle>
-        {brief ? <BriefPanel brief={brief} disclosureLabel={rule.disclosureLabel} /> : <p className="text-sm text-fg-passive">Brief henüz paylaşılmadı.</p>}
+        <CardTitle>{tt("Brief")}</CardTitle>
+        {brief ? <BriefPanel brief={brief} disclosureLabel={rule.disclosureLabel} /> : <p className="text-sm text-fg-passive">{tt("Brief henüz paylaşılmadı.")}</p>}
       </Card>
       {assignment.campaign.assets.some((a) => a.mime.startsWith("image/") || a.mime.startsWith("video/")) ? (
         <Card interactive={false} className="flex flex-col gap-4">
-          <CardTitle>Kampanya fotoğraf ve videoları</CardTitle>
+          <CardTitle>{tt("Kampanya fotoğraf ve videoları")}</CardTitle>
           <CampaignMedia
             items={assignment.campaign.assets
               .filter((a) => a.mime.startsWith("image/") || a.mime.startsWith("video/"))
@@ -207,12 +207,12 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
-          <CardTitle>Ajans dosyaları</CardTitle>
-          <AssetList assets={agencyFiles} emptyText="Ajans henüz dosya paylaşmadı." />
+          <CardTitle>{tt("Ajans dosyaları")}</CardTitle>
+          <AssetList assets={agencyFiles} emptyText={tt("Ajans henüz dosya paylaşmadı.")} />
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
-          <CardTitle>Yüklediklerim</CardTitle>
-          <AssetList assets={myFiles} emptyText="Henüz dosya yüklemediniz." />
+          <CardTitle>{tt("Yüklediklerim")}</CardTitle>
+          <AssetList assets={myFiles} emptyText={tt("Henüz dosya yüklemediniz.")} />
           {canUploadDraft ? (
             <FileUploader
               target={{ type: "deliverable", id: d.id }}
@@ -220,7 +220,7 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
                 { value: "TASLAK", label: "Taslak içerik (onaya gönderilir)" },
                 { value: "HAM_DOSYA", label: "Ham dosya (arşiv)" },
               ]}
-              label="Taslak veya ham dosya yükle"
+              label={tt("Taslak veya ham dosya yükle")}
             />
           ) : null}
         </Card>
@@ -228,15 +228,15 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
 
       {!closed && targets.length > 0 ? (
         <Card interactive={false} className="flex flex-col gap-4">
-          <CardTitle>Yayın bağlantısı</CardTitle>
-          <p className="text-[13px] text-fg-muted">İçerik onaylandı. Paylaştıktan sonra bağlantıyı girin.</p>
+          <CardTitle>{tt("Yayın bağlantısı")}</CardTitle>
+          <p className="text-[13px] text-fg-muted">{tt("İçerik onaylandı. Paylaştıktan sonra bağlantıyı girin.")}</p>
           <TransitionPanel deliverableId={d.id} targets={targets} role="INFLUENCER" currentPostUrl={d.postUrl} />
         </Card>
       ) : null}
 
       {published && !rejected ? (
         <Card interactive={false} className="flex flex-col gap-4">
-          <CardTitle>Metrikler</CardTitle>
+          <CardTitle>{tt("Metrikler")}</CardTitle>
           {row.metricSnapshots.length > 0 ? (
             <ul className="flex flex-col divide-y divide-border text-sm">
               {row.metricSnapshots.map((m) => (
@@ -252,7 +252,7 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-fg-muted">Henüz metrik girmediniz. 24. saat, 7. gün ve 30. gün ölçümlerini girin.</p>
+            <p className="text-sm text-fg-muted">{tt("Henüz metrik girmediniz. 24. saat, 7. gün ve 30. gün ölçümlerini girin.")}</p>
           )}
           {d.status !== "TAMAMLANDI" ? (
             <MetricEntryForm deliverableId={d.id} platform={d.platform} isStory={story} role="INFLUENCER" tzLabel={tzLabel} screenshots={freeShots} />

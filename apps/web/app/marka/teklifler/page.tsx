@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -21,6 +22,7 @@ export const dynamic = "force-dynamic";
  * başvuru çağrısı = üreticiler başvurur. Kabul edilen başvuru otomatik "kabul edilmiş teklif" olur.
  */
 export default async function BrandOffersPage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const { sekme } = await searchParams;
   const brandId = actor.brandId!;
@@ -38,9 +40,9 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
   const offerList =
     offers.length === 0 ? (
       <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line px-6 py-12 text-center">
-        <p className="font-medium text-fg">Henüz teklif yok</p>
-        <p className="max-w-md text-[13px] text-fg-muted">Influencer bul sayfasından üretici seçip teklif gönderin ya da başvuru çağrısı açın; kabul ettiğiniz başvurular da burada listelenir.</p>
-        <ButtonLink href="/marka/kesfet" size="sm">Influencer bul</ButtonLink>
+        <p className="font-medium text-fg">{tt("Henüz teklif yok")}</p>
+        <p className="max-w-md text-[13px] text-fg-muted">{tt("Influencer bul sayfasından üretici seçip teklif gönderin ya da başvuru çağrısı açın; kabul ettiğiniz başvurular da burada listelenir.")}</p>
+        <ButtonLink href="/marka/kesfet" size="sm">{tt("Influencer bul")}</ButtonLink>
       </div>
     ) : (
       <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
@@ -52,12 +54,12 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
               <Avatar name={inf?.name ?? "?"} src={inf ? pickAvatar(inf.socialAccounts) : null} size={40} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-fg">{inf?.name ?? "İçerik üreticisi"}</span>
-                  <Pill tone={fromApplication.has(o.id) ? "violet" : "gray"}>{fromApplication.has(o.id) ? "Başvurudan" : "Doğrudan teklif"}</Pill>
+                  <span className="font-medium text-fg">{inf?.name ?? tt("İçerik üreticisi")}</span>
+                  <Pill tone={fromApplication.has(o.id) ? "violet" : "gray"}>{fromApplication.has(o.id) ? tt("Başvurudan") : tt("Doğrudan teklif")}</Pill>
                 </span>
                 <span className="text-[14px] text-fg">{o.title}</span>
                 <span className="truncate text-[12px] text-fg-muted">{itemsSummary(o.items).join(" · ")}</span>
-                {o.responseNote ? <span className="text-[12px] text-fg-muted">Not: {o.responseNote}</span> : null}
+                {o.responseNote ? <span className="text-[12px] text-fg-muted">{tt("Not:")}{" "}{o.responseNote}</span> : null}
               </div>
               <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-1">
                 <span className="text-[17px] font-semibold tabular-nums text-fg">{formatKurus(o.totalKurus)}</span>
@@ -73,7 +75,7 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
 
   const appList =
     pendingApps.length === 0 ? (
-      <p className="rounded-2xl border border-dashed border-line px-4 py-10 text-center text-[13px] text-fg-muted">Bekleyen başvuru yok. Açık bir çağrınız varsa yeni başvurular burada görünür.</p>
+      <p className="rounded-2xl border border-dashed border-line px-4 py-10 text-center text-[13px] text-fg-muted">{tt("Bekleyen başvuru yok. Açık bir çağrınız varsa yeni başvurular burada görünür.")}</p>
     ) : (
       <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
         {pendingApps.map((a) => {
@@ -84,7 +86,7 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
               <div className="flex flex-wrap items-center gap-3">
                 <Avatar name={inf?.name ?? "?"} src={inf ? pickAvatar(inf.socialAccounts) : null} size={36} />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="font-medium text-fg">{inf?.name ?? "İçerik üreticisi"}{inf?.category ? <span className="font-normal text-fg-muted"> · {inf.category}</span> : null}</span>
+                  <span className="font-medium text-fg">{inf?.name ?? tt("İçerik üreticisi")}{inf?.category ? <span className="font-normal text-fg-muted"> · {inf.category}</span> : null}</span>
                   <Link href={`/marka/teklifler/cagri/${a.openCall.id}`} className="text-[12px] text-fg-muted underline-offset-4 hover:underline">{a.openCall.title}</Link>
                 </div>
                 {a.quotedKurus != null ? <span className="font-semibold tabular-nums text-fg">{formatKurus(Number(a.quotedKurus))}</span> : null}
@@ -101,9 +103,9 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
   const callList =
     calls.length === 0 ? (
       <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line px-6 py-12 text-center">
-        <p className="font-medium text-fg">Henüz başvuru çağrısı yok</p>
-        <p className="max-w-md text-[13px] text-fg-muted">Kampanyanızı anlatın, bütçe aralığını ve platformları belirtin; uygun içerik üreticileri size başvursun.</p>
-        <ButtonLink href="/marka/teklifler/cagri/yeni" size="sm">Başvuru çağrısı aç</ButtonLink>
+        <p className="font-medium text-fg">{tt("Henüz başvuru çağrısı yok")}</p>
+        <p className="max-w-md text-[13px] text-fg-muted">{tt("Kampanyanızı anlatın, bütçe aralığını ve platformları belirtin; uygun içerik üreticileri size başvursun.")}</p>
+        <ButtonLink href="/marka/teklifler/cagri/yeni" size="sm">{tt("Başvuru çağrısı aç")}</ButtonLink>
       </div>
     ) : (
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -115,11 +117,11 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
               <Link href={`/marka/teklifler/cagri/${c.id}`} className="flex h-full flex-col gap-2 rounded-2xl border border-line bg-surface p-4 transition-standard hover:border-line-strong">
                 <span className="flex flex-wrap items-center gap-2">
                   <Pill tone={p.tone}>{p.label}</Pill>
-                  {fresh ? <Pill tone="amber">{fresh} yeni</Pill> : null}
+                  {fresh ? <Pill tone="amber">{fresh}{" "}{tt("yeni")}</Pill> : null}
                 </span>
                 <span className="font-semibold text-fg">{c.title}</span>
                 <span className="text-[12px] text-fg-muted">
-                  {c.applications.length} başvuru · {c.platforms.join(", ") || "tüm platformlar"}
+                  {c.applications.length}{" "}{tt("başvuru ·")}{" "}{c.platforms.join(", ") || tt("tüm platformlar")}
                   {c.budgetMinKurus != null || c.budgetMaxKurus != null ? ` · ${c.budgetMinKurus != null ? formatKurus(Number(c.budgetMinKurus)) : "?"} – ${c.budgetMaxKurus != null ? formatKurus(Number(c.budgetMaxKurus)) : "?"}` : ""}
                   {c.deadline ? ` · son ${fmtDate(c.deadline)}` : ""}
                 </span>
@@ -135,12 +137,12 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-title text-fg">Teklifler</h1>
-          <p className="max-w-2xl text-[14px] text-fg-muted">İş birliğini iki yoldan başlatın: <strong className="font-medium text-fg">teklif gönderin</strong> (siz seçersiniz) ya da <strong className="font-medium text-fg">başvuru çağrısı açın</strong> (üreticiler size gelir). Kabul ettiğiniz başvuru otomatik teklife dönüşür.</p>
+          <h1 className="text-title text-fg">{tt("Teklifler")}</h1>
+          <p className="max-w-2xl text-[14px] text-fg-muted">{tt("İş birliğini iki yoldan başlatın:")}{" "}<strong className="font-medium text-fg">{tt("teklif gönderin")}</strong>{" "}{tt("(siz seçersiniz) ya da")}{" "}<strong className="font-medium text-fg">{tt("başvuru çağrısı açın")}</strong>{" "}{tt("(üreticiler size gelir). Kabul ettiğiniz başvuru otomatik teklife dönüşür.")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/marka/teklifler/cagri/yeni" variant="secondary">+ Başvuru çağrısı</ButtonLink>
-          <ButtonLink href="/marka/kesfet">+ Teklif gönder</ButtonLink>
+          <ButtonLink href="/marka/teklifler/cagri/yeni" variant="secondary">{tt("+ Başvuru çağrısı")}</ButtonLink>
+          <ButtonLink href="/marka/kesfet">{tt("+ Teklif gönder")}</ButtonLink>
         </div>
       </header>
       <StatStrip
@@ -155,7 +157,7 @@ export default async function BrandOffersPage({ searchParams }: { searchParams: 
       />
       <Tabs
         key={defaultTab}
-        label="Teklifler"
+        label={tt("Teklifler")}
         defaultTab={defaultTab}
         tabs={[
           { id: "teklifler", label: `Teklifler (${offers.length})`, content: offerList },

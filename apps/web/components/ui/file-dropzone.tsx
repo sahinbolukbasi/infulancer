@@ -1,5 +1,6 @@
 "use client";
 
+import { useTT } from "@/lib/i18n/tt-client";
 import { useId, useState, type DragEvent } from "react";
 import { UploadIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
@@ -25,6 +26,7 @@ export function FileDropzone({
   disabled?: boolean;
   onFiles?: (files: File[]) => void;
 }) {
+  const tt = useTT();
   const id = useId();
   const [dragging, setDragging] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
@@ -77,7 +79,7 @@ export function FileDropzone({
       >
         <UploadIcon size={24} className="text-fg-muted" />
         <span className="text-sm text-fg">{label}</span>
-        <span className="text-[13px] text-fg-passive">Sürükleyip bırakın ya da tıklayarak seçin</span>
+        <span className="text-[13px] text-fg-passive">{tt("Sürükleyip bırakın ya da tıklayarak seçin")}</span>
         {hint ? (
           <span id={`${id}-hint`} className="text-[12px] text-fg-passive">
             {hint}

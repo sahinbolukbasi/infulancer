@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -55,6 +56,7 @@ export default async function BrandCampaignPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ hafta?: string | string[]; gonderildi?: string }>;
 }) {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const { id } = await params;
   const { hafta, gonderildi } = await searchParams;
@@ -75,7 +77,7 @@ export default async function BrandCampaignPage({
   const currency = (await prisma.campaign.findUniqueOrThrow({ where: { id: campaign.id }, select: { currency: true } })).currency;
   const mediaCard = (
     <Card interactive={false} className="flex flex-col gap-4" id="medya">
-      <CardTitle>Kampanya fotoğraf ve videoları</CardTitle>
+      <CardTitle>{tt("Kampanya fotoğraf ve videoları")}</CardTitle>
       <CampaignMedia
         items={media.map((a) => ({ id: a.id, fileName: a.fileName, mime: a.mime, kind: a.kind, size: a.size, uploadedById: a.uploadedById, uploadedByName: a.uploadedBy.name }))}
         canDelete={(m) => m.uploadedById === actor.userId && campaign.status !== "KAPANDI"}
@@ -84,8 +86,8 @@ export default async function BrandCampaignPage({
         <FileUploader
           target={{ type: "campaign", id: campaign.id }}
           multiple
-          label="Fotoğraf veya video ekle"
-          hint="Ürün görselleri, örnek çekimler, logo veya brief PDF. Atanan influencerlar görür."
+          label={tt("Fotoğraf veya video ekle")}
+          hint={tt("Ürün görselleri, örnek çekimler, logo veya brief PDF. Atanan influencerlar görür.")}
           accept="image/*,video/*,application/pdf"
           kinds={BRAND_MEDIA_KINDS}
         />
@@ -110,36 +112,36 @@ export default async function BrandCampaignPage({
   const summary = (
     <div className="grid-12">
       <Card interactive={false} className="flex flex-col gap-6 md:col-span-8">
-        <CardTitle>Kampanya skoru</CardTitle>
+        <CardTitle>{tt("Kampanya skoru")}</CardTitle>
         <KpiBreakdown score={score} large />
       </Card>
       <Card interactive={false} className="flex flex-col gap-4 md:col-span-4">
-        <CardTitle>Özet</CardTitle>
+        <CardTitle>{tt("Özet")}</CardTitle>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="text-fg-passive">Tarih</dt>
+          <dt className="text-fg-passive">{tt("Tarih")}</dt>
           <dd className="tabular-nums">
             {fmtDate(campaign.startsAt)} – {fmtDate(campaign.endsAt)}
           </dd>
-          <dt className="text-fg-passive">Toplam ödenen</dt>
+          <dt className="text-fg-passive">{tt("Toplam ödenen")}</dt>
           <dd className="tabular-nums">{formatMinor(Number(campaign.brandTotalFeeKurus), currency)}</dd>
-          <dt className="text-fg-passive">Erişim</dt>
+          <dt className="text-fg-passive">{tt("Erişim")}</dt>
           <dd className="tabular-nums">{num.format(report.totals.reach)}</dd>
-          <dt className="text-fg-passive">Tıklama</dt>
+          <dt className="text-fg-passive">{tt("Tıklama")}</dt>
           <dd className="tabular-nums">{num.format(report.totals.clicks)}</dd>
-          <dt className="text-fg-passive">Satış</dt>
+          <dt className="text-fg-passive">{tt("Satış")}</dt>
           <dd className="tabular-nums">{num.format(report.totals.sales)}</dd>
           {report.roas != null ? (
             <>
-              <dt className="text-fg-passive">Ciro</dt>
+              <dt className="text-fg-passive">{tt("Ciro")}</dt>
               <dd className="tabular-nums">{formatKurus(report.totals.revenueKurus)}</dd>
-              <dt className="text-fg-passive">ROAS</dt>
+              <dt className="text-fg-passive">{tt("ROAS")}</dt>
               <dd className="tabular-nums">{roasFmt.format(report.roas)}x</dd>
             </>
           ) : null}
         </dl>
         {campaign.reportSummary ? (
           <div className="flex flex-col gap-2 border-t border-border pt-4">
-            <h3 className="text-label text-fg-muted">Ajans özeti</h3>
+            <h3 className="text-label text-fg-muted">{tt("Ajans özeti")}</h3>
             <p className="text-sm leading-relaxed whitespace-pre-line text-fg-muted">{campaign.reportSummary}</p>
           </div>
         ) : null}
@@ -149,50 +151,47 @@ export default async function BrandCampaignPage({
 
   const trust = (
     <Card interactive={false} className="flex flex-col gap-4">
-      <CardTitle>Metrik kaynakları ve güven düzeyi</CardTitle>
+      <CardTitle>{tt("Metrik kaynakları ve güven düzeyi")}</CardTitle>
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {report.trust.map((t) => (
           <li key={t.source} className="flex flex-col gap-1 rounded-[8px] border border-border px-4 py-3">
             <StatusDot tone={t.level === "YUKSEK" ? "active" : t.level === "ORTA" ? "muted" : "passive"}>{metricSourceLabels[t.source]}</StatusDot>
             <span className="text-[13px] text-fg-passive">
-              {trustLevelLabels[t.level]} · {num.format(t.count)} ölçüm
-            </span>
+              {trustLevelLabels[t.level]} · {num.format(t.count)}{" "}{tt("ölçüm")}</span>
           </li>
         ))}
       </ul>
-      <p className="text-[13px] text-fg-passive">
-        Platform API ve marka verisi yüksek, agent tarafından doğrulanan ekran görüntüsü orta, manuel giriş düşük güvenlidir.
-      </p>
+      <p className="text-[13px] text-fg-passive">{tt("Platform API ve marka verisi yüksek, agent tarafından doğrulanan ekran görüntüsü orta, manuel giriş düşük güvenlidir.")}</p>
     </Card>
   );
 
   const calendar = (
     <Card interactive={false} className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <CardTitle>Yayın takvimi</CardTitle>
-        <nav aria-label="Hafta" className="flex items-center gap-2 text-[13px] text-fg-muted">
-          <Link href={`${base}?hafta=${week.prev}`} className={buttonClass("ghost", "sm")} aria-label="Önceki hafta">
+        <CardTitle>{tt("Yayın takvimi")}</CardTitle>
+        <nav aria-label={tt("Hafta")} className="flex items-center gap-2 text-[13px] text-fg-muted">
+          <Link href={`${base}?hafta=${week.prev}`} className={buttonClass("ghost", "sm")} aria-label={tt("Önceki hafta")}>
             <ChevronLeftIcon size={16} />
           </Link>
           <span className="tabular-nums">
             {fmtDayLabel(week.days[0]!)} – {fmtDayLabel(week.days[6]!)}
           </span>
-          <Link href={`${base}?hafta=${week.next}`} className={buttonClass("ghost", "sm")} aria-label="Sonraki hafta">
+          <Link href={`${base}?hafta=${week.next}`} className={buttonClass("ghost", "sm")} aria-label={tt("Sonraki hafta")}>
             <ChevronRightIcon size={16} />
           </Link>
         </nav>
       </div>
-      <WeekCalendar days={week.days} rows={rows} today={week.today} emptyText="Bu hafta planlanmış paylaşım yok." />
-      <p className="text-[12px] text-fg-passive">Saatler İstanbul saatine göredir.</p>
+      <WeekCalendar days={week.days} rows={rows} today={week.today} emptyText={tt("Bu hafta planlanmış paylaşım yok.")} />
+      <p className="text-[12px] text-fg-passive">{tt("Saatler İstanbul saatine göredir.")}</p>
     </Card>
   );
 
   const performance = (
     <Card interactive={false} className="flex flex-col gap-4">
-      <CardTitle>Influencer performansı</CardTitle>
+      <CardTitle>{tt("Influencer performansı")}</CardTitle>
       <DataTable
-        caption="Influencer performansı"
-        emptyText="Kampanyada henüz influencer yok."
+        caption={tt("Influencer performansı")}
+        emptyText={tt("Kampanyada henüz influencer yok.")}
         initialSort={{ key: "reach", dir: "desc" }}
         columns={[
           { key: "name", header: "Influencer", sortable: true },
@@ -240,9 +239,9 @@ export default async function BrandCampaignPage({
 
   const drafts = (
     <Card interactive={false} className="flex flex-col gap-4" id="taslaklar">
-      <CardTitle>Onayınızı bekleyen taslaklar</CardTitle>
+      <CardTitle>{tt("Onayınızı bekleyen taslaklar")}</CardTitle>
       {report.pendingDrafts.length === 0 ? (
-        <p className="text-sm text-fg-passive">Görüş bekleyen taslak yok.</p>
+        <p className="text-sm text-fg-passive">{tt("Görüş bekleyen taslak yok.")}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border">
           {report.pendingDrafts.map(({ deliverable: d, assets, reviews }) => (
@@ -252,8 +251,7 @@ export default async function BrandCampaignPage({
                   <PlatformIcon platform={d.platform} size={16} title={platformLabels[d.platform]} />
                   {d.influencer.name} · {contentTypeLabels[d.contentType]}
                 </span>
-                <span className="text-[13px] text-fg-muted tabular-nums">
-                  Paylaşım {fmtDateTime(d.plannedAt)} · onay son tarihi {fmtDateTime(d.approvalDeadline)}
+                <span className="text-[13px] text-fg-muted tabular-nums">{tt("Paylaşım")}{" "}{fmtDateTime(d.plannedAt)}{" "}{tt("· onay son tarihi")}{" "}{fmtDateTime(d.approvalDeadline)}
                 </span>
                 {d.caption ? <p className="text-[13px] leading-relaxed whitespace-pre-line text-fg-muted">{d.caption}</p> : null}
                 {assets.length ? (
@@ -266,14 +264,13 @@ export default async function BrandCampaignPage({
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 text-[13px] text-fg-muted hover:text-fg"
                         >
-                          <FileIcon size={14} /> {a.fileName} önizle
-                          <span className="sr-only">(yeni sekmede açılır)</span>
+                          <FileIcon size={14} /> {a.fileName}{" "}{tt("önizle")}<span className="sr-only">{tt("(yeni sekmede açılır)")}</span>
                         </a>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-[13px] text-fg-passive">Önizlenecek dosya yok.</p>
+                  <p className="text-[13px] text-fg-passive">{tt("Önizlenecek dosya yok.")}</p>
                 )}
                 {reviews.length ? (
                   <ul className="flex flex-col gap-1 border-t border-border pt-2 text-[13px] text-fg-passive">
@@ -296,9 +293,9 @@ export default async function BrandCampaignPage({
 
   const gallery = (
     <Card interactive={false} className="flex flex-col gap-4">
-      <CardTitle>İçerik galerisi</CardTitle>
+      <CardTitle>{tt("İçerik galerisi")}</CardTitle>
       {report.gallery.length === 0 ? (
-        <p className="text-sm text-fg-passive">Henüz yayınlanmış içerik yok.</p>
+        <p className="text-sm text-fg-passive">{tt("Henüz yayınlanmış içerik yok.")}</p>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {report.gallery.map(({ deliverable: d, thumbAssetId, usage, reach }) => (
@@ -309,18 +306,17 @@ export default async function BrandCampaignPage({
                 <span className="flex items-center gap-1 text-fg-passive">
                   <PlatformIcon platform={d.platform} size={12} /> {contentTypeLabels[d.contentType]} · {deliverableStatusLabels[d.status]}
                 </span>
-                {reach != null ? <span className="text-fg-muted tabular-nums">{num.format(reach)} erişim</span> : null}
+                {reach != null ? <span className="text-fg-muted tabular-nums">{num.format(reach)}{" "}{tt("erişim")}</span> : null}
                 {usage ? (
                   <span className="w-fit rounded-[6px] border border-border px-2 py-0.5 text-fg-muted">
-                    {usage.channel ? usageChannelLabels[usage.channel] : "Kullanım hakkı"}
+                    {usage.channel ? usageChannelLabels[usage.channel] : tt("Kullanım hakkı")}
                     {usage.endsAt ? ` · ${fmtDate(usage.endsAt)}'e kadar` : usage.durationDays ? ` · ${usage.durationDays} gün` : ""}
                     {usage.geography.length ? ` · ${usage.geography.join(", ")}` : ""}
                   </span>
                 ) : null}
                 {d.postUrl ? (
-                  <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-fg-muted hover:text-fg">
-                    Paylaşımı aç <ExternalIcon size={12} />
-                    <span className="sr-only">(yeni sekmede açılır)</span>
+                  <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-fg-muted hover:text-fg">{tt("Paylaşımı aç")}{" "}<ExternalIcon size={12} />
+                    <span className="sr-only">{tt("(yeni sekmede açılır)")}</span>
                   </a>
                 ) : null}
               </div>
@@ -343,26 +339,20 @@ export default async function BrandCampaignPage({
         }
         actions={
           draft ? (
-            <Link href={`${base}/olustur?adim=ozet`} className={buttonClass("primary")}>
-              Kampanyayı düzenle
-            </Link>
+            <Link href={`${base}/olustur?adim=ozet`} className={buttonClass("primary")}>{tt("Kampanyayı düzenle")}</Link>
           ) : (
-            <a href={`/api/raporlar/kampanya/${campaign.id}/pdf`} download className={buttonClass("primary")}>
-              Raporu indir (PDF)
-            </a>
+            <a href={`/api/raporlar/kampanya/${campaign.id}/pdf`} download className={buttonClass("primary")}>{tt("Raporu indir (PDF)")}</a>
           )
         }
       />
       {gonderildi ? (
-        <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-[14px] text-emerald-700 dark:text-emerald-400">
-          Kampanya kaydedildi ve ajansa gönderildi. Ajans influencer atamalarını ve bedelleri onayladığında bildirim alacaksınız.
-        </p>
+        <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-[14px] text-emerald-700 dark:text-emerald-400">{tt("Kampanya kaydedildi ve ajansa gönderildi. Ajans influencer atamalarını ve bedelleri onayladığında bildirim alacaksınız.")}</p>
       ) : null}
       <CampaignLifecycle campaignId={campaign.id} />
       {summary}
       {mediaCard}
       {drafts}
-      {report.deliverables.length === 0 ? <EmptyState message="Bu kampanyada henüz planlanmış içerik yok." /> : calendar}
+      {report.deliverables.length === 0 ? <EmptyState message={tt("Bu kampanyada henüz planlanmış içerik yok.")} /> : calendar}
       {performance}
       {gallery}
       {trust}

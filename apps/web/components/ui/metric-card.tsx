@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { formatMinor } from "@infulancer/core/i18n/regions";
 
 import { useEffect, useState } from "react";
@@ -77,6 +78,7 @@ function formatValue(v: number, format: MetricCardProps["format"], currency?: st
 }
 
 export function MetricCard({ label, value, format = "number", delta, sparkline, hint, currency }: MetricCardProps) {
+  const tt = useTT();
   const shown = useCountUp(value);
   const up = (delta ?? 0) >= 0;
   return (
@@ -89,7 +91,7 @@ export function MetricCard({ label, value, format = "number", delta, sparkline, 
         {delta != null ? (
           <span className={cn("inline-flex items-center gap-1 text-[13px] tabular-nums", up ? "text-fg" : "text-fg-muted")}>
             {up ? <ArrowUpIcon size={14} /> : <ArrowDownIcon size={14} />}
-            <span className="sr-only">{up ? "Artış" : "Düşüş"}</span>
+            <span className="sr-only">{up ? tt("Artış") : tt("Düşüş")}</span>
             {pf.format(Math.abs(delta))}
           </span>
         ) : hint ? (

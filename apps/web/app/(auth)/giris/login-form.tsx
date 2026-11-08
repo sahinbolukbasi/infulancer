@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useActionState, useState } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { Field, Input } from "@/components/ui/form";
@@ -6,6 +7,7 @@ import { loginAction, type LoginState } from "./actions";
 import { useT } from "@/lib/i18n/client";
 const inputCls = "h-12 rounded-xl border-line bg-glass-strong text-[15px] focus:border-neon-pink/60";
 export function LoginForm({ next }: { next: string | null }) {
+  const tt = useTT();
   const [state, action, pending] = useActionState<LoginState, FormData>(loginAction, { error: null, email: "" });
   const [show, setShow] = useState(false);
   const t = useT();
@@ -20,7 +22,7 @@ export function LoginForm({ next }: { next: string | null }) {
             type="email"
             autoComplete="email"
             required
-            placeholder="ad@sirket.com"
+            placeholder={tt("ad@sirket.com")}
             defaultValue={state.email}
             aria-invalid={state.error ? true : undefined}
             className={inputCls}

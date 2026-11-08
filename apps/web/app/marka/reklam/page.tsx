@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { objectivesFor } from "@infulancer/core/ads/drafts";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 
 /** Marka: kendi Meta/TikTok reklam taslaklarını oluşturur, onaya gönderir ve durumunu izler. */
 export default async function BrandAdsPage({ searchParams }: { searchParams: Promise<{ asset?: string }> }) {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const { asset: defaultAssetId } = await searchParams;
   const t = actor.brandId!;
@@ -28,15 +30,13 @@ export default async function BrandAdsPage({ searchParams }: { searchParams: Pro
   const live = tenant?.mode === "production";
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Reklam" description="Meta ve TikTok için reklam taslakları oluşturun, onaya gönderin; ajans onayladıktan sonra yayına hazır olur." />
-      <InfoNote>
-        Reklam taslakları ajans onayından geçer. Onay <strong>gerçek harcama başlatmaz</strong>; canlı Meta/TikTok yayını, reklam hesabı bağlantısı (anahtarlar) tamamlandığında açılır.
-        {!live ? " Hesabınız şu an deneme modunda." : ""}
+      <PageHeader title={tt("Reklam")} description={tt("Meta ve TikTok için reklam taslakları oluşturun, onaya gönderin; ajans onayladıktan sonra yayına hazır olur.")} />
+      <InfoNote>{tt("Reklam taslakları ajans onayından geçer. Onay")}{" "}<strong>{tt("gerçek harcama başlatmaz")}</strong>{tt("; canlı Meta/TikTok yayını, reklam hesabı bağlantısı (anahtarlar) tamamlandığında açılır.")}{!live ? tt(" Hesabınız şu an deneme modunda.") : ""}
       </InfoNote>
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Yeni reklam</CardTitle>
+        <CardTitle>{tt("Yeni reklam")}</CardTitle>
         <Tabs
-          label="Reklam oluşturma"
+          label={tt("Reklam oluşturma")}
           tabs={[
             { id: "tek", label: "Tek reklam", content: <AdDraftForm brands={[]} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin={false} defaultAssetId={defaultAssetId} /> },
             { id: "toplu", label: "Toplu kampanya", content: <BulkAdDraftForm brands={[]} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin={false} defaultAssetId={defaultAssetId} /> },
@@ -44,7 +44,7 @@ export default async function BrandAdsPage({ searchParams }: { searchParams: Pro
         />
       </Card>
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Reklamlarım</CardTitle>
+        <CardTitle>{tt("Reklamlarım")}</CardTitle>
         <AdDraftList tenantId={t} isAdmin={false} />
       </Card>
     </div>

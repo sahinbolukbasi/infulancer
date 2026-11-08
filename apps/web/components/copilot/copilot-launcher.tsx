@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { CopilotChat } from "@/components/copilot/copilot-chat";
@@ -16,6 +17,7 @@ const HOMES = new Set(["/admin", "/marka", "/influencer"]);
  * kendiliğinden açılır (ana sayfalarda asistan zaten gömülü olduğu için orada açılmaz).
  */
 export function CopilotLauncher() {
+  const tt = useTT();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [welcome, setWelcome] = useState<CopilotWelcome | null>(null);
@@ -85,7 +87,7 @@ export function CopilotLauncher() {
         }}
         aria-expanded={open}
         aria-controls="copilot-drawer"
-        aria-label={open ? "Asistanı kapat" : "Asistanı aç"}
+        aria-label={open ? tt("Asistanı kapat") : tt("Asistanı aç")}
         className={cn(
           "bg-neon neon-glow fixed right-4 bottom-20 z-40 inline-flex h-14 items-center gap-2 rounded-full px-5 text-[14px] font-semibold text-black transition-transform duration-300 hover:scale-105 md:right-6 md:bottom-6",
           open && "scale-90 opacity-0 pointer-events-none",
@@ -95,12 +97,12 @@ export function CopilotLauncher() {
           <span className="absolute inset-0 rounded-full bg-white/40 animate-ping-slow" aria-hidden />
           <SparkleIcon size={18} />
         </span>
-        <span className="hidden sm:inline">Asistan</span>
+        <span className="hidden sm:inline">{tt("Asistan")}</span>
       </button>
       {hint && !open ? (
         <div role="status" className="fixed right-4 bottom-36 z-40 flex max-w-[260px] items-start gap-2 rounded-2xl border border-line bg-bg/95 px-3 py-2 text-[13px] shadow-none backdrop-blur animate-enter md:right-6 md:bottom-24">
-          <span>Takıldığınız yerde Asistan&apos;a sorun: “yeni kampanya başlat”, “ödemem ne zaman”…</span>
-          <button type="button" onClick={dismissHint} aria-label="İpucunu kapat" className="text-fg-passive hover:text-fg">
+          <span>{tt("Takıldığınız yerde Asistan'a sorun: “yeni kampanya başlat”, “ödemem ne zaman”…")}</span>
+          <button type="button" onClick={dismissHint} aria-label={tt("İpucunu kapat")} className="text-fg-passive hover:text-fg">
             ×
           </button>
         </div>
@@ -117,9 +119,7 @@ export function CopilotLauncher() {
         {welcome ? (
           <CopilotChat welcome={welcome} compact onClose={hide} />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-fg-muted" aria-busy={loading}>
-            Asistan hazırlanıyor…
-          </div>
+          <div className="flex flex-1 items-center justify-center text-sm text-fg-muted" aria-busy={loading}>{tt("Asistan hazırlanıyor…")}</div>
         )}
       </div>
     </>

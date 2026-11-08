@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { ReactNode } from "react";
 
 export type BriefView = {
@@ -38,30 +39,31 @@ function Items({ items }: { items: string[] }) {
 }
 
 /** Brief'in okunur görünümü (admin, influencer). */
-export function BriefPanel({ brief, disclosureLabel }: { brief: BriefView; disclosureLabel?: string }) {
+export async function BriefPanel({ brief, disclosureLabel }: { brief: BriefView; disclosureLabel?: string }) {
+  const tt = await getTT();
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-label text-fg-passive">Sürüm v{brief.version}</p>
+      <p className="text-label text-fg-passive">{tt("Sürüm v")}{brief.version}</p>
       <p className="whitespace-pre-line text-sm leading-relaxed text-fg">{brief.text}</p>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Group title="Yapılacaklar">
+        <Group title={tt("Yapılacaklar")}>
           <Items items={brief.dos} />
         </Group>
-        <Group title="Yapılmayacaklar">
+        <Group title={tt("Yapılmayacaklar")}>
           <Items items={brief.donts} />
         </Group>
-        <Group title="Hashtag / bahsetme">
+        <Group title={tt("Hashtag / bahsetme")}>
           <p className="text-sm text-fg">{[...brief.hashtags, ...brief.mentions].join(" ") || "—"}</p>
         </Group>
-        <Group title="Reklam ibaresi">
+        <Group title={tt("Reklam ibaresi")}>
           <p className="text-sm text-fg">
-            {brief.disclosureRequired ? `Zorunlu${disclosureLabel ? ` — ${disclosureLabel}` : ""}` : "Zorunlu değil"}
+            {brief.disclosureRequired ? `Zorunlu${disclosureLabel ? ` — ${disclosureLabel}` : ""}` : tt("Zorunlu değil")}
           </p>
         </Group>
-        <Group title="Zorunlu ifadeler">
+        <Group title={tt("Zorunlu ifadeler")}>
           <Items items={brief.requiredPhrases} />
         </Group>
-        <Group title="Yasaklı ifadeler">
+        <Group title={tt("Yasaklı ifadeler")}>
           <Items items={brief.bannedPhrases} />
         </Group>
       </div>

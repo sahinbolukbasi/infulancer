@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Actor } from "@infulancer/core/access/actor";
@@ -19,12 +20,12 @@ import { AudienceStep, BasicsStep, BriefStep, ContentPlanStep, InfluencerStep, M
 const tl = (k: bigint | number) => (Number(k) > 0 ? (Number(k) / 100).toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "");
 
 /** Sihirbaz adım çubuğu: tamamlananlar işaretli, aktif adım vurgulu; taslak açılmadan diğer adımlar kilitli. */
-function Steps({ base, active, done }: { base: string | null; active: WizardStepKey; done: Set<string> }) {
+async function Steps({ base, active, done }: { base: string | null; active: WizardStepKey; done: Set<string> }) {
+  const tt = await getTT();
   const idx = WIZARD_STEPS.findIndex((s) => s.key === active);
   return (
-    <nav aria-label="Kampanya oluşturma adımları">
-      <p className="mb-2 text-[12px] text-fg-passive tabular-nums">
-        Adım {idx + 1} / {WIZARD_STEPS.length}
+    <nav aria-label={tt("Kampanya oluşturma adımları")}>
+      <p className="mb-2 text-[12px] text-fg-passive tabular-nums">{tt("Adım")}{" "}{idx + 1} / {WIZARD_STEPS.length}
       </p>
       <ol className="grid grid-cols-4 gap-2 md:grid-cols-8">
         {WIZARD_STEPS.map((s, i) => {
@@ -35,7 +36,7 @@ function Steps({ base, active, done }: { base: string | null; active: WizardStep
                 <span className={cn("inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px]", done.has(s.key) ? "border-fg bg-fg text-bg" : cur ? "border-fg text-fg" : "border-line")} aria-hidden>
                   {done.has(s.key) ? <CheckIcon size={11} /> : i + 1}
                 </span>
-                <span className="hidden lg:inline">{done.has(s.key) ? "Tamam" : cur ? "Şu an" : ""}</span>
+                <span className="hidden lg:inline">{done.has(s.key) ? tt("Tamam") : cur ? tt("Şu an") : ""}</span>
               </span>
               <span className="text-[13px] leading-tight text-fg">{s.title}</span>
             </>
@@ -65,15 +66,16 @@ function Steps({ base, active, done }: { base: string | null; active: WizardStep
  * kaydedilince taslak oluşur ve diğer adımlara geçilir.
  */
 export async function CampaignWizardPage({ actor, campaignId, step: stepRaw, defaultBrandId }: { actor: Actor; campaignId: string | null; step?: string; defaultBrandId?: string }) {
+  const tt = await getTT();
   const isBrand = actor.role === "BRAND";
   if (!campaignId) {
     const brands = isBrand ? undefined : await prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <PageHeader title="Yeni kampanya" description="8 adım: her adım kaydedilir, istediğiniz an çıkıp taslaktan devam edebilirsiniz." />
+        <PageHeader title={tt("Yeni kampanya")} description={tt("8 adım: her adım kaydedilir, istediğiniz an çıkıp taslaktan devam edebilirsiniz.")} />
         <Steps base={null} active="temel" done={new Set()} />
         <Card interactive={false} className="flex flex-col gap-2">
-          <h2 className="text-section">1. Temel bilgiler</h2>
+          <h2 className="text-section">{tt("1. Temel bilgiler")}</h2>
           <BasicsStep brands={brands} values={defaultBrandId ? { name: "", objective: null, description: null, brandId: defaultBrandId } : undefined} />
         </Card>
       </div>
@@ -86,10 +88,8 @@ export async function CampaignWizardPage({ actor, campaignId, step: stepRaw, def
     if (isDomainError(e)) {
       return (
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-          <PageHeader title="Kampanya düzenlenemiyor" description={e.message} />
-          <Link href={isBrand ? `/marka/kampanyalar/${campaignId}` : `/admin/kampanyalar/${campaignId}`} className="text-sm underline underline-offset-4">
-            Kampanyaya dön
-          </Link>
+          <PageHeader title={tt("Kampanya düzenlenemiyor")} description={e.message} />
+          <Link href={isBrand ? `/marka/kampanyalar/${campaignId}` : `/admin/kampanyalar/${campaignId}`} className="text-sm underline underline-offset-4">{tt("Kampanyaya dön")}</Link>
         </div>
       );
     }

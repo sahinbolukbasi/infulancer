@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { kvkkConsentCopy, kvkkStatus } from "@infulancer/core/compliance/kvkk";
@@ -14,6 +15,7 @@ export const metadata: Metadata = { title: "Uyum" };
 export const dynamic = "force-dynamic";
 
 export default async function BrandCompliancePage() {
+  const tt = await getTT();
   const actor = await requireActor("BRAND");
   const t = actor.brandId!;
   const [settings, status, consents] = await Promise.all([
@@ -23,7 +25,7 @@ export default async function BrandCompliancePage() {
   ]);
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Uyum" description="Üç kart yeşilse yasal olarak hazırsınız." />
+      <PageHeader title={tt("Uyum")} description={tt("Üç kart yeşilse yasal olarak hazırsınız.")} />
       <StatusCards
         items={[
           {
@@ -54,15 +56,15 @@ export default async function BrandCompliancePage() {
       />
       <Card interactive={false} className="flex scroll-mt-24 flex-col gap-4" id="kvkk">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle>KVKK standart sözleşme</CardTitle>
-          <StatusDot tone={settings?.mode === "production" ? "active" : "muted"}>{settings?.mode === "production" ? "Canlı" : "Sandbox"}</StatusDot>
+          <CardTitle>{tt("KVKK standart sözleşme")}</CardTitle>
+          <StatusDot tone={settings?.mode === "production" ? "active" : "muted"}>{settings?.mode === "production" ? tt("Canlı") : tt("Sandbox")}</StatusDot>
         </div>
-        <p className="text-[13px] text-fg-muted">AWS ve Meta için iki makbuz gerekir; imzadan sonra 5 iş günü içinde yükleyin.</p>
+        <p className="text-[13px] text-fg-muted">{tt("AWS ve Meta için iki makbuz gerekir; imzadan sonra 5 iş günü içinde yükleyin.")}</p>
         <ul className="flex flex-col gap-1 text-sm">
           {status.filings.map((f) => (
             <li key={f.id} className="flex justify-between">
               <span>{f.transferTarget}</span>
-              <span className="text-fg-muted">{f.receiptS3Key ? "makbuz yüklendi" : `son tarih ${fmtDateTime(f.dueAt)}`}</span>
+              <span className="text-fg-muted">{f.receiptS3Key ? tt("makbuz yüklendi") : `son tarih ${fmtDateTime(f.dueAt)}`}</span>
             </li>
           ))}
         </ul>
@@ -70,7 +72,7 @@ export default async function BrandCompliancePage() {
       </Card>
 
       <Card interactive={false} className="flex scroll-mt-24 flex-col gap-4" id="iys">
-        <CardTitle>İYS onayları</CardTitle>
+        <CardTitle>{tt("İYS onayları")}</CardTitle>
         <InfoNote>
           {kvkkConsentCopy.marketing} / {kvkkConsentCopy.aiProcessing} — {kvkkConsentCopy.note}
         </InfoNote>
@@ -82,7 +84,7 @@ export default async function BrandCompliancePage() {
                 {c.recipient} · {c.channel}
               </span>
               <StatusDot tone={c.state === "RET" ? "critical" : "active"}>{c.state}</StatusDot>
-              <span className="text-[13px] text-fg-muted">{c.registeredAt ? `İYS'ye iletildi ${fmtDateTime(c.registeredAt)}` : "İYS'ye iletilmeyi bekliyor"}</span>
+              <span className="text-[13px] text-fg-muted">{c.registeredAt ? `İYS'ye iletildi ${fmtDateTime(c.registeredAt)}` : tt("İYS'ye iletilmeyi bekliyor")}</span>
             </li>
           ))}
         </ul>

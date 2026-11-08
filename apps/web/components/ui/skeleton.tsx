@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import { cn } from "@/lib/cn";
 
 /** Spinner yerine shimmer iskelet. */
@@ -6,10 +7,11 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 /** Segment loading.tsx dosyaları için ortak sayfa iskeleti. */
-export function PageSkeleton({ cards = 4 }: { cards?: number }) {
+export async function PageSkeleton({ cards = 4 }: { cards?: number }) {
+  const tt = await getTT();
   return (
     <div role="status" aria-live="polite" className="flex flex-col gap-6">
-      <span className="sr-only">Yükleniyor…</span>
+      <span className="sr-only">{tt("Yükleniyor…")}</span>
       <Skeleton className="h-9 w-64" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: cards }, (_, i) => (

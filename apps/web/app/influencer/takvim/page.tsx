@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { CalendarScreen, parsePlatforms } from "@/components/calendar/calendar-screen";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 type SP = { tarih?: string | string[]; gorunum?: string | string[]; platform?: string | string[] };
 /** Influencer takvimi: kendi paylaşım tarihleri (kabul ettiği ve teklif aşamasındaki işler). */
 export default async function InfluencerCalendarPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const tt = await getTT();
   const actor = await requireActor("INFLUENCER");
   const sp = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -41,7 +43,7 @@ export default async function InfluencerCalendarPage({ searchParams }: { searchP
   const total = rows.reduce((s, r) => s + r.cards.length, 0);
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Takvim" description={`${total} paylaşım. Saatler kitlenizin saat dilimindedir; karta tıklayınca iş ayrıntısı açılır.`} />
+      <PageHeader title={tt("Takvim")} description={`${total} paylaşım. Saatler kitlenizin saat dilimindedir; karta tıklayınca iş ayrıntısı açılır.`} />
       <CalendarScreen basePath="/influencer/takvim" per={per} platforms={platforms} rows={rows} labelBy="campaign" />
     </div>
   );

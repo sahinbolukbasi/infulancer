@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -68,6 +69,7 @@ export function CreativeComposer({
   minTry?: number;
   initialPrompt?: string;
 }) {
+  const tt = useTT();
   const router = useRouter();
   const [state, action, pending] = useActionState(generateCreative, idleState);
   const money = (n: number) => fmtTl(n, currency);
@@ -132,7 +134,7 @@ export function CreativeComposer({
     setSeconds(0);
   };
   if (!models.length) {
-    return <p className="rounded-3xl border border-dashed border-line p-8 text-center text-sm text-fg-muted">Şu an kullanılabilir üretim modeli yok. Ajansınız modelleri açtığında burada görünür.</p>;
+    return <p className="rounded-3xl border border-dashed border-line p-8 text-center text-sm text-fg-muted">{tt("Şu an kullanılabilir üretim modeli yok. Ajansınız modelleri açtığında burada görünür.")}</p>;
   }
   return (
     <form action={action} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface">
@@ -143,7 +145,7 @@ export function CreativeComposer({
       {withRefs ? refs.map((r) => <input key={r} type="hidden" name="refs" value={r} />) : null}
       {/* 1. Tür */}
       <fieldset className="grid grid-cols-3 gap-2 border-b border-line p-4">
-        <legend className="sr-only">Ne üretelim?</legend>
+        <legend className="sr-only">{tt("Ne üretelim?")}</legend>
         {kinds.map((k) => (
           <label
             key={k}
@@ -166,7 +168,7 @@ export function CreativeComposer({
       {/* 2. İstek */}
       <div className="flex flex-col gap-3 p-4">
         <label htmlFor="cc-prompt" className="text-[13px] font-medium text-fg">
-          {kind === "audio" ? "Seslendirilecek metin ve ton" : "Ne görmek istiyorsunuz?"}
+          {kind === "audio" ? tt("Seslendirilecek metin ve ton") : tt("Ne görmek istiyorsunuz?")}
         </label>
         <textarea
           id="cc-prompt"
@@ -177,10 +179,10 @@ export function CreativeComposer({
           rows={4}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder={kind === "audio" ? "Örn. Enerjik bir tonla: 'Yeni sezon şimdi mağazalarda!'" : "Örn. Bahar ruj serisi için pastel stüdyoda ürün yakın çekimi, yumuşak ışık…"}
+          placeholder={kind === "audio" ? tt("Örn. Enerjik bir tonla: 'Yeni sezon şimdi mağazalarda!'") : tt("Örn. Bahar ruj serisi için pastel stüdyoda ürün yakın çekimi, yumuşak ışık…")}
           className="resize-y rounded-2xl border border-line bg-bg px-4 py-3 text-[15px] leading-relaxed text-fg placeholder:text-fg-passive focus:border-fg/50 focus:outline-none"
         />
-        <div className="flex flex-wrap gap-1.5" aria-label="Hazır fikirler">
+        <div className="flex flex-wrap gap-1.5" aria-label={tt("Hazır fikirler")}>
           {IDEAS[kind].map((idea) => (
             <button key={idea.label} type="button" onClick={() => setPrompt(idea.text)} className="rounded-full border border-line px-3 py-1 text-[12px] text-fg-muted transition-standard hover:border-fg/40 hover:text-fg">
               + {idea.label}
@@ -190,36 +192,33 @@ export function CreativeComposer({
         {kind !== "audio" ? (
           <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-line p-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[13px] font-medium text-fg">Referans görsel ekle</span>
-              <span className="text-[11px] text-fg-passive">İsteğe bağlı · en çok 4 · {kind === "image" ? "ürününüzü/sahnenizi koruyarak yeni görsel" : "görseli hareketlendirerek video"}</span>
+              <span className="text-[13px] font-medium text-fg">{tt("Referans görsel ekle")}</span>
+              <span className="text-[11px] text-fg-passive">{tt("İsteğe bağlı · en çok 4 ·")}{" "}{kind === "image" ? tt("ürününüzü/sahnenizi koruyarak yeni görsel") : tt("görseli hareketlendirerek video")}</span>
               <span className="ml-auto flex gap-2">
-                <button type="button" onClick={() => setShowLib((v) => !v)} aria-expanded={showLib} className="rounded-full border border-line px-3 py-1 text-[12px] text-fg hover:border-fg/40">
-                  Kitaplıktan seç ({lib.length})
+                <button type="button" onClick={() => setShowLib((v) => !v)} aria-expanded={showLib} className="rounded-full border border-line px-3 py-1 text-[12px] text-fg hover:border-fg/40">{tt("Kitaplıktan seç (")}{lib.length})
                 </button>
-                <label className="cursor-pointer rounded-full border border-line px-3 py-1 text-[12px] text-fg hover:border-fg/40">
-                  Bilgisayardan yükle
-                  <input type="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" aria-label="Referans dosya yükle" onChange={(e) => { if (e.target.files?.length) void addFiles(e.target.files); e.target.value = ""; }} />
+                <label className="cursor-pointer rounded-full border border-line px-3 py-1 text-[12px] text-fg hover:border-fg/40">{tt("Bilgisayardan yükle")}<input type="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" aria-label={tt("Referans dosya yükle")} onChange={(e) => { if (e.target.files?.length) void addFiles(e.target.files); e.target.value = ""; }} />
                 </label>
               </span>
             </div>
-            {upPct != null ? <p className="text-[11px] text-fg-muted" aria-live="polite">Yükleniyor… %{upPct}</p> : null}
+            {upPct != null ? <p className="text-[11px] text-fg-muted" aria-live="polite">{tt("Yükleniyor… %")}{upPct}</p> : null}
             {upErr ? <p className="text-[11px] text-amber-600" role="status">{upErr}</p> : null}
             {refs.length ? (
-              <ul className="flex flex-wrap gap-2" aria-label="Seçili referanslar">
+              <ul className="flex flex-wrap gap-2" aria-label={tt("Seçili referanslar")}>
                 {refs.map((r) => (
                   <li key={r} className="relative h-16 w-16 overflow-hidden rounded-xl border border-fg">
                     {/* eslint-disable-next-line @next/next/no-img-element -- imzalı S3 URL'i */}
-                    <img src={`/api/creative/file/${r}`} alt="Referans" className="h-full w-full object-cover" />
-                    <button type="button" onClick={() => toggleRef(r)} aria-label="Referansı kaldır" className="absolute top-0.5 right-0.5 rounded-full bg-black/60 px-1.5 text-[10px] text-white">×</button>
+                    <img src={`/api/creative/file/${r}`} alt={tt("Referans")} className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => toggleRef(r)} aria-label={tt("Referansı kaldır")} className="absolute top-0.5 right-0.5 rounded-full bg-black/60 px-1.5 text-[10px] text-white">×</button>
                   </li>
                 ))}
               </ul>
             ) : null}
             {showLib ? (
               lib.length === 0 ? (
-                <p className="text-[12px] text-fg-muted">Kitaplık boş. Bilgisayardan yükleyin; yüklenenler Stüdyo&apos;da da görünür.</p>
+                <p className="text-[12px] text-fg-muted">{tt("Kitaplık boş. Bilgisayardan yükleyin; yüklenenler Stüdyo'da da görünür.")}</p>
               ) : (
-                <ul className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-6" aria-label="Kitaplık">
+                <ul className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-6" aria-label={tt("Kitaplık")}>
                   {lib.map((u) => (
                     <li key={u.id}>
                       {u.kind === "image" ? (
@@ -228,9 +227,9 @@ export function CreativeComposer({
                           <img src={`/api/creative/file/${u.id}`} alt="" loading="lazy" className="h-full w-full object-cover" />
                         </button>
                       ) : (
-                        <Link href={`/creative?sekme=studyo&dosya=${u.id}`} title="Videoyu Stüdyo'da brief ile düzenle" className="relative block aspect-square w-full overflow-hidden rounded-xl border border-line">
-                          <video src={`/api/creative/file/${u.id}#t=0.5`} muted preload="metadata" className="h-full w-full object-cover" aria-label={u.name ?? "Video"} />
-                          <span className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-center text-[9px] text-white">Düzenle →</span>
+                        <Link href={`/creative?sekme=studyo&dosya=${u.id}`} title={tt("Videoyu Stüdyo'da brief ile düzenle")} className="relative block aspect-square w-full overflow-hidden rounded-xl border border-line">
+                          <video src={`/api/creative/file/${u.id}#t=0.5`} muted preload="metadata" className="h-full w-full object-cover" aria-label={u.name ?? tt("Video")} />
+                          <span className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-center text-[9px] text-white">{tt("Düzenle →")}</span>
                         </Link>
                       )}
                     </li>
@@ -245,9 +244,9 @@ export function CreativeComposer({
       {kind !== "audio" ? (
         <div className="grid grid-cols-1 gap-4 border-t border-line p-4 md:grid-cols-2">
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 text-[13px] font-medium text-fg">Format</legend>
-            {!aspectOk ? <p className="text-[11px] text-amber-600">Bu model {format} üretmiyor; {m?.aspects?.join(", ")} seçin ya da başka model seçin.</p> : null}
-            {format === "9:16" && kind === "image" ? <p className="text-[11px] text-fg-passive">Story düzeni: üst ve altta yazı/arayüz için boş alan bırakılır.</p> : null}
+            <legend className="mb-2 text-[13px] font-medium text-fg">{tt("Format")}</legend>
+            {!aspectOk ? <p className="text-[11px] text-amber-600">{tt("Bu model")}{" "}{format}{" "}{tt("üretmiyor;")}{" "}{m?.aspects?.join(", ")}{" "}{tt("seçin ya da başka model seçin.")}</p> : null}
+            {format === "9:16" && kind === "image" ? <p className="text-[11px] text-fg-passive">{tt("Story düzeni: üst ve altta yazı/arayüz için boş alan bırakılır.")}</p> : null}
             <div className="grid grid-cols-4 gap-2">
               {FORMATS.map((f) => (
                 <button
@@ -265,8 +264,7 @@ export function CreativeComposer({
             </div>
           </fieldset>
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 text-[13px] font-medium text-fg">
-              Stil <span className="font-normal text-fg-passive">(isteğe bağlı)</span>
+            <legend className="mb-2 text-[13px] font-medium text-fg">{tt("Stil")}{" "}<span className="font-normal text-fg-passive">{tt("(isteğe bağlı)")}</span>
             </legend>
             <div className="flex flex-wrap gap-1.5">
               {STYLES.map((s) => (
@@ -286,9 +284,7 @@ export function CreativeComposer({
       ) : null}
       {/* 4. Model, miktar, hesap */}
       <div className="grid grid-cols-1 gap-3 border-t border-line p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_140px_minmax(0,1fr)]">
-        <label className="flex flex-col gap-1 text-[12px] text-fg-muted">
-          Kalite / model
-          <select value={m?.key ?? ""} onChange={(e) => setModelKey(e.target.value)} className="h-10 rounded-xl border border-line bg-bg px-3 text-[14px] text-fg">
+        <label className="flex flex-col gap-1 text-[12px] text-fg-muted">{tt("Kalite / model")}<select value={m?.key ?? ""} onChange={(e) => setModelKey(e.target.value)} className="h-10 rounded-xl border border-line bg-bg px-3 text-[14px] text-fg">
             {inKind.map((x) => (
               <option key={x.key} value={x.key}>
                 {modelName(x.key)}
@@ -298,29 +294,23 @@ export function CreativeComposer({
           </select>
         </label>
         {kind === "video" ? (
-          <label className="flex flex-col gap-1 text-[12px] text-fg-muted">
-            Süre
-            <select value={sec} onChange={(e) => setSeconds(Number(e.target.value))} className="h-10 rounded-xl border border-line bg-bg px-3 text-[14px] tabular-nums text-fg">
+          <label className="flex flex-col gap-1 text-[12px] text-fg-muted">{tt("Süre")}<select value={sec} onChange={(e) => setSeconds(Number(e.target.value))} className="h-10 rounded-xl border border-line bg-bg px-3 text-[14px] tabular-nums text-fg">
               {durations.map((d) => (
                 <option key={d} value={d}>
-                  {d} sn
-                </option>
+                  {d}{" "}{tt("sn")}</option>
               ))}
             </select>
           </label>
         ) : (
-          <div className="flex flex-col gap-1 text-[12px] text-fg-muted">
-            Ücretlendirme
-            <span className="flex h-10 items-center rounded-xl border border-line bg-bg/50 px-3 text-[13px] text-fg">
-              {kind === "audio" ? `${prompt.trim().length} karakter · ${n} × 1000` : "1 adet"}
+          <div className="flex flex-col gap-1 text-[12px] text-fg-muted">{tt("Ücretlendirme")}<span className="flex h-10 items-center rounded-xl border border-line bg-bg/50 px-3 text-[13px] text-fg">
+              {kind === "audio" ? `${prompt.trim().length} karakter · ${n} × 1000` : tt("1 adet")}
             </span>
           </div>
         )}
       </div>
       <div className="flex flex-col gap-3 border-t border-line bg-fg/[0.02] p-4 sm:flex-row sm:items-center">
         <label className="flex items-center gap-2 text-[12px] text-fg-muted">
-          <input type="checkbox" name="portrait" className="h-4 w-4 accent-[var(--color-fg)]" /> Referansta tanınabilir kişi var
-        </label>
+          <input type="checkbox" name="portrait" className="h-4 w-4 accent-[var(--color-fg)]" />{" "}{tt("Referansta tanınabilir kişi var")}</label>
         <div className="flex items-center gap-4 sm:ml-auto">
           <div className="flex flex-col text-right leading-tight">
             <span className="text-[15px] font-semibold tabular-nums text-fg">{money(cost)}</span>
@@ -329,8 +319,7 @@ export function CreativeComposer({
           <button type="submit" disabled={pending || !ready} className="inline-flex h-11 items-center gap-2 rounded-full bg-fg px-6 text-[14px] font-semibold text-bg transition-standard hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
             {pending ? (
               <>
-                <span className="h-2 w-2 animate-ping rounded-full bg-bg" aria-hidden /> Gönderiliyor…
-              </>
+                <span className="h-2 w-2 animate-ping rounded-full bg-bg" aria-hidden />{" "}{tt("Gönderiliyor…")}</>
             ) : withRefs ? (
               `Referansla ${KIND_LABEL[kind].toLocaleLowerCase("tr")} üret`
             ) : (
@@ -364,21 +353,21 @@ export function CreativeComposer({
               <PhonePreview src={`/api/creative/file/${result.assetId}?t=asset`} kind={result.kind === "video" ? "video" : "image"} username={username} caption={result.prompt.slice(0, 120)} initial={format === "9:16" ? (result.kind === "video" ? "ig-reels" : "ig-story") : format === "16:9" ? "yt-video" : "ig-post"} />
             )}
             <div className="flex flex-col gap-2">
-              <p className="text-[14px] font-semibold text-fg">Hazır. Sırada ne var?</p>
-              <Link href={`/creative?sekme=metin&asset=${result.assetId}`} className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">Post metni ve hashtag yaz →</Link>
-              <Link href={`/creative?sekme=galeri`} className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">Galeride gör →</Link>
+              <p className="text-[14px] font-semibold text-fg">{tt("Hazır. Sırada ne var?")}</p>
+              <Link href={`/creative?sekme=metin&asset=${result.assetId}`} className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">{tt("Post metni ve hashtag yaz →")}</Link>
+              <Link href={`/creative?sekme=galeri`} className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">{tt("Galeride gör →")}</Link>
               {result.kind !== "audio" ? (
                 <form action={openAssetInStudioAction}>
                   <input type="hidden" name="assetId" value={result.assetId} />
-                  <button type="submit" className="w-full rounded-xl border border-line px-3 py-2 text-left text-[13px] hover:border-fg/40">Stüdyoda düzenle (yazı, kadraj, AI) →</button>
+                  <button type="submit" className="w-full rounded-xl border border-line px-3 py-2 text-left text-[13px] hover:border-fg/40">{tt("Stüdyoda düzenle (yazı, kadraj, AI) →")}</button>
                 </form>
               ) : null}
-              <a href={`/api/creative/file/${result.assetId}?t=asset`} download className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">İndir</a>
+              <a href={`/api/creative/file/${result.assetId}?t=asset`} download className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">{tt("İndir")}</a>
             </div>
           </div>
         ) : null}
       </div>
-      <p className="border-t border-line px-4 py-3 text-[11px] text-fg-passive">Gerçek kişinin adı, yüzü veya sesiyle üretim otomatik reddedilir. Başarısız üretimde ücret alınmaz. Her çıktıya &quot;AI ile üretildi&quot; etiketi (C2PA) gömülür.</p>
+      <p className="border-t border-line px-4 py-3 text-[11px] text-fg-passive">{tt("Gerçek kişinin adı, yüzü veya sesiyle üretim otomatik reddedilir. Başarısız üretimde ücret alınmaz. Her çıktıya \"AI ile üretildi\" etiketi (C2PA) gömülür.")}</p>
     </form>
   );
 }
