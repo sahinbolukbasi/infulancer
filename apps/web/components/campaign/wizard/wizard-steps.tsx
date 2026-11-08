@@ -157,6 +157,7 @@ export function AudienceStep({
 }) {
   const [countries, setCountries] = useState<string[]>(values.targetCountries.length ? values.targetCountries : ["TR"]);
   const [platforms, setPlatforms] = useState<Platform[]>(values.platforms.length ? values.platforms : ["INSTAGRAM"]);
+  const [curNote, setCurNote] = useState<string | null>(null);
   const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   return (
     <StepForm action={wizardAudienceAction} id={id} backHref={backHref} label="Hedef kitle">
@@ -170,12 +171,27 @@ export function AudienceStep({
         <legend className="mb-2 text-label text-fg-muted">Yayınlanacak ülkeler</legend>
         <div className="flex flex-wrap gap-2">
           {COUNTRIES.map((c) => (
-            <Chip key={c.code} on={countries.includes(c.code)} onClick={() => setCountries(toggle(countries, c.code))}>
-              {c.name}
+            <Chip
+              key={c.code}
+              on={countries.includes(c.code)}
+              onClick={() => {
+                const cur = COUNTRIES.find((x) => x.code === countries[0])?.currency;
+                // Tutarlar çevrilmez: farklı para birimli ülke seçilirse seçim o bölgeye geçer.
+                if (cur && cur !== c.currency && !countries.includes(c.code)) {
+                  setCountries([c.code]);
+                  setCurNote(`Para birimi ${c.currency} oldu. ${cur} kullanan ülkeler için ayrı kampanya açın.`);
+                } else {
+                  setCountries(toggle(countries, c.code));
+                  setCurNote(null);
+                }
+              }}
+            >
+              {c.name} <span className="opacity-60">{c.currency}</span>
             </Chip>
           ))}
         </div>
-        <p className="text-[12px] text-fg-passive">Influencer önerileri ve kullanım hakkı coğrafyası bu ülkelere göre hazırlanır.</p>
+        {curNote ? <p role="status" className="text-[12px] text-amber-600">{curNote}</p> : null}
+        <p className="text-[12px] text-fg-passive">Kampanyanın para birimi seçilen ülkelere göre belirlenir ({COUNTRIES.find((x) => x.code === countries[0])?.currency ?? "TRY"}); tutarlar çevrilmez. Yalnız bu ülkelerde kayıtlı influencerlar listelenir ve reklam ibaresi her influencer'ın ülke kuralına göre denetlenir.</p>
       </fieldset>
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-label text-fg-muted">Platformlar</legend>

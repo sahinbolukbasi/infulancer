@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/lib/i18n/client";
 import { useSyncExternalStore } from "react";
 import { MoonIcon, SunIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
@@ -27,14 +28,15 @@ function apply(t: Theme) {
 
 /** Açık / koyu tema düğmesi. Seçim tarayıcıda saklanır; ilk boyamadan önce kök düzendeki betik uygular. */
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useT();
   const theme = useSyncExternalStore(subscribe, read, () => "dark" as Theme);
   const next: Theme = theme === "light" ? "dark" : "light";
   return (
-    <Tooltip label={next === "light" ? "Açık tema" : "Koyu tema"} side="bottom">
+    <Tooltip label={next === "light" ? t("theme.light", "Açık tema") : t("theme.dark", "Koyu tema")} side="bottom">
     <button
       type="button"
       onClick={() => apply(next)}
-      aria-label={next === "light" ? "Açık temaya geç" : "Koyu temaya geç"}
+      aria-label={next === "light" ? t("theme.toLight", "Açık temaya geç") : t("theme.toDark", "Koyu temaya geç")}
       className={cn(
         "inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted transition-standard hover:border-line-strong hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-pink",
         className,

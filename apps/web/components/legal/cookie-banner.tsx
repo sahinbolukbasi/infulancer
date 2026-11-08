@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n/client";
 import Link from "next/link";
 
 const KEY = "infl-cookie-consent";
@@ -31,6 +32,7 @@ function write(functional: boolean) {
  * Çerez politikasındaki "Tercihleri değiştir" düğmesi bandı yeniden açar.
  */
 export function CookieBanner() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [details, setDetails] = useState(false);
   const [functional, setFunctional] = useState(true);
@@ -55,25 +57,25 @@ export function CookieBanner() {
   return (
     <div role="dialog" aria-modal="false" aria-labelledby="cookie-title" className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-line bg-bg/95 p-5 backdrop-blur-xl animate-modal-in md:right-auto md:left-6 md:bottom-6 md:max-w-md">
       <h2 id="cookie-title" className="text-[15px] font-semibold">
-        Çerez tercihleri
+        {t("cookie.title", "Çerez tercihleri")}
       </h2>
       <p className="mt-1 text-[13px] text-fg-muted">
-        Oturum ve güvenlik için zorunlu çerezler, tema tercihiniz için işlevsel bir çerez kullanıyoruz. Reklam veya takip çerezi yok.{" "}
+        {t("cookie.body", "Oturum ve güvenlik için zorunlu çerezler, tema tercihiniz için işlevsel bir çerez kullanıyoruz. Reklam veya takip çerezi yok.")}{" "}
         <Link href="/cerez-politikasi" className="underline underline-offset-4">
-          Çerez Politikası
+          {t("cookie.policy", "Çerez Politikası")}
         </Link>
       </p>
       {details ? (
         <div className="mt-3 flex flex-col gap-2 text-[13px]">
           <label className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2">
             <span>
-              <span className="font-medium text-fg">Zorunlu</span> <span className="text-fg-muted">· oturum, güvenlik</span>
+              <span className="font-medium text-fg">{t("cookie.required", "Zorunlu")}</span> <span className="text-fg-muted">· {t("cookie.requiredWhat", "oturum, güvenlik")}</span>
             </span>
             <input type="checkbox" checked disabled className="h-4 w-4" aria-label="Zorunlu çerezler (kapatılamaz)" />
           </label>
           <label className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2">
             <span>
-              <span className="font-medium text-fg">İşlevsel</span> <span className="text-fg-muted">· tema tercihi</span>
+              <span className="font-medium text-fg">{t("cookie.functional", "İşlevsel")}</span> <span className="text-fg-muted">· {t("cookie.functionalWhat", "tema tercihi")}</span>
             </span>
             <input type="checkbox" checked={functional} onChange={(e) => setFunctional(e.target.checked)} className="h-4 w-4 accent-[var(--color-fg)]" aria-label="İşlevsel çerezler" />
           </label>
@@ -82,18 +84,18 @@ export function CookieBanner() {
       <div className="mt-4 flex flex-wrap justify-end gap-2">
         {details ? (
           <button type="button" onClick={() => save(functional)} className="rounded-full border border-line-strong px-4 py-2 text-[13px] hover:border-fg">
-            Seçimi kaydet
+            {t("cookie.saveChoice", "Seçimi kaydet")}
           </button>
         ) : (
           <button type="button" onClick={() => setDetails(true)} className="rounded-full px-4 py-2 text-[13px] text-fg-muted hover:text-fg">
-            Ayarlar
+            {t("cookie.manage", "Ayarlar")}
           </button>
         )}
         <button type="button" onClick={() => save(false)} className="rounded-full border border-line-strong px-4 py-2 text-[13px] hover:border-fg">
-          Yalnız zorunlu
+          {t("cookie.onlyRequired", "Yalnız zorunlu")}
         </button>
         <button type="button" onClick={() => save(true)} className="rounded-full bg-fg px-4 py-2 text-[13px] font-medium text-bg">
-          Tümünü kabul et
+          {t("cookie.acceptAll", "Tümünü kabul et")}
         </button>
       </div>
     </div>

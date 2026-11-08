@@ -7,12 +7,13 @@ import type { LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
 import { BRAND_NAME } from "@/lib/brand";
 import { NordvowMark } from "@/components/brand/logo";
+import { getT } from "@/lib/i18n/server";
 
 /**
  * Giriş / kayıt / onay ekranlarının ortak çerçevesi: solda animasyonlu marka paneli,
  * sağda cam efektli form kartı. Mobilde yalnız form ve üst başlık görünür.
  */
-export function AuthShell({
+export async function AuthShell({
   title,
   subtitle,
   children,
@@ -27,6 +28,7 @@ export function AuthShell({
   wide?: boolean;
   videos: LandingVideo[];
 }) {
+  const t = await getT();
   return (
     <div className="relative isolate grid min-h-dvh grid-cols-1 overflow-hidden bg-canvas text-fg lg:grid-cols-[1fr_minmax(0,1.05fr)]">
       {/* Arka plan */}
@@ -57,11 +59,11 @@ export function AuthShell({
         </div>
         <div className="flex flex-col gap-3">
           <p className="neon-text text-[34px] leading-tight font-semibold tracking-tight">
-            İçerik üreticileriyle
+            {t("auth.hero1", "İçerik üreticileriyle")}
             <br />
-            ölçülebilir <RotatingWord words={["erişim.", "etkileşim.", "satış.", "güven."]} />
+            {t("auth.hero2", "ölçülebilir")} <RotatingWord words={t("auth.heroWords", "erişim.|etkileşim.|satış.|güven.").split("|")} />
           </p>
-          <p className="max-w-md text-sm text-fg-muted">Ajans, marka ve içerik üreticisi aynı panelde: brief, onay, yayın, ölçüm ve ödeme.</p>
+          <p className="max-w-md text-sm text-fg-muted">{t("auth.heroText", "Ajans, marka ve içerik üreticisi aynı panelde: brief, onay, yayın, ölçüm ve ödeme.")}</p>
         </div>
       </aside>
 
@@ -86,13 +88,13 @@ export function AuthShell({
           {footer ? <div className="text-center text-[13px] text-fg-muted">{footer}</div> : null}
           <nav aria-label="Yasal" className="flex justify-center gap-5 text-[12px] text-fg-passive">
             <Link href="/" className="hover:text-fg">
-              Ana sayfa
+              {t("legal.home", "Ana sayfa")}
             </Link>
             <Link href="/gizlilik" className="hover:text-fg">
-              Gizlilik
+              {t("legal.privacy", "Gizlilik")}
             </Link>
             <Link href="/kullanim-kosullari" className="hover:text-fg">
-              Kullanım koşulları
+              {t("legal.terms", "Kullanım koşulları")}
             </Link>
           </nav>
         </div>
