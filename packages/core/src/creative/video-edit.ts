@@ -21,7 +21,20 @@ export const videoOpsSchema = z.object({
   aspect: z.enum(["orijinal", "9:16", "1:1", "4:5", "16:9"]).default("orijinal"),
   speed: z.union([z.literal(0.5), z.literal(1), z.literal(1.5), z.literal(2)]).default(1),
   mute: z.boolean().default(false),
+  /** Renk görünümü (ffmpeg filtresi; yazı tipi gerektirmez). */
+  look: z.enum(["orijinal", "canli", "siyah-beyaz", "sicak", "soguk"]).default("orijinal"),
+  /** Başta ve sonda 0,5 sn kararma geçişi. */
+  fade: z.boolean().default(false),
+  /** Brief ile düzenlemede kullanıcının isteği (kayıt için). */
+  brief: z.string().max(1000).optional(),
 });
+const LOOK: Record<string, string | null> = {
+  orijinal: null,
+  canli: "eq=saturation=1.35:contrast=1.08",
+  "siyah-beyaz": "hue=s=0",
+  sicak: "colorbalance=rs=0.08:gs=0.02:bs=-0.08",
+  soguk: "colorbalance=rs=-0.06:bs=0.08",
+};
 export type VideoOps = z.infer<typeof videoOpsSchema>;
 
 const ASPECT: Record<Exclude<VideoOps["aspect"], "orijinal">, number> = { "9:16": 9 / 16, "1:1": 1, "4:5": 4 / 5, "16:9": 16 / 9 };
@@ -41,6 +54,13 @@ export function buildFfmpegArgs(input: string, output: string, ops: VideoOps, so
   // En çok 720p; boyutlar çift sayı olmalı (H.264).
   filters.push("scale='trunc(min(iw,if(gt(ih,iw),720,1280))/2)*2':-2");
   if (ops.speed !== 1) filters.push(`setpts=PTS/${ops.speed}`);
+  const look = LOOK[ops.look ?? "orijinal"];
+  if (look) filters.push(look);
+  if (ops.fade) {
+    const outDur = (end - start) / ops.speed;
+    filters.push("fade=t=in:st=0:d=0.5");
+    if (outDur > 1.5) filters.push(`fade=t=out:st=${(outDur - 0.5).toFixed(2)}:d=0.5`);
+  }
   const args = ["-y", "-hide_banner", "-loglevel", "error", "-ss", String(start), "-to", String(end), "-i", input, "-vf", filters.join(",")];
   if (ops.mute) args.push("-an");
   else {

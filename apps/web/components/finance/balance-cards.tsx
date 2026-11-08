@@ -9,13 +9,13 @@ export function BalanceCards({ balances, holdDays }: { balances: Balances; holdD
         label="Hakedilen"
         value={balances.hakedilen}
         format="currency-kurus"
-        hint="Tamamlanan işler; kampanya kapanıp marka ödemesi gelene kadar bekler."
+        hint="Tamamlanan işler; kampanya bitene kadar burada bekler."
       />
       <MetricCard
         label="Çekilebilir"
         value={Math.max(balances.cekilebilir, 0)}
         format="currency-kurus"
-        hint={`Kapanış ve marka ödemesinden ${holdDays} gün sonra talep edilebilir.`}
+        hint={holdDays > 0 ? `Kampanya bittikten ${holdDays} gün sonra otomatik geçer; hemen çekim talebi oluşturabilirsiniz.` : "Kampanya bitince otomatik geçer; hemen çekim talebi oluşturabilirsiniz."}
       />
       <MetricCard
         label="İşlemde"

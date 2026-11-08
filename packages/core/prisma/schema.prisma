@@ -1256,6 +1256,9 @@ model CreativeJob {
   creditHoldId String?
   /// Düzenleme işlerinde kaynak dosya (kullanıcı yüklemesi); üretimde null.
   inputUploadId String?          @map("input_upload_id")
+  /// Çok adımlı AI düzenleme: bu iş bitince sırayla çalışacak kalan adımlar ve zincirin ilk işi.
+  pipeline     Json?
+  parentJobId  String?           @map("parent_job_id")
   status       CreativeJobStatus @default(HELD)
   rejectReason String?
   inferenceMs  Int?

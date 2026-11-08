@@ -186,7 +186,7 @@ export default async function FinancePage() {
     <Stagger className="flex flex-col gap-8">
       <PageHeader
         title="Finans"
-        description={`Platform ödeme talimatı üretir, transferi banka yapar. Hakediş kampanya kapanışı ve marka ödemesinden ${holdDays()} gün sonra çekilebilir; minimum çekim ${formatKurus(minPayoutKurus())}.`}
+        description={`Platform ödeme talimatı üretir, transferi banka yapar. Hakediş kampanya bitince${holdDays() ? ` (${holdDays()} gün bekleme ile)` : ""} otomatik çekilebilir olur; influencerın çekim talepleri aşağıda onay bekler; minimum çekim ${formatKurus(minPayoutKurus())}.`}
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Toplam hakedilen" value={totals.hakedilen} format="currency-kurus" hint="Henüz çekilemeyen hakedişler" />

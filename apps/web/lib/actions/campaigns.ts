@@ -168,7 +168,7 @@ export async function closeCampaign(_prev: ActionState, fd: FormData): Promise<A
   });
 }
 
-/** 'Marka ödemesi alındı' — çekilebilir bakiyenin vade hesabına girer. */
+/** 'Marka ödemesi alındı' — ajansın tahsilat takibi (influencer çekimini bekletmez). */
 export async function markBrandPaymentReceived(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN");
   const id = str(fd, "id");

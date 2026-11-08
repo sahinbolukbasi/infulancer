@@ -13,8 +13,9 @@ import { DomainError } from "./errors";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Kampanya bitişinden sonra bekleme (gün). Varsayılan 0: kampanya biter bitmez çekilebilir. */
 export function holdDays(): number {
-  return envInt("HOLD_DAYS", 14);
+  return envInt("HOLD_DAYS", 0);
 }
 
 export function minPayoutKurus(): number {
@@ -26,7 +27,7 @@ export const OPEN_PAYOUT_STATUSES = ["TALEP_EDILDI", "ONAYLANDI", "ODEME_LISTESI
 export type Balances = {
   /** İş teslim edildi, henüz çekilemez. */
   hakedilen: number;
-  /** Kampanya kapandı, marka ödemesi alındı, bekleme süresi geçti; açık talepler düşülmüş. */
+  /** Kampanya bitti (kapandı ya da bitiş tarihi geçti) ve bekleme süresi doldu; açık talepler düşülmüş. */
   cekilebilir: number;
   /** Açık çekim talepleri toplamı. */
   islemde: number;
@@ -35,16 +36,20 @@ export type Balances = {
 type CampaignMaturity = {
   status: string;
   closedAt: Date | null;
-  brandPaymentReceivedAt: Date | null;
+  endsAt: Date;
+  brandPaymentReceivedAt?: Date | null;
 };
-
-/** Hakedişin çekilebilir olacağı an; henüz belli değilse null. */
-export function maturityDate(c: CampaignMaturity, hold = holdDays()): Date | null {
-  if (c.status !== "KAPANDI" || !c.closedAt || !c.brandPaymentReceivedAt) return null;
-  const base = Math.max(c.closedAt.getTime(), c.brandPaymentReceivedAt.getTime());
-  return new Date(base + hold * DAY_MS);
+/**
+ * Hakedişin çekilebilir olacağı an; henüz belli değilse null.
+ * Kampanya bittiğinde (kapatıldığında ya da bitiş tarihi geçtiğinde) + HOLD_DAYS. Marka tahsilatı
+ * influencer'ın çekimini bekletmez (ajans riski; tahsilat ayrı takip edilir). İptal kampanyada hakediş olgunlaşmaz.
+ */
+export function maturityDate(c: CampaignMaturity, hold = holdDays(), now: Date = new Date()): Date | null {
+  if (c.status === "IPTAL" || c.status === "TASLAK") return null;
+  const end = c.status === "KAPANDI" ? (c.closedAt ?? c.endsAt) : c.endsAt <= now ? c.endsAt : null;
+  if (!end) return null;
+  return new Date(end.getTime() + hold * DAY_MS);
 }
-
 type Db = Tx | typeof prisma;
 
 export async function computeBalances(
@@ -68,7 +73,7 @@ export async function computeBalances(
           id: true,
           assignment: {
             select: {
-              campaign: { select: { status: true, closedAt: true, brandPaymentReceivedAt: true } },
+              campaign: { select: { status: true, closedAt: true, endsAt: true } },
             },
           },
         },
@@ -86,7 +91,7 @@ export async function computeBalances(
     const signed = e.direction === "CREDIT" ? e.amountKurus : -e.amountKurus;
     if (e.reason === "HAKEDIS") {
       const campaign = campaignByDeliverable.get(e.referenceId);
-      const maturesAt = campaign ? maturityDate(campaign, hold) : null;
+      const maturesAt = campaign ? maturityDate(campaign, hold, now) : null;
       if (maturesAt && now >= maturesAt) matured += signed;
       else hakedilen += signed;
     } else if (e.reason === "ODEME") {

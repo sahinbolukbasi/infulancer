@@ -171,6 +171,11 @@ export async function handleFalWebhook(w: FalWebhook) {
     await tx.creativeJob.update({ where: { id: job.id }, data: { status: "COMPLETED", completedAt: new Date(), inferenceMs: w.metrics?.inference_time != null ? Math.round(w.metrics.inference_time * 1000) : null } });
     return a;
   });
+  // Çok adımlı düzenleme: kalan adım varsa çıktı bir sonraki adımın girdisi olur.
+  if (job.pipeline) {
+    const { continuePipeline } = await import("./edit");
+    await continuePipeline(job.id, asset.id).catch((e) => console.error("[creative] zincir", job.id, (e as Error).message));
+  }
   return { handled: true, status: "COMPLETED" as const, assetId: asset.id };
 }
 

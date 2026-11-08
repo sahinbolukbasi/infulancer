@@ -3,14 +3,17 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { generateCreative } from "@/lib/actions/operations";
+import { openAssetInStudioAction } from "@/lib/actions/creative-studio";
 import { idleState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
 import { KindIcon } from "@/components/creative/kind-icon";
 import { fmtTl, KIND_LABEL, modelHint, modelName, unitLabel, type CreativeKind } from "@/lib/creative-models";
-
+import { uploadFile } from "@/lib/creative-upload";
+import { JobProgress } from "@/components/creative/job-progress";
+import { PhonePreview } from "@/components/creative/phone-preview";
 export type ComposerModel = { key: string; kind: CreativeKind; unit: string; creditsPerUnit: number; maxUnits: number | null; durations: number[] | null; aspects: string[] | null };
-export type ComposerTenant = { id: string; name: string; group: "Markalar" | "Influencerlar"; available: number };
-
+export type ComposerLibraryItem = { id: string; kind: "image" | "video"; name: string | null };
+export type ComposerRefPrices = { imageEdit: number; klingI2v: number; ecoI2v: number };
 const IDEAS: Record<CreativeKind, { label: string; text: string }[]> = {
   image: [
     { label: "Ürün çekimi", text: "Pastel stüdyo arka planda ürünün yakın çekimi, yumuşak gölgeler, sade ve premium kompozisyon" },
@@ -38,26 +41,27 @@ const FORMATS = [
 /** Sunucudaki tutar hesabının aynısı (pricing.jobChargeTry): tam TL, en az minTry. */
 const chargeTry = (cpu: number, units: number, minTry: number) => Math.max(minTry, Math.ceil(cpu * units - 1e-9));
 const STYLES = ["Minimal", "Sinematik", "Pastel", "Neon", "Doğal ışık", "Stüdyo", "Retro", "Lüks"];
-
 const KIND_DESC: Record<CreativeKind, string> = { image: "Afiş, ürün, story", video: "Reels, TikTok, tanıtım", audio: "Reklam ve story sesi" };
-
 /**
  * Creative besteci: tür → istek → format/stil → model ve miktar → üret.
- * Marka/influencer kendi TL bakiyesiyle üretir; yönetici "kimin adına" seçer.
+ * Herkes (marka, influencer, ajans) yalnız kendi hesabının bakiyesiyle üretir.
+ * İsteğe bağlı referans görseller (kitaplıktan veya bilgisayardan) üretime eklenir.
  */
 export function CreativeComposer({
   models,
-  tenants,
-  isAdmin,
+  library = [],
+  refPrices,
   available,
+  username = "markaniz",
   minTry = 2,
   initialPrompt = "",
 }: {
   models: ComposerModel[];
-  tenants: ComposerTenant[];
-  isAdmin: boolean;
-  /** Marka/influencer için kullanılabilir bakiye TL (yönetici için seçili hesaptan okunur). */
+  library?: ComposerLibraryItem[];
+  refPrices?: ComposerRefPrices;
+  /** Kullanılabilir bakiye (TL), işlemi yapanın kendi hesabı. */
   available: number;
+  username?: string;
   /** İş başına en düşük ücret (TL). */
   minTry?: number;
   initialPrompt?: string;
@@ -72,45 +76,67 @@ export function CreativeComposer({
   const [prompt, setPrompt] = useState(initialPrompt);
   const [format, setFormat] = useState("9:16");
   const [style, setStyle] = useState("");
-  const [tenantId, setTenantId] = useState(tenants[0]?.id ?? "");
+  const [refs, setRefs] = useState<string[]>([]);
+  const [lib, setLib] = useState<ComposerLibraryItem[]>(library);
+  const [showLib, setShowLib] = useState(false);
+  const [upPct, setUpPct] = useState<number | null>(null);
+  const [upErr, setUpErr] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [result, setResult] = useState<{ assetId: string | null; kind: CreativeKind; prompt: string } | null>(null);
   const m = models.find((x) => x.key === modelKey) ?? inKind[0];
   // Faturalanan birim sunucudakiyle aynı: video = seçilen süre, ses = metnin 1000 karakter dilimi, görsel = 1.
   const durations = m?.durations ?? [5];
   const sec = durations.includes(seconds) ? seconds : durations[0]!;
   const n = kind === "video" ? sec : kind === "audio" ? Math.max(1, Math.ceil(prompt.trim().length / 1000)) : 1;
-  const cost = m ? chargeTry(m.creditsPerUnit, n, minTry) : 0;
+  // Referanslı üretimde tutar referans akışının modeline göre (sunucudaki submitGeneration ile aynı).
+  const withRefs = refs.length > 0 && kind !== "audio";
+  const kling = !!m?.key.startsWith("kling");
+  const refSec = kind === "video" ? (kling ? ([5, 10].includes(sec) ? sec : 5) : [6, 10].includes(sec) ? sec : 6) : 1;
+  const refCpu = kind === "image" ? (refPrices?.imageEdit ?? 0) : kling ? (refPrices?.klingI2v ?? 0) : (refPrices?.ecoI2v ?? 0);
+  const cost = withRefs ? chargeTry(refCpu, refSec, minTry) : m ? chargeTry(m.creditsPerUnit, n, minTry) : 0;
   const aspectOk = kind === "audio" || !m?.aspects || m.aspects.includes(format);
-  const balance = isAdmin ? (tenants.find((t) => t.id === tenantId)?.available ?? 0) : available;
+  const balance = available;
   const short = cost > balance;
-  const ready = prompt.trim().length >= 10 && !!m && n > 0 && !short && aspectOk && (!isAdmin || !!tenantId);
-
+  const ready = prompt.trim().length >= 10 && !!m && n > 0 && !short && (aspectOk || withRefs);
   useEffect(() => {
-    if (state.ok) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- başarılı üretimden sonra isteği temizle
-      setPrompt("");
-      router.refresh();
+    if (state.ok && state.data?.jobId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sunucudan dönen işi izlemeye başla
+      setJobId(state.data.jobId);
+      setResult(null);
     }
-  }, [state, router]);
-
+  }, [state]);
+  const addFiles = async (files: FileList) => {
+    setUpErr(null);
+    for (const f of Array.from(files).slice(0, 4)) {
+      try {
+        setUpPct(0);
+        const r = await uploadFile(f, { name: f.name, mime: f.type, onProgress: setUpPct });
+        setLib((l) => [{ id: r.id, kind: r.kind, name: f.name }, ...l]);
+        if (r.kind === "image") setRefs((x) => (x.length < 4 ? [...x, r.id] : x));
+        else setUpErr("Video kitaplığa eklendi. Videolar Stüdyo'da “Brief ile AI düzenle” ile düzenlenir.");
+      } catch (e) {
+        setUpErr(`${f.name}: ${e instanceof Error ? e.message : "yüklenemedi"}`);
+      }
+    }
+    setUpPct(null);
+  };
+  const toggleRef = (id: string) => setRefs((x) => (x.includes(id) ? x.filter((y) => y !== id) : x.length < 4 ? [...x, id] : x));
   const pickKind = (k: CreativeKind) => {
     setKind(k);
     const first = models.find((x) => x.kind === k);
     setModelKey(first?.key ?? "");
     setSeconds(0);
   };
-
   if (!models.length) {
     return <p className="rounded-3xl border border-dashed border-line p-8 text-center text-sm text-fg-muted">Şu an kullanılabilir üretim modeli yok. Ajansınız modelleri açtığında burada görünür.</p>;
   }
-
   return (
     <form action={action} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface">
       <input type="hidden" name="modelKey" value={m?.key ?? ""} />
       <input type="hidden" name="aspect" value={kind === "audio" ? "" : format} />
       <input type="hidden" name="seconds" value={kind === "video" ? sec : ""} />
       <input type="hidden" name="style" value={kind === "audio" ? "" : style} />
-      {isAdmin ? <input type="hidden" name="tenantId" value={tenantId} /> : null}
-
+      {withRefs ? refs.map((r) => <input key={r} type="hidden" name="refs" value={r} />) : null}
       {/* 1. Tür */}
       <fieldset className="grid grid-cols-3 gap-2 border-b border-line p-4">
         <legend className="sr-only">Ne üretelim?</legend>
@@ -133,7 +159,6 @@ export function CreativeComposer({
           </label>
         ))}
       </fieldset>
-
       {/* 2. İstek */}
       <div className="flex flex-col gap-3 p-4">
         <label htmlFor="cc-prompt" className="text-[13px] font-medium text-fg">
@@ -158,8 +183,60 @@ export function CreativeComposer({
             </button>
           ))}
         </div>
+        {kind !== "audio" ? (
+          <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-line p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[13px] font-medium text-fg">Referans görsel ekle</span>
+              <span className="text-[11px] text-fg-passive">İsteğe bağlı · en çok 4 · {kind === "image" ? "ürününüzü/sahnenizi koruyarak yeni görsel" : "görseli hareketlendirerek video"}</span>
+              <span className="ml-auto flex gap-2">
+                <button type="button" onClick={() => setShowLib((v) => !v)} aria-expanded={showLib} className="rounded-full border border-line px-3 py-1 text-[12px] text-fg hover:border-fg/40">
+                  Kitaplıktan seç ({lib.length})
+                </button>
+                <label className="cursor-pointer rounded-full border border-line px-3 py-1 text-[12px] text-fg hover:border-fg/40">
+                  Bilgisayardan yükle
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" aria-label="Referans dosya yükle" onChange={(e) => { if (e.target.files?.length) void addFiles(e.target.files); e.target.value = ""; }} />
+                </label>
+              </span>
+            </div>
+            {upPct != null ? <p className="text-[11px] text-fg-muted" aria-live="polite">Yükleniyor… %{upPct}</p> : null}
+            {upErr ? <p className="text-[11px] text-amber-600" role="status">{upErr}</p> : null}
+            {refs.length ? (
+              <ul className="flex flex-wrap gap-2" aria-label="Seçili referanslar">
+                {refs.map((r) => (
+                  <li key={r} className="relative h-16 w-16 overflow-hidden rounded-xl border border-fg">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- imzalı S3 URL'i */}
+                    <img src={`/api/creative/file/${r}`} alt="Referans" className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => toggleRef(r)} aria-label="Referansı kaldır" className="absolute top-0.5 right-0.5 rounded-full bg-black/60 px-1.5 text-[10px] text-white">×</button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {showLib ? (
+              lib.length === 0 ? (
+                <p className="text-[12px] text-fg-muted">Kitaplık boş. Bilgisayardan yükleyin; yüklenenler Stüdyo&apos;da da görünür.</p>
+              ) : (
+                <ul className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-6" aria-label="Kitaplık">
+                  {lib.map((u) => (
+                    <li key={u.id}>
+                      {u.kind === "image" ? (
+                        <button type="button" onClick={() => toggleRef(u.id)} aria-pressed={refs.includes(u.id)} aria-label={`${u.name ?? "Görsel"} referans olarak ${refs.includes(u.id) ? "kaldır" : "ekle"}`} className={cn("block aspect-square w-full overflow-hidden rounded-xl border", refs.includes(u.id) ? "border-fg ring-2 ring-fg/40" : "border-line hover:border-fg/40")}>
+                          {/* eslint-disable-next-line @next/next/no-img-element -- imzalı S3 URL'i */}
+                          <img src={`/api/creative/file/${u.id}`} alt="" loading="lazy" className="h-full w-full object-cover" />
+                        </button>
+                      ) : (
+                        <Link href={`/creative?sekme=studyo&dosya=${u.id}`} title="Videoyu Stüdyo'da brief ile düzenle" className="relative block aspect-square w-full overflow-hidden rounded-xl border border-line">
+                          <video src={`/api/creative/file/${u.id}#t=0.5`} muted preload="metadata" className="h-full w-full object-cover" aria-label={u.name ?? "Video"} />
+                          <span className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-center text-[9px] text-white">Düzenle →</span>
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : null}
+          </div>
+        ) : null}
       </div>
-
       {/* 3. Format ve stil */}
       {kind !== "audio" ? (
         <div className="grid grid-cols-1 gap-4 border-t border-line p-4 md:grid-cols-2">
@@ -203,7 +280,6 @@ export function CreativeComposer({
           </fieldset>
         </div>
       ) : null}
-
       {/* 4. Model, miktar, hesap */}
       <div className="grid grid-cols-1 gap-3 border-t border-line p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_140px_minmax(0,1fr)]">
         <label className="flex flex-col gap-1 text-[12px] text-fg-muted">
@@ -236,27 +312,7 @@ export function CreativeComposer({
             </span>
           </div>
         )}
-        {isAdmin ? (
-          <label className="flex flex-col gap-1 text-[12px] text-fg-muted sm:col-span-2 lg:col-span-1">
-            Kimin adına
-            <select value={tenantId} onChange={(e) => setTenantId(e.target.value)} className="h-10 rounded-xl border border-line bg-bg px-3 text-[14px] text-fg">
-              {(["Markalar", "Influencerlar"] as const).map((g) => {
-                const list = tenants.filter((t) => t.group === g);
-                return list.length ? (
-                  <optgroup key={g} label={g}>
-                    {list.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} · {fmtTl(t.available)}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : null;
-              })}
-            </select>
-          </label>
-        ) : null}
       </div>
-
       <div className="flex flex-col gap-3 border-t border-line bg-fg/[0.02] p-4 sm:flex-row sm:items-center">
         <label className="flex items-center gap-2 text-[12px] text-fg-muted">
           <input type="checkbox" name="portrait" className="h-4 w-4 accent-[var(--color-fg)]" /> Referansta tanınabilir kişi var
@@ -269,8 +325,10 @@ export function CreativeComposer({
           <button type="submit" disabled={pending || !ready} className="inline-flex h-11 items-center gap-2 rounded-full bg-fg px-6 text-[14px] font-semibold text-bg transition-standard hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
             {pending ? (
               <>
-                <span className="h-2 w-2 animate-ping rounded-full bg-bg" aria-hidden /> Üretiliyor…
+                <span className="h-2 w-2 animate-ping rounded-full bg-bg" aria-hidden /> Gönderiliyor…
               </>
+            ) : withRefs ? (
+              `Referansla ${KIND_LABEL[kind].toLocaleLowerCase("tr")} üret`
             ) : (
               `${KIND_LABEL[kind]} üret`
             )}
@@ -283,13 +341,37 @@ export function CreativeComposer({
             {state.error}
           </p>
         ) : null}
-        {state.ok && state.message ? (
-          <p className="flex flex-wrap items-center gap-2 rounded-xl bg-emerald-500/10 px-3 py-2 text-[13px] text-emerald-600">
-            {state.message}
-            <Link href="/creative?sekme=galeri" className="font-medium underline underline-offset-4">
-              Galeride gör
-            </Link>
-          </p>
+        {jobId ? (
+          <JobProgress
+            key={jobId}
+            jobId={jobId}
+            onDone={(assetId) => {
+              setResult({ assetId, kind, prompt });
+              if (assetId) setPrompt("");
+              router.refresh();
+            }}
+          />
+        ) : null}
+        {result?.assetId ? (
+          <div className="mt-4 grid grid-cols-1 gap-4 rounded-2xl border border-line p-4 md:grid-cols-[auto_minmax(0,1fr)]">
+            {result.kind === "audio" ? (
+              <audio src={`/api/creative/file/${result.assetId}?t=asset`} controls className="w-full" />
+            ) : (
+              <PhonePreview src={`/api/creative/file/${result.assetId}?t=asset`} kind={result.kind === "video" ? "video" : "image"} username={username} caption={result.prompt.slice(0, 120)} initial={format === "9:16" ? (result.kind === "video" ? "ig-reels" : "ig-story") : format === "16:9" ? "yt-video" : "ig-post"} />
+            )}
+            <div className="flex flex-col gap-2">
+              <p className="text-[14px] font-semibold text-fg">Hazır. Sırada ne var?</p>
+              <Link href={`/creative?sekme=metin&asset=${result.assetId}`} className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">Post metni ve hashtag yaz →</Link>
+              <Link href={`/creative?sekme=galeri`} className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">Galeride gör →</Link>
+              {result.kind !== "audio" ? (
+                <form action={openAssetInStudioAction}>
+                  <input type="hidden" name="assetId" value={result.assetId} />
+                  <button type="submit" className="w-full rounded-xl border border-line px-3 py-2 text-left text-[13px] hover:border-fg/40">Stüdyoda düzenle (yazı, kadraj, AI) →</button>
+                </form>
+              ) : null}
+              <a href={`/api/creative/file/${result.assetId}?t=asset`} download className="rounded-xl border border-line px-3 py-2 text-[13px] hover:border-fg/40">İndir</a>
+            </div>
+          </div>
         ) : null}
       </div>
       <p className="border-t border-line px-4 py-3 text-[11px] text-fg-passive">Gerçek kişinin adı, yüzü veya sesiyle üretim otomatik reddedilir. Başarısız üretimde ücret alınmaz. Her çıktıya &quot;AI ile üretildi&quot; etiketi (C2PA) gömülür.</p>

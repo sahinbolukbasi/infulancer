@@ -16,6 +16,7 @@ locals {
     "kvkk-reminders"            = "cron(0 7 * * ? *)"
     "channel-health"            = "rate(1 hour)"
     "window-warnings"           = "rate(5 minutes)"
+    "campaign-auto-close"       = "rate(1 hour)"
     "ads-budget-batch"          = "cron(0 * * * ? *)"
     "webhook-dedupe-ttl"        = "cron(30 3 * * ? *)"
     "social-sync"               = "rate(6 hours)"

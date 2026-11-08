@@ -5,15 +5,18 @@ import { audit } from "@infulancer/core/audit";
 import { toAuditActor } from "@infulancer/core/access/actor";
 import { requestBudgetChange } from "@infulancer/core/ads/budget-optimizer";
 import { ensureStarterCredits, topUp } from "@infulancer/core/creative/credits";
-import { CreativeRejectedError, handleFalWebhook, submitCreative } from "@infulancer/core/creative/fal";
+import { CreativeRejectedError, handleFalWebhook } from "@infulancer/core/creative/fal";
 import { ModelUnavailableError, resolveModel, seedModelRegistry } from "@infulancer/core/creative/registry";
 import { getConfig, setConfig } from "@infulancer/core/config/store";
-import { planGeneration, type Aspect } from "@infulancer/core/creative/adapters";
+import type { Aspect } from "@infulancer/core/creative/adapters";
+import { submitGeneration } from "@infulancer/core/creative/generate";
 import { InsufficientCreditsError } from "@infulancer/core/creative/credits";
 import { DomainError } from "@infulancer/core/domain/errors";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, parseInput, revalidateAll, str } from "@/lib/action-utils";
 import { assertPlatformAdmin, requireActor } from "@/lib/auth-guard";
+import { ownTenant } from "@/lib/creative-tenant";
+import { isAgencyTenant } from "@infulancer/core/creative/tenant";
 
 /** Reklam: ad set bütçe değişikliği isteği — limit aşılırsa reddedilmez, sonraki saate ötelenir. */
 export async function requestAdBudget(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -36,16 +39,6 @@ export async function requestAdBudget(_p: ActionState, fd: FormData): Promise<Ac
 
 const CREATIVE_STYLES = new Set(["Minimal", "Sinematik", "Pastel", "Neon", "Doğal ışık", "Stüdyo", "Retro", "Lüks"]);
 const ASPECTS = new Set(["9:16", "1:1", "4:5", "16:9"]);
-/** Kimin adına üretileceği: marka/influencer kendi hesabına; ajans/yönetici seçtiği marka veya influencer'a. */
-async function creativeTenant(actor: Awaited<ReturnType<typeof requireActor>>, fd: FormData): Promise<string> {
-  if (actor.role === "BRAND") return actor.brandId!;
-  if (actor.role === "INFLUENCER") return actor.influencerId!;
-  const tenantId = str(fd, "tenantId");
-  if (!tenantId) throw new DomainError("DOGRULAMA", "Kimin adına üretileceğini seçin.");
-  const [b, i] = await Promise.all([prisma.brand.findUnique({ where: { id: tenantId }, select: { id: true } }), prisma.influencer.findUnique({ where: { id: tenantId }, select: { id: true } })]);
-  if (!b && !i) throw new DomainError("BULUNAMADI", "Marka veya influencer bulunamadı.");
-  return tenantId;
-}
 /**
  * Creative üretimi (tüm roller). Model gövdesi ve faturalanan birim sunucuda hesaplanır
  * (adapters.planGeneration): video süresi modele gider, ses birimi metinden sayılır,
@@ -58,7 +51,8 @@ export async function generateCreative(_p: ActionState, fd: FormData): Promise<A
       modelKey: str(fd, "modelKey"),
       prompt: str(fd, "prompt"),
     });
-    const tenantId = await creativeTenant(actor, fd);
+    // Her işlem işlemi yapanın kendi hesabından düşer (marka / influencer / ajans).
+    const tenantId = ownTenant(actor);
     if (actor.role !== "ADMIN") await ensureStarterCredits(tenantId);
     const model = await resolveModel(input.modelKey).catch((e) => {
       throw new DomainError("KURAL_IHLALI", (e as Error).message);
@@ -69,20 +63,23 @@ export async function generateCreative(_p: ActionState, fd: FormData): Promise<A
     // Seslendirmede metin olduğu gibi okunur; görsel/videoda stil istemin sonuna eklenir.
     const storyHint = model.kind === "image" && aspect === "9:16" ? "Instagram Story düzeni: dikey 9:16, üst ve alt %15'te yazı ve arayüz için sade boş alan bırak" : "";
     const prompt = model.kind === "audio" ? input.prompt : [input.prompt, CREATIVE_STYLES.has(style) ? `Stil: ${style}` : "", storyHint].filter(Boolean).join(". ");
-    const plan = planGeneration({ modelKey: model.key, kind: model.kind, prompt, aspect, seconds: Number(str(fd, "seconds") || "0") || undefined });
+    const refs = fd.getAll("refs").map(String).filter(Boolean).slice(0, 4);
+    let jobId = "";
     try {
-      const job = await submitCreative({ tenantId, modelKey: model.key, prompt, units: plan.units, falInput: plan.falInput, referenceImageIsPortrait: str(fd, "portrait") === "on" });
+      const job = await submitGeneration({ tenantId, modelKey: model.key, prompt, aspect, seconds: Number(str(fd, "seconds") || "0") || undefined, referenceUploadIds: refs, portrait: str(fd, "portrait") === "on" });
+      jobId = job.id;
       if ((process.env.FAL_MODE ?? "mock") === "mock" && job.requestId) {
-        const payload = model.kind === "video" ? { video: { url: "https://example.invalid/mock.mp4" } } : model.kind === "audio" ? { audio: { url: "https://example.invalid/mock.mp3" } } : { images: [{ url: "https://example.invalid/mock.png" }] };
+        const isVideo = model.kind === "video";
+        const payload = isVideo ? { video: { url: "https://example.invalid/mock.mp4" } } : model.kind === "audio" ? { audio: { url: "https://example.invalid/mock.mp3" } } : { images: [{ url: "https://example.invalid/mock.png" }] };
         await handleFalWebhook({ request_id: job.requestId, status: "OK", payload, metrics: { inference_time: 1.2 } });
       }
-      await audit.append({ actor: toAuditActor(actor), action: "CREATIVE_SUBMITTED", entityType: "CreativeJob", entityId: job.id, data: { tenantId, modelKey: model.key, units: plan.units, aspect } });
+      await audit.append({ actor: toAuditActor(actor), action: "CREATIVE_SUBMITTED", entityType: "CreativeJob", entityId: job.id, data: { tenantId, modelKey: job.modelKey, units: Number(job.units), aspect, refs: refs.length } });
     } catch (e) {
       if (e instanceof CreativeRejectedError || e instanceof ModelUnavailableError || e instanceof InsufficientCreditsError) throw new DomainError("KURAL_IHLALI", e.message);
       throw e;
     }
     revalidateAll();
-    return { ok: true, message: "Üretim başladı; hazır olunca galeriye düşer (AI etiketi gömülü)." };
+    return { ok: true, message: "Üretim başladı.", data: { jobId } };
   });
 }
 
@@ -91,11 +88,11 @@ export async function topUpCredits(_p: ActionState, fd: FormData): Promise<Actio
   return attempt(async () => {
     const input = parseInput(z.object({ tenantId: z.string().min(1).max(64), credits: z.number().int().positive().max(1_000_000) }), { tenantId: str(fd, "tenantId"), credits: Number(str(fd, "credits")) });
     const [b, i] = await Promise.all([prisma.brand.findUnique({ where: { id: input.tenantId }, select: { id: true } }), prisma.influencer.findUnique({ where: { id: input.tenantId }, select: { id: true } })]);
-    if (!b && !i) throw new DomainError("BULUNAMADI", "Marka veya influencer bulunamadı.");
+    if (!b && !i && !isAgencyTenant(input.tenantId)) throw new DomainError("BULUNAMADI", "Hesap bulunamadı.");
     await topUp(input.tenantId, input.credits, "Yönetici yüklemesi");
     await audit.append({ actor: toAuditActor(actor), action: "CREDITS_TOPPED_UP", entityType: "CreditAccount", entityId: input.tenantId, data: { credits: input.credits } });
     revalidateAll();
-    return { ok: true, message: `${input.credits} kredi yüklendi.` };
+    return { ok: true, message: `${input.credits.toLocaleString("tr-TR")} TL bakiye yüklendi.` };
   });
 }
 

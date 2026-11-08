@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   if (auth.response) return auth.response;
   try {
     const body = await readJson(req, presignSchema);
-    const tenantId = await creativeTenantFor(auth.actor, body.tenantId);
+    const tenantId = await creativeTenantFor(auth.actor);
     const r = await presignCreativeUpload(tenantId, body.mime, body.size);
     return Response.json(r, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
@@ -30,7 +30,7 @@ export async function PUT(req: Request) {
   if (auth.response) return auth.response;
   try {
     const body = await readJson(req, confirmSchema);
-    const tenantId = await creativeTenantFor(auth.actor, body.tenantId);
+    const tenantId = await creativeTenantFor(auth.actor);
     const u = await confirmCreativeUpload({ tenantId, key: body.key, name: body.name ?? null, userId: auth.actor.userId, parentId: body.parentId ?? null });
     return Response.json({ id: u.id, kind: u.kind }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {

@@ -111,7 +111,7 @@ locals {
     { name = "EVENT_MODE", value = "inline" },
     { name = "AGENT_QUEUE_URL", value = aws_sqs_queue.agent_events.url },
     { name = "LINK_CHECK_MODE", value = "http" },
-    { name = "HOLD_DAYS", value = "14" },
+    { name = "HOLD_DAYS", value = "0" },
     { name = "MIN_PAYOUT_KURUS", value = "50000" },
     { name = "AGENCY_NAME", value = "Infulancer Ajans" },
     { name = "AGENCY_IBAN", value = "TR000000000000000000000000" },

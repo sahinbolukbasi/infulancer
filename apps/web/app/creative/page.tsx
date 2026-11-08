@@ -3,6 +3,9 @@ import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
 import { aiDisclosureChecklist } from "@infulancer/core/creative/c2pa";
 import { ensureStarterCredits } from "@infulancer/core/creative/credits";
+import { AGENCY_TENANT } from "@infulancer/core/creative/tenant";
+import { ownTenant } from "@/lib/creative-tenant";
+import { PhonePreviewButton } from "@/components/creative/phone-preview-button";
 import { allowedDurations, modelSpec, supportedAspects } from "@infulancer/core/creative/adapters";
 import { creativePricing } from "@infulancer/core/creative/pricing";
 import { reconcileStaleJobs } from "@infulancer/core/creative/fal";
@@ -13,7 +16,7 @@ import { AssetThumb } from "@/components/creative/asset-thumb";
 import { openAssetInStudioAction } from "@/lib/actions/creative-studio";
 import { getConfig } from "@infulancer/core/config/store";
 import { withUnverified } from "@infulancer/core/unverified";
-import { CreativeComposer, type ComposerModel, type ComposerTenant } from "@/components/creative/creative-composer";
+import { CreativeComposer, type ComposerModel } from "@/components/creative/creative-composer";
 import { KindIcon } from "@/components/creative/kind-icon";
 import { PostBriefStudio } from "@/components/creative/post-brief-studio";
 import { TopUpForm } from "@/components/forms/operations-forms";
@@ -26,10 +29,8 @@ import { asKind, fmtTl, KIND_LABEL, modelName, needsReference, toneFor, type Cre
 import { getLandingContent, toVideos } from "@/lib/landing-store";
 import { fmtDateTime } from "@/lib/time";
 import { cn } from "@/lib/cn";
-
 export const metadata: Metadata = { title: "Creative" };
 export const dynamic = "force-dynamic";
-
 const usd = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "USD", maximumFractionDigits: 4 });
 const JOB_STATUS: Record<string, { label: string; tone: PillTone }> = {
   COMPLETED: { label: "Hazır", tone: "green" },
@@ -42,35 +43,33 @@ const JOB_STATUS: Record<string, { label: string; tone: PillTone }> = {
 };
 type Tab = "uret" | "studyo" | "galeri" | "metin" | "yonetim";
 type SP = { sekme?: string; tur?: string; asset?: string; prompt?: string; hesap?: string; dosya?: string; hata?: string };
-
 /** Creative: tüm roller için tek stüdyo (üret · galeri · post/brief · yönetim). */
 export default async function CreativePage({ searchParams }: { searchParams: Promise<SP> }) {
   const actor = await requireActor();
   const sp = await searchParams;
   const isAdmin = actor.role === "ADMIN";
-  const own = actor.role === "BRAND" ? actor.brandId! : actor.role === "INFLUENCER" ? actor.influencerId! : null;
-  // İlk kez açan marka/influencer'a tek seferlik hoş geldin bakiyesi (idempotent).
-  if (own) await ensureStarterCredits(own);
-  const scope = own ? { tenantId: own } : {};
-  const pendingCreditReq = own ? !!(await prisma.creditRequest.findFirst({ where: { tenantId: own, status: "BEKLIYOR" }, select: { id: true } })) : false;
-
+  // Herkes kendi hesabında çalışır: marka, influencer, ajans (yönetici başka hesabın bakiyesini harcamaz).
+  const own = ownTenant(actor);
+  // İlk kez açan marka/influencer'a tek seferlik hoş geldin bakiyesi (idempotent). Ajans hesabı yöneticiden yüklenir.
+  if (!isAdmin) await ensureStarterCredits(own);
+  const scope = { tenantId: own };
+  const pendingCreditReq = !isAdmin && !!(await prisma.creditRequest.findFirst({ where: { tenantId: own, status: "BEKLIYOR" }, select: { id: true } }));
   // Webhook'u kaçan işleri arka planda sonuçlandır (bakiye bloke kalmasın).
   void reconcileStaleJobs().catch(() => {});
   const [pricing, ledger] = await Promise.all([
     creativePricing(),
-    prisma.creditLedger.findMany({ where: own ? { tenantId: own } : {}, orderBy: { createdAt: "desc" }, take: own ? 30 : 60 }),
+    prisma.creditLedger.findMany({ where: isAdmin ? {} : { tenantId: own }, orderBy: { createdAt: "desc" }, take: isAdmin ? 60 : 30 }),
   ]);
   const [models, flags, brands, influencers, accounts, jobs, assets] = await Promise.all([
     prisma.modelRegistry.findMany({ orderBy: [{ kind: "asc" }, { creditsPerUnit: "asc" }] }),
     getConfig("features"),
     prisma.brand.findMany({ where: isAdmin ? {} : { id: actor.brandId ?? "-" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.influencer.findMany({ where: isAdmin ? {} : { id: actor.influencerId ?? "-" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
-    prisma.creditAccount.findMany({ where: scope }),
+    prisma.creditAccount.findMany({ where: isAdmin ? {} : scope }),
     prisma.creativeJob.findMany({ where: scope, orderBy: { createdAt: "desc" }, take: 40 }),
     prisma.generatedAsset.findMany({ where: scope, orderBy: { createdAt: "desc" }, take: 60 }),
   ]);
-
-  const nameOf = new Map<string, string>([...brands.map((b) => [b.id, b.name] as const), ...influencers.map((i) => [i.id, i.name] as const)]);
+  const nameOf = new Map<string, string>([[AGENCY_TENANT, "Ajans (kendi hesabı)"], ...brands.map((b) => [b.id, b.name] as const), ...influencers.map((i) => [i.id, i.name] as const)]);
   const kindOf = new Map(models.map((m) => [m.key, asKind(m.kind)]));
   const avail = (tenantId: string) => {
     const a = accounts.find((x) => x.tenantId === tenantId);
@@ -80,8 +79,9 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   const usable: ComposerModel[] = models
     .filter((m) => m.status === "active" && m.licenseStatus === "cleared" && (!m.featureFlag || flags[m.featureFlag]) && m.provider === "fal" && asKind(m.kind) && !needsReference(m.key) && modelSpec(m.key))
     .map((m) => ({ key: m.key, kind: asKind(m.kind)!, unit: m.unit, creditsPerUnit: Number(m.creditsPerUnit), maxUnits: m.maxUnits, durations: allowedDurations(m.key), aspects: supportedAspects(m.key) }));
-  const tenants: ComposerTenant[] = isAdmin
-    ? [...brands.map((b) => ({ id: b.id, name: b.name, group: "Markalar" as const, available: avail(b.id) })), ...influencers.map((i) => ({ id: i.id, name: i.name, group: "Influencerlar" as const, available: avail(i.id) }))]
+  // Yönetici bakiye yüklemesi için hesap listesi (ajans hesabı dahil).
+  const tenants = isAdmin
+    ? [{ id: AGENCY_TENANT, name: "Ajans (kendi hesabı)", group: "Ajans" as const }, ...brands.map((b) => ({ id: b.id, name: b.name, group: "Markalar" as const })), ...influencers.map((i) => ({ id: i.id, name: i.name, group: "Influencerlar" as const }))]
     : [];
   const jobPrompt = new Map(jobs.map((j) => [j.id, j.prompt]));
   const missingJobIds = assets.map((a) => a.jobId).filter((id): id is string => !!id && !jobPrompt.has(id));
@@ -89,13 +89,12 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
     for (const j of await prisma.creativeJob.findMany({ where: { id: { in: missingJobIds } }, select: { id: true, prompt: true } })) jobPrompt.set(j.id, j.prompt);
   }
   const adBase = actor.role === "ADMIN" ? "/admin/reklam" : actor.role === "BRAND" ? "/marka/reklam" : null;
-
   const tab: Tab = sp.sekme === "galeri" || sp.sekme === "metin" || sp.sekme === "studyo" || (sp.sekme === "yonetim" && isAdmin) ? (sp.sekme as Tab) : "uret";
-  // Stüdyo: marka/influencer kendi kitaplığı; yönetici seçtiği hesabın (varsayılan ilk marka).
-  const studioTenant = own ?? (tenants.some((t) => t.id === sp.hesap) ? sp.hesap! : (tenants[0]?.id ?? null));
+  // Kitaplık: herkes kendi hesabının dosyaları (Üret sekmesinde referans olarak da seçilir).
+  const library = tab === "studyo" || tab === "uret" ? await prisma.creativeUpload.findMany({ where: { tenantId: own }, orderBy: { createdAt: "desc" }, take: 120 }) : [];
   const studioUploads: StudioUpload[] =
-    tab === "studyo" && studioTenant
-      ? (await prisma.creativeUpload.findMany({ where: { tenantId: studioTenant }, orderBy: { createdAt: "desc" }, take: 120 })).map((u) => ({
+    tab === "studyo"
+      ? library.map((u) => ({
           id: u.id,
           kind: u.kind === "video" ? "video" : "image",
           name: u.name,
@@ -108,7 +107,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
       : [];
   const priceOf = (key: string, fallback: number) => Number(models.find((m) => m.key === key)?.creditsPerUnit ?? fallback);
   const studioPrices = { minTry: pricing.minTry, promptEdit: priceOf("nano-banana-edit", 6), bgRemove: priceOf("bria-bg-remove", 3), upscale: priceOf("esrgan-upscale", 1), i2vPerSec: priceOf("kling-v2-5-i2v", 11), i2vEcoPerSec: priceOf("hailuo-02-fast-i2v", 3) };
-  const available = own ? avail(own) : accounts.reduce((s, a) => s + Number(a.balanceCredits) - Number(a.heldCredits), 0);
+  const available = avail(own);
   const completed = jobs.filter((j) => j.status === "COMPLETED").length;
   const description =
     actor.role === "BRAND"
@@ -116,15 +115,13 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
       : actor.role === "INFLUENCER"
         ? "İçerikleriniz için görsel, video ve ses üretin; gönderi metnini de birlikte hazırlayalım."
         : "Marka ve influencerlar adına üretin; bakiye ve modelleri tek yerden yönetin.";
-
   const tabs = [
     { id: "uret", label: "Üret", href: "/creative" },
     { id: "studyo", label: "Stüdyo (yükle ve düzenle)", href: "/creative?sekme=studyo" },
     { id: "galeri", label: "Galeri", href: "/creative?sekme=galeri", count: assets.length },
     { id: "metin", label: "Post ve brief", href: "/creative?sekme=metin" },
-    ...(isAdmin ? [{ id: "yonetim", label: "Kredi ve modeller", href: "/creative?sekme=yonetim" }] : []),
+    ...(isAdmin ? [{ id: "yonetim", label: "Bakiye ve modeller", href: "/creative?sekme=yonetim" }] : []),
   ];
-
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <header className="relative overflow-hidden rounded-3xl border border-line bg-surface px-6 py-7 sm:px-8">
@@ -136,26 +133,33 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
             <p className="text-sm text-fg-muted">{description}</p>
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
-            <span className="text-[12px] text-fg-muted">{isAdmin ? "Tüm hesaplarda kullanılabilir" : "Kullanılabilir bakiyeniz"}</span>
+            <span className="text-[12px] text-fg-muted">{isAdmin ? "Ajans hesabının bakiyesi" : "Kullanılabilir bakiyeniz"}</span>
             <span className="text-3xl font-semibold tabular-nums text-fg">{fmtTl(available)}</span>
-            {!isAdmin ? <span className="text-[11px] text-fg-passive">Bakiye yüklemek için &quot;Bakiye talebi&quot; gönderin.</span> : null}
+            <span className="text-[11px] text-fg-passive">{isAdmin ? "Her üretim yalnız işlemi yapan hesabın bakiyesinden düşer." : "Bakiye yüklemek için “Bakiye talebi” gönderin."}</span>
           </div>
         </div>
       </header>
-
-      {!isAdmin && own ? <CreditRequestForm pending={pendingCreditReq} /> : null}
-      {!isAdmin && own && ledger.length ? (
+      {!isAdmin ? <CreditRequestForm pending={pendingCreditReq} /> : null}
+      {!isAdmin && ledger.length ? (
         <details className="rounded-2xl border border-line bg-surface">
           <summary className="cursor-pointer px-4 py-3 text-[13px] font-medium text-fg">Bakiye hareketleri</summary>
           <LedgerList rows={ledger} />
         </details>
       ) : null}
       <FilterTabs items={tabs} active={tab} />
-
       {tab === "uret" ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="flex min-w-0 flex-col gap-6">
-            <CreativeComposer key={sp.prompt ?? ""} minTry={pricing.minTry} models={usable} tenants={tenants} isAdmin={isAdmin} available={own ? avail(own) : 0} initialPrompt={(sp.prompt ?? "").slice(0, 2000)} />
+            <CreativeComposer
+              key={sp.prompt ?? ""}
+              minTry={pricing.minTry}
+              models={usable}
+              available={available}
+              username={(nameOf.get(own) ?? "markaniz").split(" ")[0]!.toLocaleLowerCase("tr")}
+              library={library.map((u) => ({ id: u.id, kind: u.kind === "video" ? "video" : "image", name: u.name }))}
+              refPrices={{ imageEdit: priceOf("nano-banana-edit", 6), klingI2v: priceOf("kling-v2-5-i2v", 11), ecoI2v: priceOf("hailuo-02-fast-i2v", 3) }}
+              initialPrompt={(sp.prompt ?? "").slice(0, 2000)}
+            />
             <Inspiration />
           </div>
           <aside className="flex flex-col gap-4" aria-label="Son üretimler">
@@ -179,7 +183,6 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
                             {st.label}
                           </Pill>
                           <span>{modelName(j.modelKey)}</span>
-                          {isAdmin ? <span>· {nameOf.get(j.tenantId) ?? "—"}</span> : null}
                         </div>
                         {j.rejectReason ? <p className="text-[12px] text-critical">{j.rejectReason}</p> : null}
                       </div>
@@ -199,38 +202,14 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           </aside>
         </div>
       ) : null}
-
       {tab === "galeri" && sp.hata ? <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-[13px] text-critical">{sp.hata.slice(0, 200)}</p> : null}
-      {tab === "galeri" ? <Gallery assets={assets} kindOf={kindOf} jobPrompt={jobPrompt} nameOf={nameOf} isAdmin={isAdmin} adBase={adBase} filter={sp.tur} completed={completed} /> : null}
-
+      {tab === "galeri" ? <Gallery assets={assets} kindOf={kindOf} jobPrompt={jobPrompt} adBase={adBase} filter={sp.tur} completed={completed} /> : null}
       {tab === "studyo" ? (
         <div className="flex flex-col gap-4">
-          {isAdmin ? (
-            <nav aria-label="Hesap seç" className="flex flex-wrap items-center gap-2 text-[13px]">
-              <span className="text-fg-muted">Kimin kitaplığı:</span>
-              {tenants.map((t) => (
-                <Link key={t.id} href={`/creative?sekme=studyo&hesap=${t.id}`} aria-current={t.id === studioTenant ? "page" : undefined} className={cn("rounded-full border px-3 py-1", t.id === studioTenant ? "border-fg bg-fg text-bg" : "border-line text-fg-muted hover:text-fg")}>
-                  {t.name}
-                </Link>
-              ))}
-            </nav>
-          ) : null}
-          {studioTenant ? (
-            <StudioEditor
-              key={studioTenant}
-              uploads={studioUploads}
-              tenantId={isAdmin ? studioTenant : undefined}
-              available={avail(studioTenant)}
-              prices={studioPrices}
-              isAdmin={isAdmin}
-              initialSelected={sp.dosya}
-            />
-          ) : (
-            <p className="text-sm text-fg-muted">Önce bir marka veya influencer ekleyin.</p>
-          )}
+
+          <StudioEditor uploads={studioUploads} available={available} prices={studioPrices} isAdmin={isAdmin} initialSelected={sp.dosya} />
         </div>
       ) : null}
-
       {tab === "metin" ? (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-fg-muted">Galerideki bir içerikten veya serbest bir konudan yayına hazır post metni ve içerik üreticisine verilecek brief taslağı oluşturun.</p>
@@ -239,12 +218,11 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
             assets={assets.map((a) => {
               const k = kindOf.get(a.modelKey) ?? "image";
               const p = a.jobId ? jobPrompt.get(a.jobId) : undefined;
-              return { id: a.id, label: `${KIND_LABEL[k]} · ${(p ?? modelName(a.modelKey)).slice(0, 48)}${isAdmin ? ` · ${nameOf.get(a.tenantId) ?? ""}` : ""}` };
+              return { id: a.id, label: `${KIND_LABEL[k]} · ${(p ?? modelName(a.modelKey)).slice(0, 48)}` };
             })}
           />
         </div>
       ) : null}
-
       {tab === "yonetim" && isAdmin ? (
         <div className="flex flex-col gap-6">
           <StatStrip
@@ -265,7 +243,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
               </p>
               <PricingForm markup={pricing.markup} minTry={pricing.minTry} usdTry={pricing.usdTry} autoFx={pricing.autoFx} />
               <SectionHead title="Bakiye yükle" />
-              <TopUpForm label="Hesap" brands={tenants.map((t) => ({ id: t.id, name: `${t.group === "Markalar" ? "Marka" : "Influencer"} · ${t.name}` }))} />
+              <TopUpForm label="Hesap" brands={tenants.map((t) => ({ id: t.id, name: t.group === "Ajans" ? t.name : `${t.group === "Markalar" ? "Marka" : "Influencer"} · ${t.name}` }))} />
               <p className="text-[12px] text-fg-passive">Tutarlar TL cinsindendir. Yeni marka/influencer ilk girişte {fmtTl(Number(process.env.CREATIVE_STARTER_CREDITS ?? "250"))} hoş geldin bakiyesi alır.</p>
             </div>
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
@@ -346,14 +324,11 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
     </div>
   );
 }
-
 /** Galeri: üretilen içerikler; tür filtresi ve hızlı eylemler. */
 function Gallery({
   assets,
   kindOf,
   jobPrompt,
-  nameOf,
-  isAdmin,
   adBase,
   filter,
   completed,
@@ -361,8 +336,6 @@ function Gallery({
   assets: { id: string; tenantId: string; jobId: string | null; modelKey: string; c2paManifestId: string; createdAt: Date }[];
   kindOf: Map<string, CreativeKind | null>;
   jobPrompt: Map<string, string>;
-  nameOf: Map<string, string>;
-  isAdmin: boolean;
   adBase: string | null;
   filter?: string;
   completed: number;
@@ -417,13 +390,13 @@ function Gallery({
                   <div className="flex flex-col text-[11px] text-fg-passive">
                     <span className="truncate text-[12px] text-fg-muted">
                       {modelName(a.modelKey)}
-                      {isAdmin ? ` · ${nameOf.get(a.tenantId) ?? "—"}` : ""}
                     </span>
                     <span>
                       {fmtDateTime(a.createdAt)} · C2PA {a.c2paManifestId.slice(0, 6)}
                     </span>
                   </div>
                   <div className="mt-auto flex flex-wrap gap-1.5">
+                    {k !== "audio" ? <PhonePreviewButton src={`/api/creative/file/${a.id}?t=asset`} kind={k === "video" ? "video" : "image"} caption={basePrompt.slice(0, 120)} /> : null}
                     <Link href={`/creative?sekme=metin&asset=${a.id}`} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg hover:border-fg/40">
                       Post yaz
                     </Link>
@@ -455,7 +428,6 @@ function Gallery({
     </div>
   );
 }
-
 /** İlham şeridi: örnek işlerden birine tıklayınca istek o tarzda doldurulur. */
 async function Inspiration() {
   const examples = toVideos(await getLandingContent()).slice(0, 4);
@@ -474,7 +446,6 @@ async function Inspiration() {
     </section>
   );
 }
-
 const LEDGER_LABEL: Record<string, string> = { STARTER: "Hoş geldin bakiyesi", TOPUP: "Yükleme", CHARGE: "Üretim", REFUND: "İade", ADJUST: "Düzeltme" };
 /** Bakiye hareketleri: her yükleme ve tahsilat, işlem sonrası bakiyeyle. */
 function LedgerList({ rows }: { rows: { id: string; kind: string; amount: unknown; balanceAfter: unknown; note: string | null; createdAt: Date }[] }) {

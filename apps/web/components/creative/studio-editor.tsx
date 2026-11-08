@@ -1,18 +1,19 @@
 "use client";
 import { startTransition, useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { deleteUploadAction, imageEditAction, videoEditAction } from "@/lib/actions/creative-studio";
+import { deleteUploadAction, imageEditAction, videoBriefAction, videoEditAction } from "@/lib/actions/creative-studio";
+import { JobProgress } from "@/components/creative/job-progress";
+import { PhonePreview } from "@/components/creative/phone-preview";
 import { idleState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
 import { fmtTl } from "@/lib/creative-models";
 import { KindIcon } from "@/components/creative/kind-icon";
+import { uploadFile } from "@/lib/creative-upload";
 import { DEFAULT_EDITS, PRESETS, renderEdits, STORY_SIZE, type Aspect, type ImageEdits } from "./studio-image-render";
-
 export type StudioUpload = { id: string; kind: "image" | "video"; name: string | null; mime: string; sizeBytes: number; source: string; durationSec: number | null; createdAt: string };
 export type StudioPrices = { minTry: number; promptEdit: number; bgRemove: number; upscale: number; i2vPerSec: number; i2vEcoPerSec: number };
 /** Sunucudaki tutar hesabının aynısı: tam TL, en az minTry. */
 const chargeTry = (cpu: number, units: number, minTry: number) => Math.max(minTry, Math.ceil(cpu * units - 1e-9));
-
 const fileUrl = (id: string) => `/api/creative/file/${id}`;
 const fmtSize = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const ASPECTS: { id: Aspect; label: string }[] = [
@@ -22,27 +23,6 @@ const ASPECTS: { id: Aspect; label: string }[] = [
   { id: "1:1", label: "Kare 1:1" },
   { id: "16:9", label: "Yatay 16:9" },
 ];
-
-/** Tarayıcıdan S3'e yükleme (ilerleme çubuğu için XHR). */
-async function uploadFile(file: Blob, opts: { name: string; mime: string; tenantId?: string; parentId?: string; onProgress?: (p: number) => void }): Promise<{ id: string }> {
-  const pres = await fetch("/api/creative/upload", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mime: opts.mime, size: file.size, tenantId: opts.tenantId }) });
-  const pj = await pres.json();
-  if (!pres.ok) throw new Error(pj.error ?? "Yükleme hazırlanamadı.");
-  await new Promise<void>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("PUT", pj.url);
-    xhr.setRequestHeader("content-type", opts.mime);
-    xhr.upload.onprogress = (e) => e.lengthComputable && opts.onProgress?.(Math.round((e.loaded / e.total) * 100));
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error("Yükleme başarısız.")));
-    xhr.onerror = () => reject(new Error("Bağlantı hatası; tekrar deneyin."));
-    xhr.send(file);
-  });
-  const conf = await fetch("/api/creative/upload", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: pj.key, name: opts.name, tenantId: opts.tenantId, parentId: opts.parentId }) });
-  const cj = await conf.json();
-  if (!conf.ok) throw new Error(cj.error ?? "Dosya kaydedilemedi.");
-  return { id: cj.id };
-}
-
 /**
  * Creative stüdyosu: yükle → kitaplık → düzenle.
  * Ücretsiz: kırp/kadraj, döndür, filtre, ışık, yazı (görsel, tarayıcıda) ve kes/kadraj/hız/ses (video, sunucuda ffmpeg).
@@ -57,7 +37,6 @@ export function StudioEditor({ uploads, tenantId, available, prices, isAdmin, in
   const [notice, setNotice] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const current = uploads.find((u) => u.id === selected) ?? null;
-
   const onFiles = async (files: FileList | File[]) => {
     setUploadErr(null);
     let lastId: string | null = null;
@@ -76,7 +55,6 @@ export function StudioEditor({ uploads, tenantId, available, prices, isAdmin, in
       router.refresh();
     }
   };
-
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
       {/* Sol: yükleme + kitaplık */}
@@ -155,7 +133,6 @@ export function StudioEditor({ uploads, tenantId, available, prices, isAdmin, in
           </ul>
         )}
       </aside>
-
       {/* Sağ: düzenleyici */}
       <section className="flex min-w-0 flex-col gap-3" aria-label="Düzenleyici">
         {notice ? (
@@ -177,7 +154,6 @@ export function StudioEditor({ uploads, tenantId, available, prices, isAdmin, in
     </div>
   );
 }
-
 function Slider({ label, value, onChange, min = -100, max = 100 }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number }) {
   return (
     <label className="flex flex-col gap-1 text-[12px] text-fg-muted">
@@ -189,7 +165,6 @@ function Slider({ label, value, onChange, min = -100, max = 100 }: { label: stri
     </label>
   );
 }
-
 function Chips<T extends string>({ items, value, onChange, label }: { items: { id: T; label: string }[]; value: T; onChange: (v: T) => void; label: string }) {
   return (
     <div className="flex flex-wrap gap-1.5" role="group" aria-label={label}>
@@ -201,7 +176,6 @@ function Chips<T extends string>({ items, value, onChange, label }: { items: { i
     </div>
   );
 }
-
 function DeleteButton({ id }: { id: string }) {
   const [, action, pending] = useActionState(deleteUploadAction, idleState);
   const router = useRouter();
@@ -224,9 +198,7 @@ function DeleteButton({ id }: { id: string }) {
     </button>
   );
 }
-
 /* ------------------------------- Görsel ------------------------------- */
-
 function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: { upload: StudioUpload; tenantId?: string; available: number; prices: StudioPrices; isAdmin: boolean; onSaved: (id: string) => void }) {
   const [edits, setEdits] = useState<ImageEdits>(DEFAULT_EDITS);
   const [img, setImg] = useState<HTMLImageElement | null>(null);
@@ -234,8 +206,8 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [phone, setPhone] = useState<string | null>(null);
   const set = <K extends keyof ImageEdits>(k: K, v: ImageEdits[K]) => setEdits((e) => ({ ...e, [k]: v }));
-
   useEffect(() => {
     const el = new Image();
     // Canvas'a çizip dışa aktarabilmek için CORS'lu yükleme (S3 CORS uygulama alanına izin verir).
@@ -244,13 +216,10 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
     el.onerror = () => setLoadErr(true);
     el.src = `${fileUrl(upload.id)}?cors=1`;
   }, [upload.id]);
-
   useEffect(() => {
     if (img && canvasRef.current) renderEdits(img, edits, canvasRef.current, 900);
   }, [img, edits]);
-
   const changed = JSON.stringify(edits) !== JSON.stringify(DEFAULT_EDITS);
-
   const save = useCallback(async () => {
     if (!img) return;
     setSaving(true);
@@ -285,7 +254,6 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
       setSaving(false);
     }
   }, [img, edits, upload, tenantId, onSaved]);
-
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
@@ -308,7 +276,23 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
               <p className="text-sm text-fg-muted">Yükleniyor…</p>
             )}
           </div>
+          {phone ? <PhonePreview src={phone} kind="image" initial={edits.aspect === "9:16" ? "ig-story" : "ig-post"} /> : null}
           <div className="flex flex-wrap items-center gap-2 text-[12px] text-fg-muted">
+            <button
+              type="button"
+              aria-pressed={!!phone}
+              onClick={() => {
+                if (phone) return setPhone(null);
+                try {
+                  setPhone(canvasRef.current?.toDataURL("image/jpeg", 0.85) ?? fileUrl(upload.id));
+                } catch {
+                  setPhone(fileUrl(upload.id));
+                }
+              }}
+              className={cn("rounded-full border px-3 py-1.5 text-[12px]", phone ? "border-fg bg-fg text-bg" : "border-line text-fg hover:border-fg/40")}
+            >
+              {phone ? "Önizlemeyi kapat" : "📱 Telefonda gör"}
+            </button>
             <span className="truncate font-medium text-fg">{upload.name ?? "Görsel"}</span>
             <span>· {fmtSize(upload.sizeBytes)}</span>
             <span className="ml-auto flex items-center gap-1">
@@ -319,7 +303,6 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
             </span>
           </div>
         </div>
-
         {/* Ücretsiz araçlar */}
         <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
           <div className="flex items-center justify-between">
@@ -385,108 +368,119 @@ function ImageEditor({ upload, tenantId, available, prices, isAdmin, onSaved }: 
           ) : null}
         </div>
       </div>
-
-      <AiEditPanel upload={upload} tenantId={tenantId} available={available} prices={prices} isAdmin={isAdmin} />
+      <AiEditPanel upload={upload} available={available} prices={prices} isAdmin={isAdmin} />
     </div>
   );
 }
-
 /* ------------------------------ AI düzenleme ------------------------------ */
-
-function AiEditPanel({ upload, tenantId, available, prices, isAdmin }: { upload: StudioUpload; tenantId?: string; available: number; prices: StudioPrices; isAdmin: boolean }) {
+type AiMode = "prompt-duzenle" | "arka-plan-kaldir" | "netlestir" | "videoya-cevir" | "videoya-cevir-ekonomik";
+/**
+ * AI düzenleme: birden çok işlem seçilebilir. Sıra sabittir (komut → arka plan → netleştir → video);
+ * her adımın çıktısı sonrakinin girdisi olur. Toplam tutar baştan gösterilir; başarısız adımın ve
+ * sonrasının ücreti alınmaz. İlerleme adım adım gösterilir.
+ */
+function AiEditPanel({ upload, available, prices, isAdmin, onDone }: { upload: StudioUpload; tenantId?: string; available: number; prices: StudioPrices; isAdmin: boolean; onDone?: () => void }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(imageEditAction, idleState);
-  const [mode, setMode] = useState<"prompt-duzenle" | "arka-plan-kaldir" | "netlestir" | "videoya-cevir" | "videoya-cevir-ekonomik">("prompt-duzenle");
+  const [modes, setModes] = useState<AiMode[]>(["prompt-duzenle"]);
   const [prompt, setPrompt] = useState("");
+  const [videoPrompt, setVideoPrompt] = useState("");
   const [seconds, setSeconds] = useState<number>(5);
+  const [jobId, setJobId] = useState<string | null>(null);
   useEffect(() => {
-    if (state.ok) router.refresh();
-  }, [state, router]);
-  const isVideo = mode === "videoya-cevir" || mode === "videoya-cevir-ekonomik";
-  const secOptions = mode === "videoya-cevir-ekonomik" ? [6, 10] : [5, 10];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sunucudan dönen işi izlemeye başla
+    if (state.ok && state.data?.jobId) setJobId(state.data.jobId);
+  }, [state]);
+  const videoMode = modes.find((m) => m === "videoya-cevir" || m === "videoya-cevir-ekonomik");
+  const secOptions = videoMode === "videoya-cevir-ekonomik" ? [6, 10] : [5, 10];
   const sec = secOptions.includes(seconds) ? seconds : secOptions[0]!;
   const ch = (cpu: number, u = 1) => chargeTry(cpu, u, prices.minTry);
-  const opts = [
-    { id: "prompt-duzenle" as const, title: "Komutla düzenle", desc: "Arka planı değiştir, ürün ekle, ışığı düzelt…", price: ch(prices.promptEdit), label: fmtTl(ch(prices.promptEdit)) },
-    { id: "arka-plan-kaldir" as const, title: "Arka planı kaldır", desc: "Şeffaf PNG, ürün çekimleri için", price: ch(prices.bgRemove), label: fmtTl(ch(prices.bgRemove)) },
-    { id: "netlestir" as const, title: "Netleştir (2x)", desc: "Çözünürlüğü iki katına çıkar", price: ch(prices.upscale), label: fmtTl(ch(prices.upscale)) },
-    { id: "videoya-cevir-ekonomik" as const, title: "Görselden video · ekonomik", desc: "512p, 6/10 sn (Hailuo 02 Fast)", price: ch(prices.i2vEcoPerSec, sec), label: `${fmtTl(prices.i2vEcoPerSec)}/sn` },
-    { id: "videoya-cevir" as const, title: "Görselden video · kaliteli", desc: "1080p, 5/10 sn (Kling 2.5)", price: ch(prices.i2vPerSec, sec), label: `${fmtTl(prices.i2vPerSec)}/sn` },
+  const opts: { id: AiMode; title: string; desc: string; price: number; label: string }[] = [
+    { id: "prompt-duzenle", title: "Komutla düzenle", desc: "Arka planı değiştir, ürün ekle, ışığı düzelt…", price: ch(prices.promptEdit), label: fmtTl(ch(prices.promptEdit)) },
+    { id: "arka-plan-kaldir", title: "Arka planı kaldır", desc: "Şeffaf PNG, ürün çekimleri için", price: ch(prices.bgRemove), label: fmtTl(ch(prices.bgRemove)) },
+    { id: "netlestir", title: "Netleştir (2x)", desc: "Çözünürlüğü iki katına çıkar", price: ch(prices.upscale), label: fmtTl(ch(prices.upscale)) },
+    { id: "videoya-cevir-ekonomik", title: "Görselden video · ekonomik", desc: "512p, 6/10 sn (Hailuo 02 Fast)", price: ch(prices.i2vEcoPerSec, sec), label: `${fmtTl(prices.i2vEcoPerSec)}/sn` },
+    { id: "videoya-cevir", title: "Görselden video · kaliteli", desc: "1080p, 5/10 sn (Kling 2.5)", price: ch(prices.i2vPerSec, sec), label: `${fmtTl(prices.i2vPerSec)}/sn` },
   ];
-  const cur = opts.find((o) => o.id === mode)!;
-  const needsPrompt = mode === "prompt-duzenle" || isVideo;
-  const short = !isAdmin && cur.price > available;
+  const toggle = (id: AiMode) =>
+    setModes((cur) => {
+      if (cur.includes(id)) return cur.filter((x) => x !== id);
+      // Tek video dönüşümü: diğer video seçeneğini kaldır.
+      const base = id.startsWith("videoya") ? cur.filter((x) => !x.startsWith("videoya")) : cur;
+      return [...base, id];
+    });
+  const ORDER: AiMode[] = ["prompt-duzenle", "arka-plan-kaldir", "netlestir", "videoya-cevir-ekonomik", "videoya-cevir"];
+  const ordered = ORDER.filter((o) => modes.includes(o));
+  const total = ordered.reduce((s, m) => s + (opts.find((o) => o.id === m)?.price ?? 0), 0);
+  const short = total > available;
+  const needPrompt = modes.includes("prompt-duzenle");
+  const missing = (needPrompt && prompt.trim().length < 5) || (!!videoMode && (videoPrompt || prompt).trim().length < 5);
+  const running = jobId != null;
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
+        setJobId(null);
         startTransition(() => action(fd));
       }}
       className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4"
     >
       <input type="hidden" name="uploadId" value={upload.id} />
-      <input type="hidden" name="action" value={mode} />
+      {ordered.map((m) => (
+        <input key={m} type="hidden" name="actions" value={m} />
+      ))}
       <input type="hidden" name="seconds" value={sec} />
-      {tenantId ? <input type="hidden" name="tenantId" value={tenantId} /> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-[14px] font-semibold text-fg">AI ile düzenle</h3>
-        <span className="text-[12px] text-fg-muted">Bakiyeden düşer · başarısız işte ücret alınmaz</span>
+        <span className="text-[12px] text-fg-muted">Birden çok seçebilirsiniz · sırayla uygulanır · başarısız adımda ücret alınmaz</span>
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5" role="radiogroup" aria-label="AI düzenleme türü">
-        {opts.map((o) => (
-          <button key={o.id} type="button" role="radio" aria-checked={mode === o.id} onClick={() => setMode(o.id)} className={cn("flex flex-col gap-1 rounded-xl border p-3 text-left transition-standard", mode === o.id ? "border-fg bg-fg/5" : "border-line hover:border-fg/40")}>
-            <span className="text-[13px] font-semibold text-fg">{o.title}</span>
-            <span className="text-[11px] text-fg-muted">{o.desc}</span>
-            <span className="mt-1 text-[12px] font-medium tabular-nums text-fg">{o.label}</span>
-          </button>
-        ))}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5" role="group" aria-label="AI düzenleme türleri">
+        {opts.map((o) => {
+          const on = modes.includes(o.id);
+          const step = ordered.indexOf(o.id);
+          return (
+            <button key={o.id} type="button" role="checkbox" aria-checked={on} onClick={() => toggle(o.id)} className={cn("relative flex flex-col gap-1 rounded-xl border p-3 text-left transition-standard", on ? "border-fg bg-fg/5" : "border-line hover:border-fg/40")}>
+              {on ? <span className="absolute top-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-fg text-[10px] font-bold text-bg">{step + 1}</span> : null}
+              <span className="pr-6 text-[13px] font-semibold text-fg">{o.title}</span>
+              <span className="text-[11px] text-fg-muted">{o.desc}</span>
+              <span className="mt-1 text-[12px] font-medium tabular-nums text-fg">{o.label}</span>
+            </button>
+          );
+        })}
       </div>
-      {needsPrompt ? (
-        <textarea
-          name="prompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={2}
-          maxLength={1000}
-          required
-          placeholder={isVideo ? "Örn. ürün yavaşça dönsün, kamera yaklaşsın, yumuşak ışık" : "Örn. arka planı pastel pembe stüdyo yap, gölgeleri yumuşat"}
-          aria-label="Düzenleme komutu"
-          className="resize-y rounded-xl border border-line bg-bg px-3 py-2 text-[14px] text-fg placeholder:text-fg-passive"
-        />
+      {needPrompt ? (
+        <textarea name="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={2} maxLength={1000} placeholder="Komut: örn. arka planı pastel pembe stüdyo yap, gölgeleri yumuşat" aria-label="Düzenleme komutu" className="resize-y rounded-xl border border-line bg-bg px-3 py-2 text-[14px] text-fg placeholder:text-fg-passive" />
       ) : null}
-      {isVideo ? <Chips label="Süre" items={secOptions.map((x) => ({ id: String(x), label: `${x} sn` }))} value={String(sec)} onChange={(v) => setSeconds(Number(v))} /> : null}
+      {videoMode ? (
+        <>
+          <textarea name="videoPrompt" value={videoPrompt} onChange={(e) => setVideoPrompt(e.target.value)} rows={2} maxLength={1000} placeholder="Video hareketi: örn. ürün yavaşça dönsün, kamera yaklaşsın" aria-label="Video hareket komutu" className="resize-y rounded-xl border border-line bg-bg px-3 py-2 text-[14px] text-fg placeholder:text-fg-passive" />
+          <Chips label="Süre" items={secOptions.map((x) => ({ id: String(x), label: `${x} sn` }))} value={String(sec)} onChange={(v) => setSeconds(Number(v))} />
+        </>
+      ) : null}
+      {ordered.length > 1 ? <p className="text-[12px] text-fg-muted">Sıra: {ordered.map((m) => opts.find((o) => o.id === m)!.title).join(" → ")}</p> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {needsPrompt ? (
+        {needPrompt || videoMode ? (
           <label className="flex items-center gap-2 text-[12px] text-fg-muted">
             <input type="checkbox" name="portrait" className="h-4 w-4 accent-[var(--color-fg)]" /> Görselde tanınabilir bir kişi var
           </label>
         ) : null}
         <div className="flex items-center gap-3 sm:ml-auto">
-          <span className={cn("text-[12px] tabular-nums", short ? "text-critical" : "text-fg-muted")}>{short ? `Bakiye yetersiz (${fmtTl(available)})` : `${fmtTl(cur.price)} · kalan ${isAdmin ? "—" : fmtTl(Math.max(0, available - cur.price))}`}</span>
-          <button type="submit" disabled={pending || short || (needsPrompt && prompt.trim().length < 5)} className="rounded-full bg-fg px-5 py-2 text-[13px] font-semibold text-bg disabled:opacity-40">
-            {pending ? "Gönderiliyor…" : "Uygula"}
+          <span className={cn("text-[12px] tabular-nums", short ? "text-critical" : "text-fg-muted")}>{short ? `Bakiye yetersiz (${fmtTl(available)})` : `Toplam ${fmtTl(total)} · kalan ${fmtTl(Math.max(0, available - total))}`}</span>
+          <button type="submit" disabled={pending || short || ordered.length === 0 || missing} className="rounded-full bg-fg px-5 py-2 text-[13px] font-semibold text-bg disabled:opacity-40">
+            {pending ? "Gönderiliyor…" : ordered.length > 1 ? `${ordered.length} adımı uygula` : "Uygula"}
           </button>
         </div>
       </div>
       <div aria-live="polite">
         {state.error ? <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-[13px] text-critical">{state.error}</p> : null}
-        {state.ok && state.message ? (
-          <p className="rounded-xl bg-emerald-500/10 px-3 py-2 text-[13px] text-emerald-600">
-            {state.message}{" "}
-            <a href="/creative?sekme=galeri" className="font-medium underline underline-offset-4">
-              Galeride gör
-            </a>
-          </p>
-        ) : null}
+        {running ? <JobProgress key={jobId} jobId={jobId!} onDone={() => { router.refresh(); onDone?.(); }} /> : null}
       </div>
-      <p className="text-[11px] text-fg-passive">Gerçek kişinin yüzüyle/sesiyle kimlik üretimi (md. 27/12) reddedilir. AI çıktılarına &quot;AI ile üretildi&quot; etiketi (C2PA) gömülür.</p>
+      <p className="text-[11px] text-fg-passive">{isAdmin ? "Ajans hesabının bakiyesinden düşer. " : ""}Gerçek kişinin yüzüyle/sesiyle kimlik üretimi (md. 27/12) reddedilir. AI çıktılarına &quot;AI ile üretildi&quot; etiketi (C2PA) gömülür.</p>
     </form>
   );
 }
-
 /* --------------------------------- Video --------------------------------- */
-
 function VideoEditor({ upload, tenantId, onDone }: { upload: StudioUpload; tenantId?: string; onDone: (id: string) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [duration, setDuration] = useState<number>(upload.durationSec ?? 0);
@@ -495,18 +489,26 @@ function VideoEditor({ upload, tenantId, onDone }: { upload: StudioUpload; tenan
   const [aspect, setAspect] = useState<Aspect>("orijinal");
   const [speed, setSpeed] = useState<"0.5" | "1" | "1.5" | "2">("1");
   const [mute, setMute] = useState(false);
+  const [look, setLook] = useState<"orijinal" | "canli" | "siyah-beyaz" | "sicak" | "soguk">("orijinal");
+  const [fade, setFade] = useState(false);
+  const [phone, setPhone] = useState(false);
+  const [brief, setBrief] = useState("");
   const [state, action, pending] = useActionState(videoEditAction, idleState);
+  const [bState, bAction, bPending] = useActionState(videoBriefAction, idleState);
   const [job, setJob] = useState<{ id: string; status: string; error?: string | null } | null>(null);
   const effEnd = end ?? duration;
   const outLen = Math.max(0, Math.min(effEnd, start + 60) - start) / Number(speed);
   const tooLong = duration > 0 && effEnd - start > 60;
-
   useEffect(() => {
     const id = state.data?.jobId;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sunucudan dönen iş kimliğini izlemeye başla
     if (state.ok && id) setJob({ id, status: "QUEUED" });
   }, [state]);
-
+  useEffect(() => {
+    const id = bState.data?.jobId;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- brief planından dönen işi izle
+    if (bState.ok && id) setJob({ id, status: "QUEUED" });
+  }, [bState]);
   useEffect(() => {
     if (!job || job.status === "DONE" || job.status === "FAILED") return;
     const t = setInterval(async () => {
@@ -518,10 +520,8 @@ function VideoEditor({ upload, tenantId, onDone }: { upload: StudioUpload; tenan
     }, 2000);
     return () => clearInterval(t);
   }, [job, onDone]);
-
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}.${Math.floor((s % 1) * 10)}`;
-  const busy = pending || (job != null && (job.status === "QUEUED" || job.status === "RUNNING"));
-
+  const busy = pending || bPending || (job != null && (job.status === "QUEUED" || job.status === "RUNNING"));
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex flex-col gap-3">
@@ -537,7 +537,47 @@ function VideoEditor({ upload, tenantId, onDone }: { upload: StudioUpload; tenan
             aria-label={upload.name ?? "Video"}
           />
         </div>
+        {phone ? <PhonePreview src={fileUrl(upload.id)} kind="video" initial={aspect === "16:9" ? "yt-video" : "ig-reels"} /> : null}
+        {/* Brief ile AI düzenleme: istek → düzenleme planı → ffmpeg (ücretsiz) */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            setJob(null);
+            startTransition(() => bAction(fd));
+          }}
+          className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
+          aria-label="Brief ile AI video düzenleme"
+        >
+          <input type="hidden" name="uploadId" value={upload.id} />
+          <input type="hidden" name="duration" value={duration ? duration.toFixed(2) : ""} />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-[14px] font-semibold text-fg">Brief ile AI düzenle</h3>
+            <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[11px] font-medium text-emerald-600">Ücretsiz</span>
+          </div>
+          <textarea name="brief" value={brief} onChange={(e) => setBrief(e.target.value)} rows={2} maxLength={1000} placeholder="Örn. ilk 15 saniyeyi story formatında, canlı renklerle, hızlı ve sessiz yap; başta ve sonda yumuşak geçiş olsun" aria-label="Düzenleme isteği (brief)" className="resize-y rounded-xl border border-line bg-bg px-3 py-2 text-[14px] text-fg placeholder:text-fg-passive" />
+          <div className="flex flex-wrap gap-1.5" aria-label="Hazır istekler">
+            {["İlk 15 saniye, story formatı, canlı renkler", "Reels için dikey, 1,5x hız, sessiz", "Kare format, siyah-beyaz, yumuşak geçiş", "Son 10 saniye, yatay, sıcak tonlar"].map((t) => (
+              <button key={t} type="button" onClick={() => setBrief(t)} className="rounded-full border border-line px-2.5 py-1 text-[11px] text-fg-muted hover:text-fg">
+                + {t}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-fg-passive">AI isteği kesme, kadraj, hız, ses, renk ve geçiş adımlarına çevirir; plan aşağıda yazılır.</span>
+            <button type="submit" disabled={busy || brief.trim().length < 5} className="ml-auto rounded-full bg-fg px-4 py-1.5 text-[13px] font-semibold text-bg disabled:opacity-40">
+              {bPending ? "Planlanıyor…" : "AI ile düzenle"}
+            </button>
+          </div>
+          <div aria-live="polite">
+            {bState.error ? <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-[13px] text-critical">{bState.error}</p> : null}
+            {bState.ok && bState.message ? <p className="rounded-xl bg-fg/5 px-3 py-2 text-[13px] text-fg">{bState.message}</p> : null}
+          </div>
+        </form>
         <div className="flex flex-wrap items-center gap-2 text-[12px] text-fg-muted">
+          <button type="button" aria-pressed={phone} onClick={() => setPhone((v) => !v)} className={cn("rounded-full border px-3 py-1.5 text-[12px]", phone ? "border-fg bg-fg text-bg" : "border-line text-fg hover:border-fg/40")}>
+            {phone ? "Önizlemeyi kapat" : "📱 Telefonda gör"}
+          </button>
           <span className="truncate font-medium text-fg">{upload.name ?? "Video"}</span>
           <span>
             · {fmtSize(upload.sizeBytes)}
@@ -551,7 +591,6 @@ function VideoEditor({ upload, tenantId, onDone }: { upload: StudioUpload; tenan
           </span>
         </div>
       </div>
-
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -567,6 +606,8 @@ function VideoEditor({ upload, tenantId, onDone }: { upload: StudioUpload; tenan
         <input type="hidden" name="aspect" value={aspect} />
         <input type="hidden" name="speed" value={speed} />
         {mute ? <input type="hidden" name="mute" value="on" /> : null}
+        <input type="hidden" name="look" value={look} />
+        {fade ? <input type="hidden" name="fade" value="on" /> : null}
         {tenantId ? <input type="hidden" name="tenantId" value={tenantId} /> : null}
         <div className="flex items-center justify-between">
           <h3 className="text-[14px] font-semibold text-fg">Videoyu düzenle</h3>
@@ -601,6 +642,13 @@ function VideoEditor({ upload, tenantId, onDone }: { upload: StudioUpload; tenan
         </div>
         <label className="flex items-center gap-2 text-[13px] text-fg">
           <input type="checkbox" checked={mute} onChange={(e) => setMute(e.target.checked)} className="h-4 w-4 accent-[var(--color-fg)]" /> Sesi kaldır
+        </label>
+        <div className="flex flex-col gap-2">
+          <span className="text-[12px] text-fg-muted">Renk</span>
+          <Chips label="Renk" items={[{ id: "orijinal", label: "Orijinal" }, { id: "canli", label: "Canlı" }, { id: "sicak", label: "Sıcak" }, { id: "soguk", label: "Soğuk" }, { id: "siyah-beyaz", label: "S/B" }]} value={look} onChange={setLook} />
+        </div>
+        <label className="flex items-center gap-2 text-[13px] text-fg">
+          <input type="checkbox" checked={fade} onChange={(e) => setFade(e.target.checked)} className="h-4 w-4 accent-[var(--color-fg)]" /> Başta ve sonda yumuşak geçiş
         </label>
         <div className="flex flex-col gap-2 border-t border-line pt-3">
           <p className="text-[12px] text-fg-muted">

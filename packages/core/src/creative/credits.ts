@@ -18,7 +18,7 @@ export async function placeHold(tenantId: string, credits: number, db: Tx = pris
   const updated = await db.$executeRaw`
     UPDATE credit_accounts SET "heldCredits" = "heldCredits" + ${credits}, "updatedAt" = now()
     WHERE "tenantId" = ${tenantId} AND "balanceCredits" - "heldCredits" >= ${credits}`;
-  if (updated !== 1) throw new InsufficientCreditsError("Yetersiz kredi bakiyesi.");
+  if (updated !== 1) throw new InsufficientCreditsError("Bakiyeniz bu işlem için yetersiz. Bakiye talebi gönderin.");
   return db.creditHold.create({ data: { tenantId, credits: D(credits) } });
 }
 
