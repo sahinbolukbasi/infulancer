@@ -15,13 +15,16 @@ import type { ActionState } from "@/lib/action-state";
 import { attempt, bool, intOrNull, optStr, parseInput, revalidateAll, str } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
 import { isValidTimeZone } from "@/lib/time";
+import { isRegion } from "@infulancer/core/i18n/regions";
 
 const PLATFORMS: Platform[] = ["INSTAGRAM", "TIKTOK", "YOUTUBE"];
 
 const influencerSchema = z.object({
   name: z.string().min(2).max(120),
   category: z.string().min(2).max(60),
-  iban: z.string().regex(/^TR\d{24}$/, { error: "TR ile başlayan 26 karakterlik IBAN girin." }),
+  // Ülkeye göre IBAN (TR 26, DE 22, FR 27 hane…): ülke koduyla başlayan geçerli IBAN biçimi.
+  iban: z.string().regex(/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/, { error: "Ülke koduyla başlayan geçerli bir IBAN girin (ör. TR…, DE…)." }),
+  country: z.string().refine(isRegion, { error: "Ülke seçin." }),
   ibanHolder: z.string().min(2).max(120),
   taxStatus: z.enum(["FATURA", "SERBEST_MESLEK_MAKBUZU", "STOPAJLI"]),
   canIssueInvoice: z.enum(["true", "false"], { error: "Fatura kesebilir mi? seçimi zorunlu." }),
@@ -36,6 +39,7 @@ const labels: Record<string, string> = {
   taxStatus: "Vergi durumu",
   canIssueInvoice: "Fatura kesebilir mi?",
   audienceTimezone: "Kitle saat dilimi",
+  country: "Kayıtlı ülke",
 };
 
 const demographicsSchema = z.record(z.string(), z.unknown());
@@ -132,6 +136,7 @@ export async function saveInfluencer(_prev: ActionState, fd: FormData): Promise<
         taxStatus: str(fd, "taxStatus"),
         canIssueInvoice: str(fd, "canIssueInvoice"),
         audienceTimezone: str(fd, "audienceTimezone"),
+        country: (str(fd, "country") || "TR").toUpperCase(),
       },
       labels,
     );

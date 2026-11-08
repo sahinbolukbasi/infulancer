@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma, type PayoutStatus } from "@infulancer/core/db";
 import { contentTypeLabels, formatKurus, ledgerReasonLabels, payoutStatusLabels, platformLabels } from "@infulancer/core/domain/labels";
+import { currencyOf } from "@infulancer/core/i18n/regions";
 import { computeBalances, holdDays, minPayoutKurus } from "@infulancer/core/domain/ledger";
 import { BalanceCards } from "@/components/finance/balance-cards";
 import { PayoutRequestButton } from "@/components/finance/payout-forms";
@@ -24,6 +25,8 @@ const payoutTone: Record<PayoutStatus, StatusTone> = {
 
 export default async function InfluencerPaymentsPage() {
   const actor = await requireActor("INFLUENCER");
+  // Hakediş ve ödemeler influencer'ın kayıtlı ülkesinin para biriminde (çevrim yok).
+  const myCountry = (await prisma.influencer.findUniqueOrThrow({ where: { id: actor.influencerId! }, select: { country: true } })).country;
   const influencerId = actor.influencerId!;
   const now = new Date();
   const [me, balances, payouts, entries] = await Promise.all([
@@ -56,7 +59,7 @@ export default async function InfluencerPaymentsPage() {
   return (
     <Stagger className="flex flex-col gap-6">
       <PageHeader title="Ödemeler" description="Bakiyeniz, çekim talepleriniz ve hakediş geçmişiniz." />
-      <BalanceCards balances={balances} holdDays={holdDays()} />
+      <BalanceCards balances={balances} holdDays={holdDays()} currency={currencyOf(myCountry)} />
 
       <Card interactive={false} className="flex flex-col gap-3">
         <CardTitle>Çekim</CardTitle>

@@ -1,4 +1,5 @@
 import { prisma } from "@infulancer/core/db";
+import { REGIONS } from "@infulancer/core/i18n/regions";
 import { categoryLabel } from "@infulancer/core/domain/categories";
 import type { PickerInfluencer } from "@/components/campaign/influencer-picker";
 import { pickAvatar } from "@/components/ui/avatar";
@@ -20,9 +21,12 @@ export const pickerInfluencerSelect = {
   },
 } as const;
 
-export function pickerPool(campaignId: string) {
+export async function pickerPool(campaignId: string) {
+  // Ülke ayrımı: kampanyanın hedef ülkelerinde kayıtlı influencerlar (para birimi kampanyayla aynı).
+  const c = await prisma.campaign.findUnique({ where: { id: campaignId }, select: { targetCountries: true, currency: true } });
+  const countries = c?.targetCountries.length ? c.targetCountries : REGIONS.filter((r) => r.currency === (c?.currency ?? "TRY")).map((r) => r.code);
   return prisma.influencer.findMany({
-    where: { assignments: { none: { campaignId, contractStatus: { not: "RED" } } } },
+    where: { country: { in: countries }, assignments: { none: { campaignId, contractStatus: { not: "RED" } } } },
     orderBy: { name: "asc" },
     select: pickerInfluencerSelect,
   });

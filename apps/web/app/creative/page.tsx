@@ -5,9 +5,10 @@ import { aiDisclosureChecklist } from "@infulancer/core/creative/c2pa";
 import { ensureStarterCredits } from "@infulancer/core/creative/credits";
 import { AGENCY_TENANT } from "@infulancer/core/creative/tenant";
 import { ownTenant } from "@/lib/creative-tenant";
+import { tenantCurrency } from "@infulancer/core/creative/tenant";
 import { PhonePreviewButton } from "@/components/creative/phone-preview-button";
 import { allowedDurations, modelSpec, supportedAspects } from "@infulancer/core/creative/adapters";
-import { creativePricing } from "@infulancer/core/creative/pricing";
+import { rateFromTry, creativePricing } from "@infulancer/core/creative/pricing";
 import { reconcileStaleJobs } from "@infulancer/core/creative/fal";
 import { PricingForm } from "@/components/creative/pricing-form";
 import { CreditRequestForm } from "@/components/creative/credit-request-form";
@@ -50,6 +51,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   const isAdmin = actor.role === "ADMIN";
   // Herkes kendi hesabında çalışır: marka, influencer, ajans (yönetici başka hesabın bakiyesini harcamaz).
   const own = ownTenant(actor);
+  const accCurrency = await tenantCurrency(own);
   // İlk kez açan marka/influencer'a tek seferlik hoş geldin bakiyesi (idempotent). Ajans hesabı yöneticiden yüklenir.
   if (!isAdmin) await ensureStarterCredits(own);
   const scope = { tenantId: own };
@@ -78,7 +80,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   // Yalnız istek gövdesi tanımlı (adapters) ve fal'da doğrulanmış modeller; ucuzdan pahalıya.
   const usable: ComposerModel[] = models
     .filter((m) => m.status === "active" && m.licenseStatus === "cleared" && (!m.featureFlag || flags[m.featureFlag]) && m.provider === "fal" && asKind(m.kind) && !needsReference(m.key) && modelSpec(m.key))
-    .map((m) => ({ key: m.key, kind: asKind(m.kind)!, unit: m.unit, creditsPerUnit: Number(m.creditsPerUnit), maxUnits: m.maxUnits, durations: allowedDurations(m.key), aspects: supportedAspects(m.key) }));
+    .map((m) => ({ key: m.key, kind: asKind(m.kind)!, unit: m.unit, creditsPerUnit: Number(m.creditsPerUnit) * rateFromTry(pricing, accCurrency), maxUnits: m.maxUnits, durations: allowedDurations(m.key), aspects: supportedAspects(m.key) }));
   // Yönetici bakiye yüklemesi için hesap listesi (ajans hesabı dahil).
   const tenants = isAdmin
     ? [{ id: AGENCY_TENANT, name: "Ajans (kendi hesabı)", group: "Ajans" as const }, ...brands.map((b) => ({ id: b.id, name: b.name, group: "Markalar" as const })), ...influencers.map((i) => ({ id: i.id, name: i.name, group: "Influencerlar" as const }))]
@@ -105,8 +107,13 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           createdAt: u.createdAt.toISOString(),
         }))
       : [];
-  const priceOf = (key: string, fallback: number) => Number(models.find((m) => m.key === key)?.creditsPerUnit ?? fallback);
-  const studioPrices = { minTry: pricing.minTry, promptEdit: priceOf("nano-banana-edit", 6), bgRemove: priceOf("bria-bg-remove", 3), upscale: priceOf("esrgan-upscale", 1), i2vPerSec: priceOf("kling-v2-5-i2v", 11), i2vEcoPerSec: priceOf("hailuo-02-fast-i2v", 3) };
+  // Hesabın para birimi: model fiyatları (TL) USD kuru üzerinden bu birime çevrilerek FİYATLANIR; gösterimde çevrim yok.
+  const currency = accCurrency;
+  const rate = rateFromTry(pricing, currency);
+  const minCharge = currency === "TRY" ? pricing.minTry : Math.ceil(pricing.minTry * rate * 100 - 1e-9) / 100;
+  const priceOf = (key: string, fallback: number) => Number(models.find((m) => m.key === key)?.creditsPerUnit ?? fallback) * rate;
+  const money = (n: number) => fmtTl(n, currency);
+  const studioPrices = { currency, minTry: minCharge, promptEdit: priceOf("nano-banana-edit", 6), bgRemove: priceOf("bria-bg-remove", 3), upscale: priceOf("esrgan-upscale", 1), i2vPerSec: priceOf("kling-v2-5-i2v", 11), i2vEcoPerSec: priceOf("hailuo-02-fast-i2v", 3) };
   const available = avail(own);
   const completed = jobs.filter((j) => j.status === "COMPLETED").length;
   const description =
@@ -134,16 +141,16 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
             <span className="text-[12px] text-fg-muted">{isAdmin ? "Ajans hesabının bakiyesi" : "Kullanılabilir bakiyeniz"}</span>
-            <span className="text-3xl font-semibold tabular-nums text-fg">{fmtTl(available)}</span>
+            <span className="text-3xl font-semibold tabular-nums text-fg">{money(available)}</span>
             <span className="text-[11px] text-fg-passive">{isAdmin ? "Her üretim yalnız işlemi yapan hesabın bakiyesinden düşer." : "Bakiye yüklemek için “Bakiye talebi” gönderin."}</span>
           </div>
         </div>
       </header>
-      {!isAdmin ? <CreditRequestForm pending={pendingCreditReq} /> : null}
+      {!isAdmin ? <CreditRequestForm pending={pendingCreditReq} currency={currency} /> : null}
       {!isAdmin && ledger.length ? (
         <details className="rounded-2xl border border-line bg-surface">
           <summary className="cursor-pointer px-4 py-3 text-[13px] font-medium text-fg">Bakiye hareketleri</summary>
-          <LedgerList rows={ledger} />
+          <LedgerList rows={ledger} currencyOf={() => currency} />
         </details>
       ) : null}
       <FilterTabs items={tabs} active={tab} />
@@ -152,7 +159,8 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           <div className="flex min-w-0 flex-col gap-6">
             <CreativeComposer
               key={sp.prompt ?? ""}
-              minTry={pricing.minTry}
+              minTry={minCharge}
+              currency={currency}
               models={usable}
               available={available}
               username={(nameOf.get(own) ?? "markaniz").split(" ")[0]!.toLocaleLowerCase("tr")}
@@ -228,8 +236,8 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
           <StatStrip
             stats={[
               { label: "Hesap", value: String(accounts.length) },
-              { label: "Toplam bakiye", value: fmtTl(accounts.reduce((s, a) => s + Number(a.balanceCredits), 0)) },
-              { label: "Blokede", value: fmtTl(accounts.reduce((s, a) => s + Number(a.heldCredits), 0)) },
+              { label: "Toplam bakiye (TL hesaplar)", value: fmtTl(accounts.filter((a) => a.currency === "TRY").reduce((s, a) => s + Number(a.balanceCredits), 0)) },
+              { label: "Blokede (TL)", value: fmtTl(accounts.filter((a) => a.currency === "TRY").reduce((s, a) => s + Number(a.heldCredits), 0)) },
               { label: "Son işler", value: String(jobs.length) },
               { label: "Tamamlanan", value: String(completed) },
               { label: "Aktif model", value: String(usable.length) },
@@ -254,7 +262,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
                   <li key={a.tenantId} className="flex justify-between gap-2 py-2">
                     <span className="truncate">{nameOf.get(a.tenantId) ?? a.tenantId.slice(-6)}</span>
                     <span className="shrink-0 tabular-nums text-fg-muted">
-                      {fmtTl(Number(a.balanceCredits))}{Number(a.heldCredits) ? ` · ${fmtTl(Number(a.heldCredits))} blokede` : ""}
+                      {fmtTl(Number(a.balanceCredits), a.currency)}{Number(a.heldCredits) ? ` · ${fmtTl(Number(a.heldCredits), a.currency)} blokede` : ""}
                     </span>
                   </li>
                 ))}
@@ -267,7 +275,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
               <div className="px-4 pt-4">
                 <SectionHead title="Son bakiye hareketleri (tüm hesaplar)" />
               </div>
-              <LedgerList rows={ledger.map((r) => ({ ...r, note: `${nameOf.get(r.tenantId) ?? r.tenantId.slice(-6)}${r.note ? ` · ${r.note}` : ""}` }))} />
+              <LedgerList currencyOf={(t) => accounts.find((a) => a.tenantId === t)?.currency ?? "TRY"} rows={ledger.map((r) => ({ ...r, note: `${nameOf.get(r.tenantId) ?? r.tenantId.slice(-6)}${r.note ? ` · ${r.note}` : ""}` }))} />
             </section>
           ) : null}
           <section className="flex flex-col gap-3">
@@ -448,7 +456,7 @@ async function Inspiration() {
 }
 const LEDGER_LABEL: Record<string, string> = { STARTER: "Hoş geldin bakiyesi", TOPUP: "Yükleme", CHARGE: "Üretim", REFUND: "İade", ADJUST: "Düzeltme" };
 /** Bakiye hareketleri: her yükleme ve tahsilat, işlem sonrası bakiyeyle. */
-function LedgerList({ rows }: { rows: { id: string; kind: string; amount: unknown; balanceAfter: unknown; note: string | null; createdAt: Date }[] }) {
+function LedgerList({ rows, currencyOf }: { rows: { id: string; tenantId?: string; kind: string; amount: unknown; balanceAfter: unknown; note: string | null; createdAt: Date }[]; currencyOf: (tenantId?: string) => string }) {
   return (
     <ul className="flex max-h-80 flex-col divide-y divide-line overflow-y-auto border-t border-line text-[13px]">
       {rows.map((r) => {
@@ -463,8 +471,8 @@ function LedgerList({ rows }: { rows: { id: string; kind: string; amount: unknow
               </span>
             </span>
             <span className="flex shrink-0 flex-col items-end tabular-nums">
-              <span className={amt < 0 ? "text-fg" : "text-emerald-600"}>{amt > 0 ? "+" : "−"}{fmtTl(Math.abs(amt))}</span>
-              <span className="text-[11px] text-fg-passive">Bakiye {fmtTl(Number(r.balanceAfter))}</span>
+              <span className={amt < 0 ? "text-fg" : "text-emerald-600"}>{amt > 0 ? "+" : "−"}{fmtTl(Math.abs(amt), currencyOf(r.tenantId))}</span>
+              <span className="text-[11px] text-fg-passive">Bakiye {fmtTl(Number(r.balanceAfter), currencyOf(r.tenantId))}</span>
             </span>
           </li>
         );

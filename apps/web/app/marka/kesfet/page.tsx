@@ -7,22 +7,29 @@ import { BrandDiscover, type ContentOption, type DiscoverCreator } from "@/compo
 import { pickAvatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/layout";
 import { requireActor } from "@/lib/auth-guard";
+import Link from "next/link";
+import { countryLabel, currencyOf, isRegion, REGIONS } from "@infulancer/core/i18n/regions";
 export const metadata: Metadata = { title: "Influencer bul" };
 export const dynamic = "force-dynamic";
 
 /** Marka: içerik üreticisi keşfi ve teklif gönderimi. Yalnız herkese açık profil bilgisi ve fiyat listesi gösterilir. */
-export default async function BrandDiscoverPage({ searchParams }: { searchParams: Promise<{ sec?: string }> }) {
+export default async function BrandDiscoverPage({ searchParams }: { searchParams: Promise<{ sec?: string; ulke?: string }> }) {
   const actor = await requireActor("BRAND");
-  const { sec } = await searchParams;
+  const { sec, ulke } = await searchParams;
+  // Ülke ayrımı: varsayılan markanın kayıtlı ülkesi; ?ulke= ile başka bölge seçilir.
+  const brand = await prisma.brand.findUniqueOrThrow({ where: { id: actor.brandId! }, select: { country: true } });
+  const country = isRegion(ulke) ? ulke.toUpperCase() : brand.country;
+  const counts = await prisma.influencer.groupBy({ by: ["country"], where: { user: { status: "ACTIVE" }, showcaseVisible: true }, _count: true });
   const [rows, cards, campaigns] = await Promise.all([
     prisma.influencer.findMany({
-      where: { user: { status: "ACTIVE" }, showcaseVisible: true },
+      where: { user: { status: "ACTIVE" }, showcaseVisible: true, country },
       orderBy: { name: "asc" },
       take: 500,
       select: {
         id: true,
         name: true,
         city: true,
+        country: true,
         category: true,
         headline: true,
         showPrices: true,
@@ -38,7 +45,7 @@ export default async function BrandDiscoverPage({ searchParams }: { searchParams
     return {
       id: i.id,
       name: i.name,
-      city: i.city,
+      city: [i.city, countryLabel(i.country)].filter(Boolean).join(", "),
       avatarUrl: pickAvatar(i.socialAccounts),
       categories: [...new Set(i.categories.flatMap((c) => [c.category.name, c.category.parent?.name].filter((x): x is string => !!x)))],
       primaryCategory: i.categories[0] ? categoryLabel(i.categories[0].category) : i.category,
@@ -53,8 +60,19 @@ export default async function BrandDiscoverPage({ searchParams }: { searchParams
   );
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Influencer bul" description="Seçin, içerikleri belirleyin, tek tıkla teklif gönderin." />
-      <BrandDiscover creators={creators} options={options} campaigns={campaigns} initialSelected={sec && creators.some((c) => c.id === sec) ? [sec] : []} />
+      <PageHeader title="Influencer bul" description={`${countryLabel(country)} kayıtlı içerik üreticileri; fiyatlar ${currencyOf(country)} cinsinden. Seçin, içerikleri belirleyin, tek tıkla teklif gönderin.`} />
+      <nav aria-label="Ülke" className="flex flex-wrap gap-2">
+        {REGIONS.map((r) => {
+          const n = counts.find((c) => c.country === r.code)?._count ?? 0;
+          const on = r.code === country;
+          return (
+            <Link key={r.code} href={`/marka/kesfet?ulke=${r.code}`} aria-current={on ? "page" : undefined} className={`rounded-full border px-3 py-1 text-[13px] ${on ? "border-fg bg-fg text-bg" : "border-line text-fg-muted hover:text-fg"}`}>
+              {r.name} <span className="tabular-nums opacity-70">{n}</span>
+            </Link>
+          );
+        })}
+      </nav>
+      <BrandDiscover currency={currencyOf(country)} creators={creators} options={options} campaigns={campaigns} initialSelected={sec && creators.some((c) => c.id === sec) ? [sec] : []} />
     </div>
   );
 }

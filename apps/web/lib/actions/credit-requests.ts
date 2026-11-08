@@ -25,7 +25,7 @@ export async function approveCreditRequestAction(_p: ActionState, fd: FormData):
     const req = await approveCreditRequest(str(fd, "id"), actor.userId);
     await audit.append({ actor: toAuditActor(actor), action: "CREDIT_REQUEST_APPROVED", entityType: "CreditRequest", entityId: req.id, data: { tenantId: req.tenantId, amountTry: req.amountTry } });
     revalidateAll();
-    return { ok: true, message: `${req.amountTry} TL bakiye yüklendi.` };
+    return { ok: true, message: "Talep onaylandı, bakiye yüklendi." };
   });
 }
 

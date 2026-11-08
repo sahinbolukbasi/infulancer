@@ -87,3 +87,10 @@ export function isActive(pathname: string, item: NavItem): boolean {
   if (item.exact) return pathname === item.href;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
+
+/** Menü etiketi seçili dilde (anahtar: nav.<href>; /docs rol başına farklı ad taşır). */
+export function navLabel(t: (k: string, f: string) => string, role: Role, item: NavItem): string {
+  if (item.href === "/docs" && role === "BRAND") return t("nav.docs.brand", item.label);
+  if (item.href === "/docs" && role === "INFLUENCER") return t("nav.docs.influencer", item.label);
+  return t(`nav.${item.href}`, item.label);
+}

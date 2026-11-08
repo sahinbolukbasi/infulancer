@@ -3,7 +3,8 @@ import Link from "next/link";
 import { toBrandCampaignView } from "@infulancer/core/access/dto";
 import { prisma, type CampaignStatus } from "@infulancer/core/db";
 import { countryName } from "@infulancer/core/domain/campaign-plan";
-import { campaignStatusLabels, formatKurus } from "@infulancer/core/domain/labels";
+import { campaignStatusLabels } from "@infulancer/core/domain/labels";
+import { formatMinor } from "@infulancer/core/i18n/regions";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ButtonLink } from "@/components/ui/form";
@@ -93,7 +94,7 @@ export default async function BrandCampaignsPage({ searchParams }: { searchParam
                         {fmtDate(c.startsAt)} – {fmtDate(c.endsAt)}
                       </dd>
                       <dt className="text-fg-passive">Bütçe</dt>
-                      <dd className="text-fg-muted tabular-nums">{Number(c.brandTotalFeeKurus) > 0 ? formatKurus(c.brandTotalFeeKurus) : "—"}</dd>
+                      <dd className="text-fg-muted tabular-nums">{Number(c.brandTotalFeeKurus) > 0 ? formatMinor(c.brandTotalFeeKurus, raw.currency) : "—"}</dd>
                       {raw.targetCountries.length ? (
                         <>
                           <dt className="text-fg-passive">Ülke</dt>

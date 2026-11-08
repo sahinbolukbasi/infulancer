@@ -6,6 +6,7 @@ import type { Platform } from "../enums";
 import { audienceSchema, contentPlanSchema, draftChecks, OBJECTIVES, parseContentPlan, type Objective } from "./campaign-plan";
 import { DomainError } from "./errors";
 import { utmSafe } from "./utm";
+import { campaignCurrency, currencyOf } from "../i18n/regions";
 
 /**
  * Kampanya taslağı (sihirbaz) — marka ve ajans ortak kullanır.
@@ -64,7 +65,8 @@ export async function createDraft(actor: Actor, input: { brandId?: string | null
   if (actor.role !== "ADMIN" && actor.role !== "BRAND") throw new DomainError("YETKISIZ", "Kampanya oluşturma yetkiniz yok.");
   const brandId = actor.role === "BRAND" ? actor.brandId : input.brandId;
   if (!brandId) throw new DomainError("DOGRULAMA", "Marka seçin.");
-  if (!(await prisma.brand.findUnique({ where: { id: brandId }, select: { id: true } }))) throw new DomainError("DOGRULAMA", "Marka bulunamadı.");
+  const brand = await prisma.brand.findUnique({ where: { id: brandId }, select: { id: true, country: true } });
+  if (!brand) throw new DomainError("DOGRULAMA", "Marka bulunamadı.");
   const name = input.name.trim();
   if (name.length < 3 || name.length > 140) throw new DomainError("DOGRULAMA", "Kampanya adı 3–140 karakter olmalı.");
   const objective = OBJECTIVES.find((o) => o.id === input.objective)?.id;
@@ -84,6 +86,9 @@ export async function createDraft(actor: Actor, input: { brandId?: string | null
       targets: OBJECTIVE_TARGETS[objective],
       status: "TASLAK",
       createdById: actor.userId,
+      // Varsayılan bölge markanın ülkesi; hedef kitle adımında değişir.
+      targetCountries: [brand.country],
+      currency: currencyOf(brand.country),
     },
   });
   await audit.append({ actor: toAuditActor(actor), action: "CAMPAIGN_CREATED", entityType: "Campaign", entityId: c.id, data: { brandId, name, objective, via: "wizard" } });
@@ -108,7 +113,10 @@ export async function updateAudience(actor: Actor, id: string, raw: unknown) {
   await assertCanEditDraft(actor, id);
   const r = audienceSchema.safeParse(raw);
   if (!r.success) throw new DomainError("DOGRULAMA", r.error.issues[0]?.message ?? "Hedef kitle geçersiz.");
-  await prisma.campaign.update({ where: { id }, data: { ...r.data, platforms: r.data.platforms as Platform[] } });
+  const c = await prisma.campaign.findUniqueOrThrow({ where: { id }, select: { brand: { select: { country: true } } } });
+  const { currency, mixed } = campaignCurrency(r.data.targetCountries, c.brand.country);
+  if (mixed) throw new DomainError("DOGRULAMA", "Seçilen ülkelerin para birimleri farklı (ör. TRY ve EUR). Tutarlar çevrilmediği için her para birimi bölgesine ayrı kampanya açın.");
+  await prisma.campaign.update({ where: { id }, data: { ...r.data, platforms: r.data.platforms as Platform[], currency } });
   await audit.append({ actor: toAuditActor(actor), action: "CAMPAIGN_UPDATED", entityType: "Campaign", entityId: id, data: { step: "kitle", ...r.data } });
 }
 

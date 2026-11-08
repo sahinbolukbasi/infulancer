@@ -225,8 +225,9 @@ export function ScheduleStep({
   id: string;
   backHref: string;
   isAdmin: boolean;
-  values: { startsAt: string; endsAt: string; brandTotalFee: string; budget: string };
+  values: { startsAt: string; endsAt: string; brandTotalFee: string; budget: string; currency?: string };
 }) {
+  const cur = !values.currency || values.currency === "TRY" ? "TL" : values.currency;
   const [startsAt, setStartsAt] = useState(values.startsAt);
   const [endsAt, setEndsAt] = useState(values.endsAt);
   const days = Math.round((Date.parse(endsAt) - Date.parse(startsAt)) / 86_400_000) + 1;
@@ -245,11 +246,11 @@ export function ScheduleStep({
         <span className="text-[12px] tabular-nums text-fg-passive">{days > 0 ? `${days} gün` : "Bitiş başlangıçtan önce olamaz"}</span>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label="Toplam bütçe (TL)" hint={isAdmin ? "Markanın ödediği toplam tutar." : "Ajansa ödeyeceğiniz toplam tutar (influencer bedelleri dahil)."}>
+        <Field label={`Toplam bütçe (${cur})`} hint={`${isAdmin ? "Markanın ödediği toplam tutar." : "Ajansa ödeyeceğiniz toplam tutar (influencer bedelleri dahil)."} Kampanyanın para birimi hedef ülkelere göre ${values.currency ?? "TRY"}; tutarlar çevrilmez.`}>
           {(p) => <Input {...p} name="brandTotalFee" required inputMode="decimal" defaultValue={values.brandTotalFee} placeholder="250.000" />}
         </Field>
         {isAdmin ? (
-          <Field label="Influencer bütçesi (TL)" hint="Yalnız ajans görür; boşsa kurulumda girilir.">
+          <Field label={`Influencer bütçesi (${cur})`} hint="Yalnız ajans görür; boşsa kurulumda girilir.">
             {(p) => <Input {...p} name="budget" inputMode="decimal" defaultValue={values.budget} placeholder="200.000" />}
           </Field>
         ) : null}

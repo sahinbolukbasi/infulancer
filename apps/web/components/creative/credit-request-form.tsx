@@ -4,7 +4,7 @@ import { Field, Input } from "@/components/ui/form";
 import { requestCreditAction } from "@/lib/actions/credit-requests";
 
 /** Marka/influencer için Creative bakiyesi (TL) talep formu. Açılır bölüm içinde. */
-export function CreditRequestForm({ pending }: { pending: boolean }) {
+export function CreditRequestForm({ pending, currency = "TRY" }: { pending: boolean; currency?: string }) {
   return (
     <details className="rounded-2xl border border-line bg-surface">
       <summary className="cursor-pointer px-4 py-3 text-[13px] font-medium text-fg hover:text-fg">
@@ -16,7 +16,7 @@ export function CreditRequestForm({ pending }: { pending: boolean }) {
         ) : (
           <ActionForm action={requestCreditAction} submitLabel="Talep gönder" submitSize="sm" resetOnSuccess aria-label="Bakiye talebi">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Talep tutarı (TL)">{(p) => <Input {...p} name="amount" inputMode="numeric" required placeholder="2000" />}</Field>
+              <Field label={`Talep tutarı (${currency === "TRY" ? "TL" : currency})`}>{(p) => <Input {...p} name="amount" inputMode="numeric" required placeholder={currency === "TRY" ? "2000" : "50"} />}</Field>
               <Field label="Açıklama (opsiyonel)">{(p) => <Input {...p} name="note" placeholder="Video üretimi için" />}</Field>
             </div>
           </ActionForm>

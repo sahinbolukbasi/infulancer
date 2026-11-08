@@ -3,6 +3,8 @@ import { safeNextPath } from "@/lib/roles";
 import Link from "next/link";
 import { LoginForm } from "./login-form";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { getT } from "@/lib/i18n/server";
+import { RegionSwitcher } from "@/components/i18n/region-switcher";
 import { getLandingContent, toVideos } from "@/lib/landing-store";
 
 export const metadata: Metadata = { title: "Giriş" };
@@ -23,24 +25,28 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const showDevHint = process.env.NODE_ENV !== "production";
 
   const videos = toVideos(await getLandingContent());
+  const t = await getT();
   return (
     <AuthShell
       videos={videos}
-      title="Tekrar hoş geldiniz"
-      subtitle="Ajans, marka ve influencer hesapları için tek giriş."
+      title={t("auth.welcome", "Tekrar hoş geldiniz")}
+      subtitle={t("auth.subtitle", "Ajans, marka ve influencer hesapları için tek giriş.")}
       footer={
         <>
-          Davet kodunuz mu var?{" "}
+          {t("auth.invite", "Davet kodunuz mu var?")}{" "}
           <Link href="/kayit" className="text-fg underline-offset-4 hover:underline">
-            Kayıt olun →
+            {t("auth.register", "Kayıt olun →")}
           </Link>
+          <span className="ml-3 inline-block align-middle">
+            <RegionSwitcher compact />
+          </span>
         </>
       }
     >
       <div className="flex flex-col gap-5">
         {onaylandi ? (
           <p role="status" className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-fg">
-            Üyeliğiniz onaylandı. E-posta ve şifrenizle giriş yapın.
+            {t("auth.approved", "Üyeliğiniz onaylandı. E-posta ve şifrenizle giriş yapın.")}
           </p>
         ) : null}
         <LoginForm next={nextPath} />

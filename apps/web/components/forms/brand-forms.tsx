@@ -1,10 +1,11 @@
 "use client";
 
 import { ActionForm } from "@/components/forms/action-form";
-import { Field, Input } from "@/components/ui/form";
+import { Field, Input, Select } from "@/components/ui/form";
 import { createBrandUser, saveBrand } from "@/lib/actions/brands";
 import type { CategoryNode } from "@infulancer/core/domain/categories";
 import { CategoryPicker } from "@/components/forms/category-picker";
+import { REGIONS } from "@infulancer/core/i18n/regions";
 
 export type BrandFormValues = {
   id: string;
@@ -17,6 +18,7 @@ export type BrandFormValues = {
   contractRef: string | null;
   contractStartsAt: string | null;
   category: string;
+  country?: string;
   competitorBrandIds: string[];
   categoryIds?: string[];
   primaryCategoryId?: string | null;
@@ -31,6 +33,17 @@ export function BrandForm({ brand, otherBrands, categories }: { brand?: BrandFor
       <p className="-mt-2 text-[12px] text-fg-passive">Ana kategori rakip/münhasırlık tespitinde kullanılır.</p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Marka adı">{(p) => <Input {...p} name="name" required defaultValue={brand?.name} />}</Field>
+        <Field label="Ülke" hint="Kampanya para birimi ve varsayılan bölge (tutarlar çevrilmez).">
+          {(p) => (
+            <Select {...p} name="country" defaultValue={brand?.country ?? "TR"}>
+              {REGIONS.map((r) => (
+                <option key={r.code} value={r.code}>
+                  {r.name} · {r.currency}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
         <Field label="Vergi dairesi">{(p) => <Input {...p} name="taxOffice" required defaultValue={brand?.taxOffice} />}</Field>
         <Field label="Vergi numarası">
           {(p) => <Input {...p} name="taxNumber" required inputMode="numeric" defaultValue={brand?.taxNumber} />}

@@ -4,13 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@infulancer/core/enums";
 import { cn } from "@/lib/cn";
-import { isActive, navByRole } from "./nav";
+import { isActive, navByRole, navLabel } from "./nav";
+import { useT } from "@/lib/i18n/client";
 import { isPathHidden } from "@infulancer/core/access/page-visibility";
 import type { PermCtx } from "./sidebar";
 
 /** Mobilde (< md) kenar çubuğunun yerini alan alt sekme çubuğu. */
 export function MobileTabBar({ role, perm }: { role: Role; perm?: PermCtx }) {
   const pathname = usePathname();
+  const t = useT();
   // Admin'de öğe çok: alt çubukta ilk 5, gerisi kenar çubuğu/arama ile.
   const items = navByRole[role].filter((i) => !perm?.perms.length || !isPathHidden(perm.perms, perm.role, perm.userId, i.href)).slice(0, 5);
   return (
@@ -33,7 +35,7 @@ export function MobileTabBar({ role, perm }: { role: Role; perm?: PermCtx }) {
                 )}
               >
                 <Icon size={20} />
-                <span className="max-w-full truncate px-1">{item.label}</span>
+                <span className="max-w-full truncate px-1">{navLabel(t, role, item)}</span>
               </Link>
             </li>
           );

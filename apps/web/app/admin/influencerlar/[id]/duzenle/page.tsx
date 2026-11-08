@@ -43,6 +43,7 @@ export default async function EditInfluencerPage({ params }: { params: Promise<{
             taxStatus: inf.taxStatus,
             canIssueInvoice: inf.canIssueInvoice,
             audienceTimezone: inf.audienceTimezone,
+            country: inf.country,
             city: inf.city,
             bio: inf.bio,
             categoryIds: inf.categories.map((c) => c.categoryId),

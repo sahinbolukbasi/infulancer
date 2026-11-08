@@ -30,6 +30,7 @@ import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
 import { prisma } from "@infulancer/core/db";
 import { CampaignMedia } from "@/components/campaign/campaign-media";
+import { formatMinor } from "@infulancer/core/i18n/regions";
 import { FileUploader } from "@/components/files/file-uploader";
 import { buildCalendarRows, resolveWeek } from "@/lib/calendar";
 import { num, pct, pct1 } from "@/lib/format";
@@ -71,6 +72,7 @@ export default async function BrandCampaignPage({
     include: { uploadedBy: { select: { name: true } } },
   });
   const draft = campaign.status === "TASLAK";
+  const currency = (await prisma.campaign.findUniqueOrThrow({ where: { id: campaign.id }, select: { currency: true } })).currency;
   const mediaCard = (
     <Card interactive={false} className="flex flex-col gap-4" id="medya">
       <CardTitle>Kampanya fotoğraf ve videoları</CardTitle>
@@ -119,7 +121,7 @@ export default async function BrandCampaignPage({
             {fmtDate(campaign.startsAt)} – {fmtDate(campaign.endsAt)}
           </dd>
           <dt className="text-fg-passive">Toplam ödenen</dt>
-          <dd className="tabular-nums">{formatKurus(Number(campaign.brandTotalFeeKurus))}</dd>
+          <dd className="tabular-nums">{formatMinor(Number(campaign.brandTotalFeeKurus), currency)}</dd>
           <dt className="text-fg-passive">Erişim</dt>
           <dd className="tabular-nums">{num.format(report.totals.reach)}</dd>
           <dt className="text-fg-passive">Tıklama</dt>

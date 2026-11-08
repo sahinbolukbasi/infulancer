@@ -6,14 +6,14 @@ import { JobProgress } from "@/components/creative/job-progress";
 import { PhonePreview } from "@/components/creative/phone-preview";
 import { idleState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
-import { fmtTl } from "@/lib/creative-models";
+import { chargeAmount, fmtTl } from "@/lib/creative-models";
 import { KindIcon } from "@/components/creative/kind-icon";
 import { uploadFile } from "@/lib/creative-upload";
 import { DEFAULT_EDITS, PRESETS, renderEdits, STORY_SIZE, type Aspect, type ImageEdits } from "./studio-image-render";
 export type StudioUpload = { id: string; kind: "image" | "video"; name: string | null; mime: string; sizeBytes: number; source: string; durationSec: number | null; createdAt: string };
-export type StudioPrices = { minTry: number; promptEdit: number; bgRemove: number; upscale: number; i2vPerSec: number; i2vEcoPerSec: number };
+export type StudioPrices = { currency: string; minTry: number; promptEdit: number; bgRemove: number; upscale: number; i2vPerSec: number; i2vEcoPerSec: number };
 /** Sunucudaki tutar hesabının aynısı: tam TL, en az minTry. */
-const chargeTry = (cpu: number, units: number, minTry: number) => Math.max(minTry, Math.ceil(cpu * units - 1e-9));
+const chargeTry = (cpu: number, units: number, minTry: number, currency = "TRY") => chargeAmount(cpu, units, minTry, currency);
 const fileUrl = (id: string) => `/api/creative/file/${id}`;
 const fmtSize = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const ASPECTS: { id: Aspect; label: string }[] = [
@@ -394,13 +394,14 @@ function AiEditPanel({ upload, available, prices, isAdmin, onDone }: { upload: S
   const videoMode = modes.find((m) => m === "videoya-cevir" || m === "videoya-cevir-ekonomik");
   const secOptions = videoMode === "videoya-cevir-ekonomik" ? [6, 10] : [5, 10];
   const sec = secOptions.includes(seconds) ? seconds : secOptions[0]!;
-  const ch = (cpu: number, u = 1) => chargeTry(cpu, u, prices.minTry);
+  const ch = (cpu: number, u = 1) => chargeTry(cpu, u, prices.minTry, prices.currency);
+  const money = (n: number) => fmtTl(n, prices.currency);
   const opts: { id: AiMode; title: string; desc: string; price: number; label: string }[] = [
-    { id: "prompt-duzenle", title: "Komutla düzenle", desc: "Arka planı değiştir, ürün ekle, ışığı düzelt…", price: ch(prices.promptEdit), label: fmtTl(ch(prices.promptEdit)) },
-    { id: "arka-plan-kaldir", title: "Arka planı kaldır", desc: "Şeffaf PNG, ürün çekimleri için", price: ch(prices.bgRemove), label: fmtTl(ch(prices.bgRemove)) },
-    { id: "netlestir", title: "Netleştir (2x)", desc: "Çözünürlüğü iki katına çıkar", price: ch(prices.upscale), label: fmtTl(ch(prices.upscale)) },
-    { id: "videoya-cevir-ekonomik", title: "Görselden video · ekonomik", desc: "512p, 6/10 sn (Hailuo 02 Fast)", price: ch(prices.i2vEcoPerSec, sec), label: `${fmtTl(prices.i2vEcoPerSec)}/sn` },
-    { id: "videoya-cevir", title: "Görselden video · kaliteli", desc: "1080p, 5/10 sn (Kling 2.5)", price: ch(prices.i2vPerSec, sec), label: `${fmtTl(prices.i2vPerSec)}/sn` },
+    { id: "prompt-duzenle", title: "Komutla düzenle", desc: "Arka planı değiştir, ürün ekle, ışığı düzelt…", price: ch(prices.promptEdit), label: money(ch(prices.promptEdit)) },
+    { id: "arka-plan-kaldir", title: "Arka planı kaldır", desc: "Şeffaf PNG, ürün çekimleri için", price: ch(prices.bgRemove), label: money(ch(prices.bgRemove)) },
+    { id: "netlestir", title: "Netleştir (2x)", desc: "Çözünürlüğü iki katına çıkar", price: ch(prices.upscale), label: money(ch(prices.upscale)) },
+    { id: "videoya-cevir-ekonomik", title: "Görselden video · ekonomik", desc: "512p, 6/10 sn (Hailuo 02 Fast)", price: ch(prices.i2vEcoPerSec, sec), label: `${money(prices.i2vEcoPerSec)}/sn` },
+    { id: "videoya-cevir", title: "Görselden video · kaliteli", desc: "1080p, 5/10 sn (Kling 2.5)", price: ch(prices.i2vPerSec, sec), label: `${money(prices.i2vPerSec)}/sn` },
   ];
   const toggle = (id: AiMode) =>
     setModes((cur) => {
@@ -466,7 +467,7 @@ function AiEditPanel({ upload, available, prices, isAdmin, onDone }: { upload: S
           </label>
         ) : null}
         <div className="flex items-center gap-3 sm:ml-auto">
-          <span className={cn("text-[12px] tabular-nums", short ? "text-critical" : "text-fg-muted")}>{short ? `Bakiye yetersiz (${fmtTl(available)})` : `Toplam ${fmtTl(total)} · kalan ${fmtTl(Math.max(0, available - total))}`}</span>
+          <span className={cn("text-[12px] tabular-nums", short ? "text-critical" : "text-fg-muted")}>{short ? `Bakiye yetersiz (${money(available)})` : `Toplam ${money(total)} · kalan ${money(Math.max(0, available - total))}`}</span>
           <button type="submit" disabled={pending || short || ordered.length === 0 || missing} className="rounded-full bg-fg px-5 py-2 text-[13px] font-semibold text-bg disabled:opacity-40">
             {pending ? "Gönderiliyor…" : ordered.length > 1 ? `${ordered.length} adımı uygula` : "Uygula"}
           </button>

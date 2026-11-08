@@ -1,4 +1,5 @@
 "use client";
+import { formatMinor } from "@infulancer/core/i18n/regions";
 
 import { useEffect, useState } from "react";
 import { ArrowDownIcon, ArrowUpIcon } from "@/components/icons";
@@ -57,6 +58,8 @@ export type MetricCardProps = {
   value: number;
   /** Görüntüleme biçimi; varsayılan tr-TR tamsayı. */
   format?: "number" | "percent" | "currency-kurus";
+  /** currency-kurus için para birimi (çevrim yok; yalnız biçim). */
+  currency?: string;
   /** Önceki döneme göre değişim (oran; 0.12 = %12). */
   delta?: number | null;
   sparkline?: number[];
@@ -67,20 +70,20 @@ const nf = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 });
 const pf = new Intl.NumberFormat("tr-TR", { style: "percent", maximumFractionDigits: 1 });
 const cf = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 
-function formatValue(v: number, format: MetricCardProps["format"]) {
+function formatValue(v: number, format: MetricCardProps["format"], currency?: string) {
   if (format === "percent") return pf.format(v);
-  if (format === "currency-kurus") return cf.format(v / 100);
+  if (format === "currency-kurus") return currency && currency !== "TRY" ? formatMinor(Math.round(v), currency) : cf.format(v / 100);
   return nf.format(Math.round(v));
 }
 
-export function MetricCard({ label, value, format = "number", delta, sparkline, hint }: MetricCardProps) {
+export function MetricCard({ label, value, format = "number", delta, sparkline, hint, currency }: MetricCardProps) {
   const shown = useCountUp(value);
   const up = (delta ?? 0) >= 0;
   return (
     <div className="flex flex-col gap-4 rounded-[8px] border border-border bg-surface p-6 transition-standard hover:-translate-y-px hover:border-border-strong">
       <p className="text-label text-fg-muted">{label}</p>
-      <p className="text-metric text-fg" aria-label={`${label}: ${formatValue(value, format)}`}>
-        <span aria-hidden>{formatValue(shown, format)}</span>
+      <p className="text-metric text-fg" aria-label={`${label}: ${formatValue(value, format, currency)}`}>
+        <span aria-hidden>{formatValue(shown, format, currency)}</span>
       </p>
       <div className="flex items-center justify-between gap-4">
         {delta != null ? (

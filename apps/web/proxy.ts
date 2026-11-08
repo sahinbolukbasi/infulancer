@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "./auth.config";
+import { detectRegion } from "@infulancer/core/i18n/regions";
 import { isAdminOnlyPath, requiredRoleForPath, roleHome } from "./lib/roles";
 
 const { auth } = NextAuth(authConfig);
@@ -18,7 +19,22 @@ function withPath(res: NextResponse, pathname: string): NextResponse {
   res.headers.set("x-pathname", pathname);
   return res;
 }
-export default auth((req) => {
+/**
+ * Dil ve ülke otomatik algılama: ilk ziyarette Cloudflare (cf-ipcountry) / CloudFront
+ * (cloudfront-viewer-country) ülke başlığı ve tarayıcı dili okunur, çereze yazılır.
+ * Kullanıcı seçici ile değiştirdiğinde çerez ve hesap güncellenir; bu yalnız ilk değerdir.
+ */
+function withRegion(req: Parameters<Parameters<typeof auth>[0]>[0], res: Response): Response {
+  if (!(res instanceof NextResponse)) return res;
+  if (req.cookies.get("nv_locale") && req.cookies.get("nv_country")) return res;
+  const d = detectRegion({ ipCountry: req.headers.get("cf-ipcountry") ?? req.headers.get("cloudfront-viewer-country"), acceptLanguage: req.headers.get("accept-language") });
+  const opts = { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production" };
+  if (!req.cookies.get("nv_locale")) res.cookies.set("nv_locale", d.locale, opts);
+  if (!req.cookies.get("nv_country")) res.cookies.set("nv_country", d.country, opts);
+  return res;
+}
+export default auth((req) => withRegion(req, handle(req)));
+function handle(req: Parameters<Parameters<typeof auth>[0]>[0]): Response {
   const { pathname, search } = req.nextUrl;
   const user = req.auth?.user;
 
@@ -59,7 +75,7 @@ export default auth((req) => {
     return NextResponse.redirect(new URL(roleHome[user.role], req.nextUrl));
   }
   return withPath(NextResponse.next(), pathname);
-});
+}
 
 export const config = {
   matcher: ["/((?!api/auth|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|ico|webp|mp4|webm)$).*)"],

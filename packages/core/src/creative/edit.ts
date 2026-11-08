@@ -3,7 +3,9 @@ import { Prisma } from "../generated/prisma/client";
 import { prisma } from "../db";
 import { DomainError } from "../domain/errors";
 import { envStr } from "../env";
-import { creativePricing, jobChargeTry } from "./pricing";
+import { chargeIn, creativePricing } from "./pricing";
+import { tenantCurrency } from "./tenant";
+import { formatMajor } from "../i18n/regions";
 import { submitCreative } from "./fal";
 import { getOwnedUpload, importGeneratedAsset, presignCreativeGet } from "./uploads";
 /**
@@ -68,13 +70,13 @@ function stepUnits(s: EditStep): number {
 }
 
 /** Zincirin toplam tutarı (TL): kullanıcıya baştan gösterilir ve bakiye baştan kontrol edilir. */
-export async function pipelineCost(steps: EditStep[]): Promise<number> {
-  const { minTry } = await creativePricing();
+export async function pipelineCost(steps: EditStep[], currency = "TRY"): Promise<number> {
+  const pricing = await creativePricing();
   let total = 0;
   for (const s of steps) {
     const m = await prisma.modelRegistry.findUnique({ where: { key: EDIT_ACTIONS[s.action].modelKey }, select: { creditsPerUnit: true } });
     if (!m) throw new DomainError("KURAL_IHLALI", `${EDIT_LABEL[s.action]} şu an kullanılamıyor.`);
-    total += jobChargeTry(Number(m.creditsPerUnit), stepUnits(s), minTry);
+    total += chargeIn(Number(m.creditsPerUnit), stepUnits(s), pricing, currency);
   }
   return total;
 }
@@ -126,10 +128,11 @@ export async function submitEditPipeline(input: { tenantId: string; uploadId: st
   const upload = await getOwnedUpload(input.tenantId, input.uploadId);
   if (upload.kind !== "image") throw new DomainError("DOGRULAMA", "AI düzenleme için bir görsel seçin.");
   for (const s of steps) if (EDIT_ACTIONS[s.action].needsPrompt && (s.prompt ?? "").trim().length < 5) throw new DomainError("DOGRULAMA", `${EDIT_LABEL[s.action]}: en az 5 karakterlik bir komut yazın.`);
-  const total = await pipelineCost(steps);
+  const currency = await tenantCurrency(input.tenantId);
+  const total = Math.round((await pipelineCost(steps, currency)) * 100) / 100;
   const acc = await prisma.creditAccount.findUnique({ where: { tenantId: input.tenantId } });
   const available = acc ? Number(acc.balanceCredits) - Number(acc.heldCredits) : 0;
-  if (available < total) throw new DomainError("KURAL_IHLALI", `Bu düzenlemelerin toplamı ${total} TL; kullanılabilir bakiyeniz ${Math.floor(available)} TL.`);
+  if (available < total) throw new DomainError("KURAL_IHLALI", `Bu düzenlemelerin toplamı ${formatMajor(total, currency)}; kullanılabilir bakiyeniz ${formatMajor(available, currency)}.`);
   return submitStep(input.tenantId, upload.id, steps[0]!, steps.slice(1), null);
 }
 

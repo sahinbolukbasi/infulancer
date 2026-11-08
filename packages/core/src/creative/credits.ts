@@ -2,6 +2,8 @@ import { Prisma } from "../generated/prisma/client";
 import { prisma, type Tx } from "../db";
 import { notifyAdmins } from "../agents/common";
 import { envInt } from "../env";
+import { tenantCurrency } from "./tenant";
+import { creativePricing, starterIn } from "./pricing";
 
 /**
  * Creative kredileri: submit'te HOLD, fal webhook'unda (başarılı çıktı) CHARGE.
@@ -13,7 +15,7 @@ export class InsufficientCreditsError extends Error {}
 const D = (n: number | string | Prisma.Decimal) => new Prisma.Decimal(n);
 
 export async function placeHold(tenantId: string, credits: number, db: Tx = prisma) {
-  await db.creditAccount.upsert({ where: { tenantId }, create: { tenantId }, update: {} });
+  await db.creditAccount.upsert({ where: { tenantId }, create: { tenantId, currency: await tenantCurrency(tenantId) }, update: {} });
   // Koşullu güncelleme: kullanılabilir bakiye yeterliyse hold'a al (yarış güvenli).
   const updated = await db.$executeRaw`
     UPDATE credit_accounts SET "heldCredits" = "heldCredits" + ${credits}, "updatedAt" = now()
@@ -57,7 +59,7 @@ export async function topUp(tenantId: string, credits: number, note?: string | n
   return prisma.$transaction(async (tx) => {
     const acc = await tx.creditAccount.upsert({
       where: { tenantId },
-      create: { tenantId, balanceCredits: D(credits) },
+      create: { tenantId, balanceCredits: D(credits), currency: await tenantCurrency(tenantId) },
       update: { balanceCredits: { increment: D(credits) } },
     });
     await ledger(tx, tenantId, "TOPUP", credits, note ?? "Bakiye yükleme");
@@ -71,12 +73,15 @@ export async function topUp(tenantId: string, credits: number, note?: string | n
  * Varsayılan 250 TL (gerçek fal maliyetimiz ≈ 250 / (kur × markup) ≈ 1,7 $): denemeye yeter,
  * hesap açıp bedava üretim toplamayı ekonomik kılmaz. CREATIVE_STARTER_CREDITS ile değişir.
  */
-export async function ensureStarterCredits(tenantId: string, credits = envInt("CREATIVE_STARTER_CREDITS", 250)) {
+export async function ensureStarterCredits(tenantId: string, creditsTry = envInt("CREATIVE_STARTER_CREDITS", 250)) {
   const existing = await prisma.creditAccount.findUnique({ where: { tenantId }, select: { tenantId: true } });
   if (existing) return existing;
+  // Hesap kendi para biriminde açılır (TRY tutarının karşılığı; gösterimde çevrim yok).
+  const currency = await tenantCurrency(tenantId);
+  const credits = starterIn(creditsTry, await creativePricing(), currency);
   try {
     return await prisma.$transaction(async (tx) => {
-      const acc = await tx.creditAccount.create({ data: { tenantId, balanceCredits: D(credits) } });
+      const acc = await tx.creditAccount.create({ data: { tenantId, balanceCredits: D(credits), currency } });
       await ledger(tx, tenantId, "STARTER", credits, "Hoş geldin bakiyesi");
       return acc;
     });

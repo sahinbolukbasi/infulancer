@@ -1,4 +1,5 @@
 "use server";
+import { isRegion } from "@infulancer/core/i18n/regions";
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
@@ -24,6 +25,7 @@ const brandSchema = z.object({
   contractRef: z.string().max(80).nullable(),
   contractStartsAt: z.string().refine(isDay, { error: "Geçerli bir tarih girin." }).nullable(),
   category: z.string().min(2).max(60),
+  country: z.string().refine(isRegion, { error: "Ülke seçin." }),
   competitorBrandIds: z.array(z.string().min(1).max(64)).max(50),
 });
 
@@ -37,6 +39,7 @@ const brandLabels: Record<string, string> = {
   contractRef: "Sözleşme no",
   contractStartsAt: "Sözleşme başlangıcı",
   category: "Kategori",
+  country: "Ülke",
   competitorBrandIds: "Rakip markalar",
 };
 
@@ -59,6 +62,7 @@ export async function saveBrand(_prev: ActionState, fd: FormData): Promise<Actio
         contractRef: optStr(fd, "contractRef"),
         contractStartsAt: optStr(fd, "contractStartsAt"),
         category: cats.legacyName,
+        country: (str(fd, "country") || "TR").toUpperCase(),
         competitorBrandIds: fd.getAll("competitorBrandIds").map(String).filter((v) => v && v !== id),
       },
       brandLabels,

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
-import { campaignStatusLabels, formatKurus } from "@infulancer/core/domain/labels";
+import { campaignStatusLabels } from "@infulancer/core/domain/labels";
+import { formatMinor } from "@infulancer/core/i18n/regions";
 import { DataTable } from "@/components/ui/data-table";
 import { ButtonLink } from "@/components/ui/form";
 import { PageHeader, Stagger } from "@/components/ui/layout";
@@ -41,6 +42,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       brandPaymentReceivedAt: true,
       brandTotalFeeKurus: true,
       submittedAt: true,
+      currency: true,
       _count: { select: { assignments: { where: { contractStatus: { not: "RED" } } } } },
     },
   });
@@ -115,7 +117,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
               score: { display: score == null ? "—" : pct.format(score), sort: score },
               dates: { display: `${fmtDate(c.startsAt)} – ${fmtDate(c.endsAt)}`, sort: c.startsAt.getTime() },
               influencers: { display: c._count.assignments, sort: c._count.assignments },
-              budget: { display: formatKurus(Number(c.budgetKurus)), sort: Number(c.budgetKurus) },
+              budget: { display: formatMinor(Number(c.budgetKurus), c.currency), sort: Number(c.budgetKurus) },
               progress: {
                 display: (
                   <span className="inline-flex items-center gap-2">

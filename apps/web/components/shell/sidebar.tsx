@@ -7,7 +7,8 @@ import type { Role } from "@infulancer/core/enums";
 import { PanelIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { Tooltip } from "@/components/ui/tooltip";
-import { isActive, navByRole } from "./nav";
+import { isActive, navByRole, navLabel } from "./nav";
+import { useT } from "@/lib/i18n/client";
 import { isPathHidden, type PagePermissionRow } from "@infulancer/core/access/page-visibility";
 import type { Role as CoreRole } from "@infulancer/core/enums";
 export type PermCtx = { perms: PagePermissionRow[]; role: CoreRole; userId: string };
@@ -46,6 +47,7 @@ function setCollapsed(value: boolean) {
 /** Sol sabit kenar çubuğu: 240px, 64px'e daraltılabilir (durum localStorage'da). md altında gizli. */
 export function Sidebar({ role, perm }: { role: Role; perm?: PermCtx }) {
   const pathname = usePathname();
+  const t = useT();
   const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
   const items = navByRole[role].filter((i) => !perm?.perms.length || !isPathHidden(perm.perms, perm.role, perm.userId, i.href));
 
@@ -94,11 +96,11 @@ export function Sidebar({ role, perm }: { role: Role; perm?: PermCtx }) {
               )}
             >
               <Icon size={18} />
-              <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
+              <span className={collapsed ? "sr-only" : undefined}>{navLabel(t, role, item)}</span>
             </Link>
           );
           const node = collapsed ? (
-            <Tooltip key={item.href} label={item.label} side="right" className="flex">
+            <Tooltip key={item.href} label={navLabel(t, role, item)} side="right" className="flex">
               {link}
             </Tooltip>
           ) : (
@@ -106,7 +108,7 @@ export function Sidebar({ role, perm }: { role: Role; perm?: PermCtx }) {
           );
           return showSection ? (
             <div key={`sec-${item.href}`} className="flex flex-col gap-1">
-              <span className="px-3 pb-0.5 pt-3 text-[11px] font-medium uppercase tracking-wide text-fg-passive">{item.section}</span>
+              <span className="px-3 pb-0.5 pt-3 text-[11px] font-medium uppercase tracking-wide text-fg-passive">{t(`section.${item.section}`, item.section!)}</span>
               {node}
             </div>
           ) : (

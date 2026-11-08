@@ -7,6 +7,7 @@ import { PlatformIcon } from "@/components/platform-icon";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { saveInfluencer } from "@/lib/actions/influencers";
 import type { CategoryNode } from "@infulancer/core/domain/categories";
+import { REGIONS } from "@infulancer/core/i18n/regions";
 import { CategoryPicker } from "@/components/forms/category-picker";
 
 const PLATFORMS: { value: Platform; label: string }[] = [
@@ -24,6 +25,7 @@ export type InfluencerFormValues = {
   taxStatus: string;
   canIssueInvoice: boolean;
   audienceTimezone: string;
+  country?: string;
   city?: string | null;
   bio?: string | null;
   categoryIds?: string[];
@@ -125,6 +127,17 @@ export function InfluencerForm({ influencer, timeZones, categories }: { influenc
               <option value="FATURA">Fatura keser</option>
               <option value="SERBEST_MESLEK_MAKBUZU">Serbest meslek makbuzu</option>
               <option value="STOPAJLI">Stopajlı ödeme</option>
+            </Select>
+          )}
+        </Field>
+        <Field label="Kayıtlı ülke" hint="Para birimi (hakediş/ödeme), reklam ibaresi kuralları ve marka keşfi buna göre.">
+          {(p) => (
+            <Select {...p} name="country" defaultValue={influencer?.country ?? "TR"}>
+              {REGIONS.map((r) => (
+                <option key={r.code} value={r.code}>
+                  {r.name} · {r.currency}
+                </option>
+              ))}
             </Select>
           )}
         </Field>

@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { fmtTl } from "@/lib/creative-models";
 
 type Step = { id: string; label: string; status: string; error: string | null; amount: number | null; charged: boolean; refunded: boolean; assetId: string | null };
-type Progress = { done: boolean; failed: boolean; steps: Step[]; finalAssetId: string | null; chainError: string | null };
+type Progress = { currency?: string; done: boolean; failed: boolean; steps: Step[]; finalAssetId: string | null; chainError: string | null };
 type Row = { key: string; label: string; state: "done" | "active" | "wait" | "fail"; note?: string };
 
 /**
@@ -50,7 +50,7 @@ export function JobProgress({ jobId, onDone, className }: { jobId: string; onDon
   if (p) {
     const first = p.steps[0];
     const total = p.steps.reduce((s, x) => s + (x.amount ?? 0), 0);
-    rows.push({ key: "bakiye", label: first?.status === "REJECTED" ? "İstek kurallara takıldı" : `Bakiye ayrıldı${total ? ` · ${fmtTl(total)}` : ""}`, state: first?.status === "REJECTED" ? "fail" : "done", note: first?.status === "REJECTED" ? (first.error ?? undefined) : undefined });
+    rows.push({ key: "bakiye", label: first?.status === "REJECTED" ? "İstek kurallara takıldı" : `Bakiye ayrıldı${total ? ` · ${fmtTl(total, p.currency)}` : ""}`, state: first?.status === "REJECTED" ? "fail" : "done", note: first?.status === "REJECTED" ? (first.error ?? undefined) : undefined });
     for (const s of p.steps) {
       if (s.status === "REJECTED") continue;
       const state: Row["state"] = s.status === "COMPLETED" ? "done" : s.status === "FAILED" ? "fail" : s.status === "WAITING" ? "wait" : "active";
@@ -58,7 +58,7 @@ export function JobProgress({ jobId, onDone, className }: { jobId: string; onDon
         key: s.id,
         label: state === "active" ? `${s.label}: model çalışıyor…` : state === "wait" ? `${s.label}: sırada` : state === "fail" ? `${s.label}: başarısız` : `${s.label}: tamamlandı`,
         state,
-        note: state === "fail" ? `${s.error ?? "Model hata verdi"}. Ücret alınmadı, ${s.amount ? fmtTl(s.amount) + " " : ""}bakiyenize iade edildi.` : undefined,
+        note: state === "fail" ? `${s.error ?? "Model hata verdi"}. Ücret alınmadı, ${s.amount ? fmtTl(s.amount, p.currency) + " " : ""}bakiyenize iade edildi.` : undefined,
       });
     }
     if (p.done) rows.push({ key: "etiket", label: "AI etiketi (C2PA) gömüldü, galeriye eklendi", state: "done" });

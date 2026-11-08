@@ -49,6 +49,7 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ id
             contractRef: brand.contractRef,
             contractStartsAt: brand.contractStartsAt ? localDay(brand.contractStartsAt, AGENCY_TZ) : null,
             category: brand.category,
+            country: brand.country,
             competitorBrandIds: brand.competitorBrandIds,
             categoryIds: brand.categories.map((c) => c.categoryId),
             primaryCategoryId: brand.categories.find((c) => c.primary)?.categoryId ?? null,

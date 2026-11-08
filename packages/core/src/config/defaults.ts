@@ -47,7 +47,7 @@ export type ConfigShape = {
   "pricing.bsp360dialog": { tier: string; eurPerMonth: number; channels: number }[];
   "pricing.markup": { messageMarkupPct: number; creditUsd: number; creditMarkup: [number, number] };
   /** Creative TL fiyatı = max(minTry, yukarı yuvarla(fal/Bedrock USD maliyeti × usdTry × markup)). */
-  "pricing.creative": { usdTry: number; markup: number; minTry: number; autoFx: boolean; fxUpdatedAt: string | null };
+  "pricing.creative": { usdTry: number; markup: number; minTry: number; autoFx: boolean; fxUpdatedAt: string | null; fx?: Record<string, number> };
   "tax.gvk103.fourthBracketTry": { year: number; amount: number | null };
   "tiktok.contentPosting": { unauditedMaxUsersPer24h: number };
   "features": Record<string, boolean>;

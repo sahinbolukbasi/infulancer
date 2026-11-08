@@ -7,7 +7,7 @@ import { openAssetInStudioAction } from "@/lib/actions/creative-studio";
 import { idleState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
 import { KindIcon } from "@/components/creative/kind-icon";
-import { fmtTl, KIND_LABEL, modelHint, modelName, unitLabel, type CreativeKind } from "@/lib/creative-models";
+import { chargeAmount, fmtTl, KIND_LABEL, modelHint, modelName, unitLabel, type CreativeKind } from "@/lib/creative-models";
 import { uploadFile } from "@/lib/creative-upload";
 import { JobProgress } from "@/components/creative/job-progress";
 import { PhonePreview } from "@/components/creative/phone-preview";
@@ -39,7 +39,6 @@ const FORMATS = [
   { id: "16:9", label: "Yatay", hint: "16:9", box: "h-3.5 w-6" },
 ];
 /** Sunucudaki tutar hesabının aynısı (pricing.jobChargeTry): tam TL, en az minTry. */
-const chargeTry = (cpu: number, units: number, minTry: number) => Math.max(minTry, Math.ceil(cpu * units - 1e-9));
 const STYLES = ["Minimal", "Sinematik", "Pastel", "Neon", "Doğal ışık", "Stüdyo", "Retro", "Lüks"];
 const KIND_DESC: Record<CreativeKind, string> = { image: "Afiş, ürün, story", video: "Reels, TikTok, tanıtım", audio: "Reklam ve story sesi" };
 /**
@@ -53,6 +52,7 @@ export function CreativeComposer({
   refPrices,
   available,
   username = "markaniz",
+  currency = "TRY",
   minTry = 2,
   initialPrompt = "",
 }: {
@@ -62,12 +62,16 @@ export function CreativeComposer({
   /** Kullanılabilir bakiye (TL), işlemi yapanın kendi hesabı. */
   available: number;
   username?: string;
-  /** İş başına en düşük ücret (TL). */
+  /** Hesabın para birimi (fiyatlar bu birimde gelir; çevrim yok). */
+  currency?: string;
+  /** İş başına en düşük ücret (hesabın para biriminde). */
   minTry?: number;
   initialPrompt?: string;
 }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(generateCreative, idleState);
+  const money = (n: number) => fmtTl(n, currency);
+  const chargeTry = (cpu: number, units: number, min: number) => chargeAmount(cpu, units, min, currency);
   const kinds = useMemo(() => (["image", "video", "audio"] as CreativeKind[]).filter((k) => models.some((m) => m.kind === k)), [models]);
   const [kind, setKind] = useState<CreativeKind>(kinds[0] ?? "image");
   const inKind = models.filter((m) => m.kind === kind);
@@ -288,7 +292,7 @@ export function CreativeComposer({
             {inKind.map((x) => (
               <option key={x.key} value={x.key}>
                 {modelName(x.key)}
-                {modelHint(x.key) ? ` · ${modelHint(x.key)}` : ""} · {fmtTl(x.creditsPerUnit)}/{unitLabel(x.unit)}
+                {modelHint(x.key) ? ` · ${modelHint(x.key)}` : ""} · {money(x.creditsPerUnit)}/{unitLabel(x.unit)}
               </option>
             ))}
           </select>
@@ -319,8 +323,8 @@ export function CreativeComposer({
         </label>
         <div className="flex items-center gap-4 sm:ml-auto">
           <div className="flex flex-col text-right leading-tight">
-            <span className="text-[15px] font-semibold tabular-nums text-fg">{fmtTl(cost)}</span>
-            <span className={cn("text-[11px] tabular-nums", short ? "text-critical" : "text-fg-passive")}>{short ? `Bakiye yetersiz (${fmtTl(balance)})` : `Kalan: ${fmtTl(Math.max(0, balance - cost))}`}</span>
+            <span className="text-[15px] font-semibold tabular-nums text-fg">{money(cost)}</span>
+            <span className={cn("text-[11px] tabular-nums", short ? "text-critical" : "text-fg-passive")}>{short ? `Bakiye yetersiz (${money(balance)})` : `Kalan: ${money(Math.max(0, balance - cost))}`}</span>
           </div>
           <button type="submit" disabled={pending || !ready} className="inline-flex h-11 items-center gap-2 rounded-full bg-fg px-6 text-[14px] font-semibold text-bg transition-standard hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
             {pending ? (

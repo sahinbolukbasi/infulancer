@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { creativePricing, jobChargeTry } from "./pricing";
+import { chargeIn, creativePricing } from "./pricing";
+import { tenantCurrency } from "./tenant";
 import { prisma } from "../db";
 import { envStr } from "../env";
 import { objectStore } from "../channels/raw-store";
@@ -116,8 +117,9 @@ export async function submitCreative(input: {
     throw new CreativeRejectedError(`${model.key} için üst sınır ${model.maxUnits} ${model.unit}.`);
   }
   // Bakiyeden düşecek tutar: tam TL, en az minTry (pricing.ts). Hold bu tutarla açılır, başarıda aynısı tahsil edilir.
-  const { minTry } = await creativePricing();
-  const credits = jobChargeTry(Number(model.creditsPerUnit), input.units, minTry);
+  // Hesabın kendi para biriminde (TRY, EUR…): model fiyatı TL'den USD kuru üzerinden hesaplanır.
+  const pricing = await creativePricing();
+  const credits = chargeIn(Number(model.creditsPerUnit), input.units, pricing, await tenantCurrency(input.tenantId));
   const hold = await placeHold(input.tenantId, credits);
   const job = await prisma.creativeJob.create({
     data: { tenantId: input.tenantId, campaignId: input.campaignId, modelKey: model.key, modelId: model.modelId, prompt: input.prompt, promptHash, units: input.units, creditHoldId: hold.id, inputUploadId: input.inputUploadId ?? null, status: "HELD" },

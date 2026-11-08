@@ -1,5 +1,6 @@
 import { prisma } from "@infulancer/core/db";
 import { reconcileStaleJobs } from "@infulancer/core/creative/fal";
+import { tenantCurrency } from "@infulancer/core/creative/tenant";
 import { EDIT_ACTIONS, EDIT_LABEL, pipelineJobs, type EditAction } from "@infulancer/core/creative/edit";
 import { requireApiActor } from "@/lib/auth-guard";
 import { ownTenant } from "@/lib/creative-tenant";
@@ -48,7 +49,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   // Webhook gecikirse fal kuyruğunu sorgulayarak sonuçlandır (bloke takılı kalmasın).
   if (!done && !failed) void reconcileStaleJobs({ olderThanMs: 60_000 }).catch(() => {});
   return Response.json(
-    { done, failed, steps, finalAssetId: done ? (assetOf.get(last.id) ?? null) : null, chainError: root.rejectReason && root.status === "COMPLETED" ? root.rejectReason : null },
+    { currency: await tenantCurrency(root.tenantId), done, failed, steps, finalAssetId: done ? (assetOf.get(last.id) ?? null) : null, chainError: root.rejectReason && root.status === "COMPLETED" ? root.rejectReason : null },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

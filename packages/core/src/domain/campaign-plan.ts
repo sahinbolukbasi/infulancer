@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ContentType, Platform } from "../enums";
 import { platformRules } from "./platform-rules";
+import { REGIONS } from "../i18n/regions";
 
 /**
  * Kampanya oluşturma sihirbazının ortak tanımları (marka ve ajans aynı adımları kullanır).
@@ -38,19 +39,8 @@ export const OBJECTIVES = [
 ] as const;
 export type Objective = (typeof OBJECTIVES)[number]["id"];
 
-/** Yayın ülkeleri (ISO 3166-1 alpha-2). Çok ülkeli kampanyalar ve influencer ayrımı için. */
-export const COUNTRIES: { code: string; name: string }[] = [
-  { code: "TR", name: "Türkiye" },
-  { code: "DE", name: "Almanya" },
-  { code: "AT", name: "Avusturya" },
-  { code: "CH", name: "İsviçre" },
-  { code: "FR", name: "Fransa" },
-  { code: "BE", name: "Belçika" },
-  { code: "NL", name: "Hollanda" },
-  { code: "GB", name: "Birleşik Krallık" },
-  { code: "US", name: "ABD" },
-  { code: "AZ", name: "Azerbaycan" },
-];
+/** Yayın ülkeleri (ISO 3166-1 alpha-2) — bölge tanımlarından (dil, para birimi, saat dilimi). */
+export const COUNTRIES: { code: string; name: string; currency: string }[] = REGIONS.map((r) => ({ code: r.code, name: r.name, currency: r.currency }));
 export const countryName = (code: string) => COUNTRIES.find((c) => c.code === code)?.name ?? code;
 
 export const GENDERS = [

@@ -9,6 +9,7 @@ import { prisma } from "@infulancer/core/db";
 import { checkBrandConflict, enforceBrandConflict } from "@infulancer/core/domain/brand-conflict";
 import { transitionDeliverable } from "@infulancer/core/domain/deliverable-status";
 import { DomainError } from "@infulancer/core/domain/errors";
+import { assertInfluencerFitsCampaign } from "@infulancer/core/domain/campaign-region";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, intOrNull, optStr, parseInput, revalidateAll, str, tlToKurus } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
@@ -53,6 +54,8 @@ async function insertAssignment(actor: Actor, input: AssignmentInput, opts: { ac
       select: { id: true },
     });
     if (dup) throw new DomainError("DOGRULAMA", "Bu influencer kampanyada zaten atanmış.");
+    // Ülke ayrımı: hedef ülkede kayıtlı ve kampanya para biriminde ödenebilir olmalı.
+    await assertInfluencerFitsCampaign(tx, input.campaignId, input.influencerId);
     if (input.couponCode) {
       const coupon = await tx.assignment.findFirst({
         where: { campaignId: input.campaignId, couponCode: input.couponCode, contractStatus: { not: "RED" } },

@@ -11,6 +11,8 @@ import { CopilotLauncher } from "@/components/copilot/copilot-launcher";
 import { Sidebar } from "./sidebar";
 import { loadPagePermissions, type PagePermissionRow } from "@infulancer/core/access/page-permissions";
 import { BRAND_NAME } from "@/lib/brand";
+import { getT } from "@/lib/i18n/server";
+import { RegionSwitcher } from "@/components/i18n/region-switcher";
 import { NordvowMark } from "@/components/brand/logo";
 
 /**
@@ -26,6 +28,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
   const permRole: Role = actor.staffRole ?? actor.role;
   const perms: PagePermissionRow[] = await loadPagePermissions(permRole, actor.userId);
   const permCtx = { perms, role: permRole, userId: actor.userId };
+  const t = await getT();
 
   return (
     <div className="relative isolate flex min-h-dvh bg-bg text-fg">
@@ -38,7 +41,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
         href="#icerik"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-[8px] focus:bg-fg focus:px-3 focus:py-2 focus:text-bg"
       >
-        İçeriğe geç
+        {t("common.skip", "İçeriğe geç")}
       </a>
       <Sidebar role={navRole} perm={permCtx} />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -47,7 +50,7 @@ export async function AppShell({ role, children }: { role: Role; children: React
           {role === "ADMIN" ? (
             <form action="/admin/ara" method="get" role="search" className="hidden max-w-md flex-1 sm:block">
               <label htmlFor="global-search" className="sr-only">
-                Kampanya, influencer veya marka ara
+                {t("shell.search", "Kampanya, influencer veya marka ara")}
               </label>
               <div className="relative">
                 <SearchIcon size={16} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-passive" />
@@ -56,16 +59,17 @@ export async function AppShell({ role, children }: { role: Role; children: React
                   name="q"
                   type="search"
                   minLength={2}
-                  placeholder="Kampanya, influencer veya marka ara"
+                  placeholder={t("shell.search", "Kampanya, influencer veya marka ara")}
                   className="h-9 w-full rounded-[8px] border border-border bg-surface pr-3 pl-9 text-sm text-fg placeholder:text-fg-passive transition-standard hover:border-border-strong focus:border-fg focus:outline-none"
                 />
               </div>
             </form>
           ) : null}
           <div className="ml-auto flex items-center gap-2">
+            <RegionSwitcher />
             <ThemeToggle />
             <NotificationBell userId={actor.userId} />
-            <AccountMenu name={user?.name ?? ""} email={user?.email ?? ""} roleLabel={roleLabels[navRole]} />
+            <AccountMenu name={user?.name ?? ""} email={user?.email ?? ""} roleLabel={t(`role.${navRole}`, roleLabels[navRole])} />
           </div>
         </header>
         <main id="icerik" className="mx-auto w-full max-w-[1440px] flex-1 px-4 pt-8 pb-24 md:px-8 md:pb-12">

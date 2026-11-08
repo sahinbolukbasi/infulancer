@@ -52,7 +52,8 @@ describe("K37 kampanya sihirbazı: marka kampanya oluşturur", () => {
     await expect(submitDraft(brand, c.id)).rejects.toThrow(/tamamlayın/);
     await expect(updateAudience(brand, c.id, { targetCountries: [], platforms: ["INSTAGRAM"], audienceAgeMin: 18, audienceAgeMax: 30, audienceGender: "hepsi", audienceInterests: [] })).rejects.toThrow(/ülke/);
     await expect(updateAudience(brand, c.id, { targetCountries: ["TR"], platforms: ["INSTAGRAM"], audienceAgeMin: 40, audienceAgeMax: 20, audienceGender: null, audienceInterests: [] })).rejects.toThrow(/Yaş/);
-    await updateAudience(brand, c.id, { targetCountries: ["TR", "DE"], platforms: ["INSTAGRAM", "TIKTOK"], audienceAgeMin: 18, audienceAgeMax: 34, audienceGender: "kadin", audienceInterests: ["moda"] });
+    await expect(updateAudience(brand, c.id, { targetCountries: ["TR", "DE"], platforms: ["INSTAGRAM"], audienceAgeMin: 18, audienceAgeMax: 34, audienceGender: null, audienceInterests: [] })).rejects.toThrow(/para birimleri farklı/);
+    await updateAudience(brand, c.id, { targetCountries: ["DE", "AT"], platforms: ["INSTAGRAM", "TIKTOK"], audienceAgeMin: 18, audienceAgeMax: 34, audienceGender: "kadin", audienceInterests: ["moda"] });
     await expect(updateSchedule(brand, c.id, { startsAt: new Date("2026-12-10"), endsAt: new Date("2026-12-01"), brandTotalFeeKurus: 100 })).rejects.toThrow(/Bitiş/);
     // Marka influencer bütçesini (ajans iç bilgisi) değiştiremez.
     await updateSchedule(brand, c.id, { startsAt: new Date("2026-12-01"), endsAt: new Date("2026-12-31"), brandTotalFeeKurus: 25_000_000, budgetKurus: 999 });
@@ -70,7 +71,8 @@ describe("K37 kampanya sihirbazı: marka kampanya oluşturur", () => {
     expect(st.ready).toBe(true);
     expect(Number(st.campaign.budgetKurus)).toBe(0);
     expect(Number(st.campaign.brandTotalFeeKurus)).toBe(25_000_000);
-    expect(st.campaign.targetCountries).toEqual(["TR", "DE"]);
+    expect(st.campaign.targetCountries).toEqual(["DE", "AT"]);
+    expect(st.campaign.currency).toBe("EUR");
     const admins = await prisma.notification.count({ where: { userId: admin.userId } });
     expect((await submitDraft(brand, c.id)).first).toBe(true);
     expect(await prisma.notification.count({ where: { userId: admin.userId } })).toBe(admins + 1);

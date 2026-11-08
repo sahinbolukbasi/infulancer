@@ -5,8 +5,10 @@ import { useCallback, useRef, useState } from "react";
 import { ChevronDownIcon, LogoutIcon, UserIcon } from "@/components/icons";
 import { signOutAction } from "@/lib/actions/auth";
 import { useDismiss } from "@/lib/use-dismiss";
+import { useT } from "@/lib/i18n/client";
 
 export function AccountMenu({ name, email, roleLabel }: { name: string; email: string; roleLabel: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setOpen(false), []);
@@ -42,7 +44,7 @@ export function AccountMenu({ name, email, roleLabel }: { name: string; email: s
             className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2 text-left text-sm text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
           >
             <UserIcon size={16} />
-            Profilim
+            {t("shell.profile", "Profilim")}
           </Link>
           <form action={signOutAction}>
             <button
@@ -51,7 +53,7 @@ export function AccountMenu({ name, email, roleLabel }: { name: string; email: s
               className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2 text-left text-sm text-fg-muted transition-standard hover:bg-surface-hover hover:text-fg"
             >
               <LogoutIcon size={16} />
-              Çıkış yap
+              {t("shell.logout", "Çıkış yap")}
             </button>
           </form>
         </div>

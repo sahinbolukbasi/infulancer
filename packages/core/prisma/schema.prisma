@@ -197,6 +197,9 @@ model User {
   phone        String?
   /// Kullanıcının yüklediği profil fotoğrafı (S3 anahtarı). Yoksa influencer sosyal hesabından türetilir.
   avatarKey    String?
+  /// Arayüz dili (tr, en, de, fr) ve ülke (ISO2); ilk girişte otomatik algılanır, kullanıcı değiştirebilir.
+  locale       String?
+  country      String?
   brandId      String?
   brand        Brand?      @relation(fields: [brandId], references: [id], onDelete: SetNull)
   influencerId String?     @unique
@@ -232,6 +235,8 @@ model Brand {
   contractRef        String?
   contractStartsAt   DateTime?
   category           String
+  /// Kayıtlı ülke (ISO2): marka para birimi ve varsayılan kampanya bölgesi.
+  country            String    @default("TR")
   competitorBrandIds String[]
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
@@ -251,6 +256,8 @@ model Influencer {
   taxStatus        TaxStatus
   canIssueInvoice  Boolean
   audienceTimezone String    @default("Europe/Istanbul")
+  /// Kayıtlı ülke (ISO2): para birimi, uyum (reklam ibaresi) kuralları ve marka keşfi buna göre.
+  country          String    @default("TR")
   city             String?
   bio              String?
   /// Vitrin: markalara görünen kısa başlık ve görünürlük tercihleri (influencer yönetir)
@@ -326,6 +333,8 @@ model Campaign {
   slug                   String         @unique
   budgetKurus            BigInt
   brandTotalFeeKurus     BigInt
+  /// Kampanyanın para birimi (hedef ülkelerin para birimi). Tutarlar bu birimde, çevrilmeden gösterilir.
+  currency               String         @default("TRY")
   startsAt               DateTime
   endsAt                 DateTime
   /// [{kpi, target, weight, windowDays}] — zod ile doğrulanır (domain/campaign-score.ts)
@@ -1224,6 +1233,8 @@ model ModelRegistry {
 
 model CreditAccount {
   tenantId        String   @id
+  /// Hesabın para birimi (Creative bakiyesi bu birimde).
+  currency        String   @default("TRY")
   balanceCredits  Decimal  @default(0) @db.Decimal(14, 3)
   heldCredits     Decimal  @default(0) @db.Decimal(14, 3)
   lowBalanceAlert Decimal  @default(100) @db.Decimal(14, 3)

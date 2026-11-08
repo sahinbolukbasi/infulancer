@@ -1,4 +1,5 @@
 "use client";
+import { formatMinor } from "@infulancer/core/i18n/regions";
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,11 +28,13 @@ type Item = { platform: Platform; contentType: string; qty: number; priceTl: str
 
 const compact = new Intl.NumberFormat("tr-TR", { notation: "compact", maximumFractionDigits: 1 });
 const pct = new Intl.NumberFormat("tr-TR", { style: "percent", maximumFractionDigits: 1 });
-const tl = (k: number) => `${(k / 100).toLocaleString("tr-TR")} TL`;
 const num = (v: string) => Number(v.replace(/\./g, "").replace(",", ".")) || 0;
 
 /** Marka: içerik üreticisi keşfi → seç → tek formla teklif gönder (her birine ayrı teklif ve bildirim). */
-export function BrandDiscover({ creators, options, campaigns, initialSelected = [] }: { creators: DiscoverCreator[]; options: ContentOption[]; campaigns: { id: string; name: string }[]; initialSelected?: string[] }) {
+export function BrandDiscover({ creators, options, campaigns, initialSelected = [], currency = "TRY" }: { creators: DiscoverCreator[]; options: ContentOption[]; campaigns: { id: string; name: string }[]; initialSelected?: string[]; currency?: string }) {
+  // Tutarlar bölgenin para biriminde (çevrim yok).
+  const tl = (k: number) => formatMinor(k, currency);
+  const cur = currency === "TRY" ? "TL" : currency;
   const router = useRouter();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
@@ -194,7 +197,7 @@ export function BrandDiscover({ creators, options, campaigns, initialSelected = 
                 <button type="button" onClick={() => setItems((x) => (x.length > 1 ? x.filter((_, k) => k !== i) : x))} aria-label="Satırı sil" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-hover">
                   <XIcon size={14} />
                 </button>
-                {!useRates ? <Input className="col-span-4" value={it.priceTl} onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, priceTl: e.target.value } : y)))} placeholder="Birim fiyat (TL)" inputMode="decimal" aria-label="Birim fiyat" /> : null}
+                {!useRates ? <Input className="col-span-4" value={it.priceTl} onChange={(e) => setItems((x) => x.map((y, k) => (k === i ? { ...y, priceTl: e.target.value } : y)))} placeholder={`Birim fiyat (${cur})`} inputMode="decimal" aria-label="Birim fiyat" /> : null}
               </div>
             ))}
             <button type="button" onClick={() => setItems((x) => [...x, { platform: "TIKTOK", contentType: "VIDEO", qty: 1, priceTl: "" }])} className="w-fit text-[13px] text-fg-muted hover:text-fg">
@@ -206,7 +209,7 @@ export function BrandDiscover({ creators, options, campaigns, initialSelected = 
             Her üreticinin kendi fiyatını kullan (listesi olmayana aşağıdaki fiyat)
           </label>
           {useRates ? (
-            <Input value={items[0]?.priceTl ?? ""} onChange={(e) => setItems((x) => x.map((y) => ({ ...y, priceTl: e.target.value })))} placeholder="Listesi olmayanlar için birim fiyat (TL)" inputMode="decimal" aria-label="Varsayılan birim fiyat" />
+            <Input value={items[0]?.priceTl ?? ""} onChange={(e) => setItems((x) => x.map((y) => ({ ...y, priceTl: e.target.value })))} placeholder={`Listesi olmayanlar için birim fiyat (${cur})`} inputMode="decimal" aria-label="Varsayılan birim fiyat" />
           ) : null}
           <div className="grid grid-cols-2 gap-2">
             <Input type="date" value={publishBy} onChange={(e) => setPublishBy(e.target.value)} aria-label="En geç yayın tarihi" />

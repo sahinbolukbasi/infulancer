@@ -3,6 +3,7 @@ import Link from "next/link";
 import { toInfluencerAssignmentView } from "@infulancer/core/access/dto";
 import { prisma } from "@infulancer/core/db";
 import { contentTypeLabels, deliverableStatusLabels, platformLabels } from "@infulancer/core/domain/labels";
+import { currencyOf } from "@infulancer/core/i18n/regions";
 import { computeBalances, holdDays } from "@infulancer/core/domain/ledger";
 import { WeekAgenda, WeekCalendar } from "@/components/calendar/week-calendar";
 import { BalanceCards } from "@/components/finance/balance-cards";
@@ -22,6 +23,8 @@ export const metadata: Metadata = { title: "İşlerim" };
 
 export default async function InfluencerHomePage() {
   const actor = await requireActor("INFLUENCER");
+  // Hakediş ve ödemeler influencer'ın kayıtlı ülkesinin para biriminde (çevrim yok).
+  const myCountry = (await prisma.influencer.findUniqueOrThrow({ where: { id: actor.influencerId! }, select: { country: true } })).country;
   const influencerId = actor.influencerId!;
   const [me, assignments, balances] = await Promise.all([
     prisma.influencer.findUniqueOrThrow({ where: { id: influencerId }, select: { id: true, name: true, audienceTimezone: true } }),
@@ -52,7 +55,7 @@ export default async function InfluencerHomePage() {
       <CopilotHome actor={actor} />
 
       <section aria-label="Bakiye" className="flex flex-col gap-2">
-        <BalanceCards balances={balances} holdDays={holdDays()} />
+        <BalanceCards balances={balances} holdDays={holdDays()} currency={currencyOf(myCountry)} />
         <Link href="/influencer/odemeler" className="text-[13px] text-fg-muted hover:text-fg">
           Ödemeler ve çekim talebi →
         </Link>

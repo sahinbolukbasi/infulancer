@@ -6,6 +6,7 @@ import { contentPlanSchema, expandPlanSchedule, type ContentPlanItem } from "@in
 import { DomainError } from "@infulancer/core/domain/errors";
 import { assertContentType } from "@infulancer/core/domain/platform-rules";
 import { buildUtmLink } from "@infulancer/core/domain/utm";
+import { ruleFor } from "@infulancer/core/compliance/country-rules";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, bool, optStr, revalidateAll, str, tags } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
@@ -16,6 +17,10 @@ import { isDay, isTime, zonedToUtc } from "@/lib/time";
  * Saatler her influencer'ın kendi kitle saat diliminde yorumlanır (aynı yerel saatte paylaşım).
  * Reddedilmiş atamalar ve kapanmış kampanya atlanır; her influencer kendi işleminde yazılır.
  */
+const label = (country: string) => {
+  const w = ruleFor(country).words[0]!;
+  return w.length <= 3 ? `#${w}` : w[0]!.toUpperCase() + w.slice(1);
+};
 export async function applyContentPlanBulk(_p: ActionState, fd: FormData): Promise<ActionState> {
   const actor = await requireActor("ADMIN");
   return attempt(async () => {
@@ -57,7 +62,7 @@ export async function applyContentPlanBulk(_p: ActionState, fd: FormData): Promi
     if (campaign.status === "KAPANDI" || campaign.status === "IPTAL") throw new DomainError("KURAL_IHLALI", "Kapanmış/iptal kampanyada iş planlanamaz.");
     const assignments = await prisma.assignment.findMany({
       where: { id: { in: assignmentIds }, campaignId, contractStatus: { not: "RED" } },
-      select: { id: true, influencer: { select: { name: true, audienceTimezone: true, socialAccounts: { select: { platform: true, handle: true } } } } },
+      select: { id: true, influencer: { select: { name: true, country: true, audienceTimezone: true, socialAccounts: { select: { platform: true, handle: true } } } } },
     });
     if (assignments.length === 0) throw new DomainError("DOGRULAMA", "Seçilen influencerlar bu kampanyada değil.");
     const schedule = expandPlanSchedule(plan, { startDay, time, spacingDays });
@@ -81,8 +86,8 @@ export async function applyContentPlanBulk(_p: ActionState, fd: FormData): Promi
               mentions,
               disclosureRequired,
               frameCount: item.frameCount,
-              // Story: her karede ilk unsur "Reklam | Marka" olmalı (md. 23/A); kare metni bu kalıpla başlar, ajans düzenleyebilir.
-              frameTexts: story ? Array.from({ length: item.frameCount }, () => `Reklam | ${campaign.brand.name}`) : [],
+              // Story: her karede ülke kuralının ibaresi + marka (TR: "Reklam | Marka", DE: "Werbung | Marke"…); ajans düzenleyebilir.
+              frameTexts: story ? Array.from({ length: item.frameCount }, () => `${label(a.influencer.country)} | ${campaign.brand.name}`) : [],
               paidPartnershipToggle: item.platform === "INSTAGRAM",
               commercialContentToggle: item.platform === "TIKTOK",
               isLive: item.contentType === "LIVE",
