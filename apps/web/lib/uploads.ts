@@ -13,7 +13,7 @@ import { notifyAdmins } from "./notify";
  * Yükleme yetki kuralları (route handler'lar ortak kullanır).
  * - Influencer yalnız kendi işlerine TASLAK / HAM_DOSYA / METRIK_SS yükler (Influencer → Ajans).
  * - Admin ajans dosyalarını (brief, marka, ürün…) yükler; influencer türlerini de yükleyebilir.
- * - Marka dosya yükleyemez.
+ * - Marka yalnız kendi kampanyasına brief/ürün/örnek çekim/logo dosyası yükler (kampanya medyası).
  */
 
 export const INFLUENCER_KINDS = ["TASLAK", "HAM_DOSYA", "METRIK_SS"] as const satisfies readonly AssetKind[];
@@ -30,6 +30,8 @@ const ALL_KINDS = [
   "DIGER",
 ] as const satisfies readonly AssetKind[];
 
+/** Markanın kampanyasına ekleyebileceği medya türleri (influencerlar görür). */
+export const BRAND_KINDS = ["URUN_FOTO", "ORNEK_CEKIM", "MARKA_LOGO", "BRIEF_PDF", "DIGER"] as const satisfies readonly AssetKind[];
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024 * 1024;
 
 export const uploadRequestSchema = z.object({
@@ -79,7 +81,14 @@ export async function readJson<T>(req: Request, schema: z.ZodType<T>): Promise<T
 
 /** Yetki + yön kurallarını uygular, BEKLIYOR durumunda Asset satırı açar. */
 export async function prepareAsset(actor: Actor, req: UploadRequest) {
-  if (actor.role === "BRAND") throw new DomainError("YETKISIZ", "Markalar dosya yükleyemez.");
+  if (actor.role === "BRAND") {
+    if (req.target.type !== "campaign" || !(BRAND_KINDS as readonly AssetKind[]).includes(req.kind)) {
+      throw new DomainError("YETKISIZ", "Marka yalnız kampanyasına ürün görseli, örnek çekim, logo veya brief dosyası ekleyebilir.");
+    }
+    const own = await prisma.campaign.findUnique({ where: { id: req.target.id }, select: { brandId: true, status: true } });
+    if (!own || own.brandId !== actor.brandId) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
+    if (own.status === "KAPANDI" || own.status === "IPTAL") throw new DomainError("KURAL_IHLALI", "Kapanmış kampanyaya dosya eklenemez.");
+  }
   const influencerKind = (INFLUENCER_KINDS as readonly AssetKind[]).includes(req.kind);
   if (actor.role === "INFLUENCER" && !influencerKind) {
     throw new DomainError("YETKISIZ", "Yalnız taslak içerik, ham dosya ve metrik ekran görüntüsü yükleyebilirsiniz.");

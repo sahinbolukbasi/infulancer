@@ -334,6 +334,24 @@ model Campaign {
   closedAt               DateTime?
   brandPaymentReceivedAt DateTime?
   reportSummary          String?
+  /// Kampanya açıklaması ve hedefi (bilinirlik, etkilesim, satis, video)
+  description            String?
+  objective              String?
+  /// Hedef ülkeler (ISO 3166-1 alpha-2) ve platformlar
+  targetCountries        String[]       @default([])
+  platforms              Platform[]     @default([])
+  /// Hedef kitle: yaş aralığı, cinsiyet, ilgi alanları
+  audienceAgeMin         Int?
+  audienceAgeMax         Int?
+  audienceGender         String?
+  audienceInterests      String[]       @default([])
+  /// İçerik planı şablonu: [{platform, contentType, count, notes}] (domain/campaign-plan.ts)
+  contentPlan            Json?
+  /// Markanın önerdiği influencerlar (ajans onaylayıp atar)
+  shortlistInfluencerIds String[]       @default([])
+  /// Kampanyayı oluşturan kullanıcı ve markanın ajansa gönderdiği an
+  createdById            String?
+  submittedAt            DateTime?
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 

@@ -40,6 +40,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       brand: { select: { name: true } },
       brandPaymentReceivedAt: true,
       brandTotalFeeKurus: true,
+      submittedAt: true,
       _count: { select: { assignments: { where: { contractStatus: { not: "RED" } } } } },
     },
   });
@@ -102,7 +103,15 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
                 sort: c.name,
               },
               brand: { display: c.brand.name, sort: c.brand.name },
-              status: { display: <StatusDot tone={campaignTone(c.status)}>{campaignStatusLabels[c.status]}</StatusDot>, sort: statusRank[c.status] },
+              status: {
+                display:
+                  c.status === "TASLAK" && c.submittedAt ? (
+                    <StatusDot tone="active">Markadan geldi · kurulum</StatusDot>
+                  ) : (
+                    <StatusDot tone={campaignTone(c.status)}>{campaignStatusLabels[c.status]}</StatusDot>
+                  ),
+                sort: c.status === "TASLAK" && c.submittedAt ? -1 : statusRank[c.status],
+              },
               score: { display: score == null ? "—" : pct.format(score), sort: score },
               dates: { display: `${fmtDate(c.startsAt)} – ${fmtDate(c.endsAt)}`, sort: c.startsAt.getTime() },
               influencers: { display: c._count.assignments, sort: c._count.assignments },

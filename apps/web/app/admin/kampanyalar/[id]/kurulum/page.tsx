@@ -6,6 +6,11 @@ import { parseTargets } from "@infulancer/core/domain/campaign-score";
 import { campaignSetup, type SetupStepKey } from "@infulancer/core/domain/campaign-setup";
 import { contentTypeLabels, formatKurus, platformLabels } from "@infulancer/core/domain/labels";
 import { SetupSteps } from "@/components/campaign/setup-steps";
+import { BulkPlanForm } from "@/components/campaign/bulk-plan-form";
+import { CampaignMedia } from "@/components/campaign/campaign-media";
+import { FileUploader } from "@/components/files/file-uploader";
+import { countryName, OBJECTIVES, parseContentPlan, planTotal } from "@infulancer/core/domain/campaign-plan";
+import { assetKindLabels } from "@infulancer/core/domain/labels";
 import { RecommendButton } from "@/components/forms/agent-job-forms";
 import { AssignmentForm } from "@/components/forms/assignment-form";
 import { InfluencerPicker } from "@/components/campaign/influencer-picker";
@@ -29,6 +34,11 @@ export const dynamic = "force-dynamic";
 
 const STEP_KEYS: SetupStepKey[] = ["bilgiler", "hedefler", "influencerlar", "icerik", "brief", "yayin"];
 const tl = (k: number) => (k / 100).toFixed(2);
+/** Toplu planın ilk günü: kampanya başlangıcı (geçmişteyse 3 gün sonrası). */
+function defaultStartDay(startsAt: Date): string {
+  const soon = new Date(Date.now() + 3 * 86_400_000);
+  return localDay(startsAt > soon ? startsAt : soon, AGENCY_TZ);
+}
 
 export default async function CampaignSetupPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ adim?: string }> }) {
   await requireActor("ADMIN");
@@ -63,6 +73,53 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
     prisma.agentRun.findFirst({ where: { checkType: "INFLUENCER_ONERI", targetType: "Campaign", targetId: id }, orderBy: { createdAt: "desc" } }),
   ]);
   const editable = c.status === "TASLAK" || c.status === "AKTIF";
+  const plan = parseContentPlan(c.contentPlan);
+  const [media, shortlist] = await Promise.all([
+    prisma.asset.findMany({ where: { campaignId: id, uploadStatus: "TAMAM" }, orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } }),
+    c.shortlistInfluencerIds.length ? prisma.influencer.findMany({ where: { id: { in: c.shortlistInfluencerIds } }, select: { id: true, name: true } }) : Promise.resolve([]),
+  ]);
+  const brandRequest = (
+    <div className="flex flex-col gap-3 rounded-[8px] border border-border p-4 text-[13px]">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm text-fg">{c.submittedAt ? "Markanın kampanya talebi" : "Kampanya özeti"}</h3>
+        <Link href={`/admin/kampanyalar/${id}/olustur?adim=ozet`} className="text-[12px] text-fg-muted underline-offset-4 hover:text-fg hover:underline">
+          Sihirbazda düzenle
+        </Link>
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+        <dt className="text-fg-passive">Amaç</dt>
+        <dd>{OBJECTIVES.find((o) => o.id === c.objective)?.title ?? "—"}</dd>
+        <dt className="text-fg-passive">Ülkeler</dt>
+        <dd>{c.targetCountries.length ? c.targetCountries.map(countryName).join(", ") : "—"}</dd>
+        <dt className="text-fg-passive">Platformlar</dt>
+        <dd>{c.platforms.length ? c.platforms.map((p) => platformLabels[p]).join(", ") : "—"}</dd>
+        <dt className="text-fg-passive">Kitle</dt>
+        <dd>
+          {c.audienceAgeMin ?? "?"}–{c.audienceAgeMax ?? "?"} yaş{c.audienceInterests.length ? ` · ${c.audienceInterests.join(", ")}` : ""}
+        </dd>
+        <dt className="text-fg-passive">İçerik planı</dt>
+        <dd>{plan.length ? `${plan.map((p) => `${p.count}× ${contentTypeLabels[p.contentType]} (${platformLabels[p.platform]})`).join(", ")} · kişi başı ${planTotal(plan)}` : "—"}</dd>
+        <dt className="text-fg-passive">Önerilen influencer</dt>
+        <dd>{shortlist.length ? shortlist.map((s) => s.name).join(", ") : "—"}</dd>
+      </dl>
+      {c.description ? <p className="text-fg-muted whitespace-pre-line">{c.description}</p> : null}
+    </div>
+  );
+  const mediaBlock = (
+    <div className="flex flex-col gap-3 border-t border-border pt-5">
+      <h3 className="text-sm text-fg">Kampanya fotoğraf ve videoları ({media.length})</h3>
+      <CampaignMedia items={media.map((a) => ({ id: a.id, fileName: a.fileName, mime: a.mime, kind: a.kind, size: a.size, uploadedById: a.uploadedById, uploadedByName: a.uploadedBy.name }))} canDelete={() => c.status !== "KAPANDI"} />
+      {editable ? (
+        <FileUploader
+          target={{ type: "campaign", id }}
+          multiple
+          label="Fotoğraf veya video ekle"
+          accept="image/*,video/*,application/pdf"
+          kinds={(["URUN_FOTO", "ORNEK_CEKIM", "MARKA_LOGO", "BRIEF_PDF", "ONAYLI_CAPTION", "DIGER"] as const).map((k) => ({ value: k, label: assetKindLabels[k] }))}
+        />
+      ) : null}
+    </div>
+  );
   const recs = (suggestions?.findings as { recommendations?: { influencerId: string; name: string; score: number; rationale: string }[] } | null)?.recommendations ?? [];
   const picker = toPickerInfluencers(pool, c.brand.id, new Map(recs.map((r) => [r.influencerId, r.rationale])));
 
@@ -94,6 +151,7 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
           </ul>
         ) : null}
 
+        {active === "bilgiler" ? brandRequest : null}
         {active === "bilgiler" || active === "hedefler" ? (
           <CampaignForm
             brands={brands}
@@ -139,11 +197,11 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex flex-col gap-1">
                       <h3 className="text-sm text-fg">Influencer seç ve ekle</h3>
-                      <p className="text-[13px] text-fg-muted">Kategori seçip “Tümünü seç” ile toplu işaretleyin, bedeli hepsine birden uygulayın. Eklenen herkese teklif gider; rakip markayla çakışanlar otomatik engellenir.</p>
+                      <p className="text-[13px] text-fg-muted">Kategori seçip “Tümünü seç” ile toplu işaretleyin, bedeli hepsine birden uygulayın. Eklenen herkese teklif gider; rakip markayla çakışanlar otomatik engellenir.{shortlist.length ? ` Markanın önerdiği ${shortlist.length} kişi önceden seçili.` : ""}</p>
                     </div>
                     <RecommendButton campaignId={id} />
                   </div>
-                  <InfluencerPicker campaignId={id} influencers={picker} />
+                  <InfluencerPicker campaignId={id} influencers={picker} preselected={c.shortlistInfluencerIds} />
                 </div>
                 <details className="rounded-[8px] border border-border">
                   <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Tekli atama (kupon, münhasırlık veya çakışma gerekçesiyle)</summary>
@@ -160,6 +218,28 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
             <InfoNote>Önce influencer atayın; içerik planı influencer başına yapılır.</InfoNote>
           ) : (
             <div className="flex flex-col gap-6">
+              {editable ? (
+                <div className="flex flex-col gap-4 rounded-[8px] border border-fg/30 p-4">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-sm text-fg">Toplu içerik planı</h3>
+                    <p className="text-[13px] text-fg-muted">Aynı planı seçilen tüm influencerlara tek seferde uygulayın. Saatler her kişinin kitle saat diliminde yorumlanır; sonra iş bazında düzenleyebilirsiniz.</p>
+                  </div>
+                  <BulkPlanForm
+                    campaignId={id}
+                    assignments={c.assignments.filter((a) => a.contractStatus !== "RED").map((a) => ({ id: a.id, name: a.influencer.name, tz: a.influencer.audienceTimezone, deliverables: a.deliverables.length }))}
+                    plan={plan}
+                    platforms={c.platforms}
+                    defaults={{
+                      hashtags: brief?.hashtags ?? [],
+                      mentions: brief?.mentions ?? [],
+                      geo: c.targetCountries,
+                      startDay: defaultStartDay(c.startsAt),
+                      disclosureRequired: brief?.disclosureRequired ?? true,
+                    }}
+                  />
+                </div>
+              ) : null}
+              <h3 className="text-sm text-fg-muted">Kişi bazında içerikler</h3>
               {c.assignments.map((a) => {
                 const tz = a.influencer.audienceTimezone;
                 return (
@@ -204,7 +284,12 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
           )
         ) : null}
 
-        {active === "brief" ? <BriefForm campaignId={id} latest={brief ?? undefined} nextVersion={(brief?.version ?? 0) + 1} /> : null}
+        {active === "brief" ? (
+          <>
+            <BriefForm campaignId={id} latest={brief ?? undefined} nextVersion={(brief?.version ?? 0) + 1} />
+            {mediaBlock}
+          </>
+        ) : null}
 
         {active === "yayin" ? (
           <div className="flex flex-col gap-4">
@@ -230,11 +315,18 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
               </div>
             ) : null}
             {c.status === "TASLAK" ? (
-              setup.readyToActivate ? (
-                <ActivateCampaignButton campaignId={id} />
-              ) : (
-                <InfoNote>Eksik adımlar tamamlanmadan kampanya yayına alınamaz. Etiketsiz içerikle yayın yasal olarak engellidir.</InfoNote>
-              )
+              <div className="flex flex-col gap-3 rounded-[8px] border border-border p-4">
+                <p className="text-[13px] text-fg-muted">Tüm adımlar girildiği anda kaydedildi. Kampanyayı taslak olarak bırakabilir ya da kontroller tamamsa yayına alabilirsiniz.</p>
+                {!setup.readyToActivate ? (
+                  <InfoNote>Eksik adımlar tamamlanmadan kampanya yayına alınamaz. Etiketsiz içerikle yayın yasal olarak engellidir.</InfoNote>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-3">
+                  {setup.readyToActivate ? <ActivateCampaignButton campaignId={id} /> : null}
+                  <ButtonLink href={`/admin/kampanyalar/${id}?kaydedildi=1`} variant={setup.readyToActivate ? "secondary" : "primary"}>
+                    Taslak olarak kaydet ve çık
+                  </ButtonLink>
+                </div>
+              </div>
             ) : (
               <InfoNote>Kampanya {c.status === "AKTIF" ? "yayında" : "kapandı"}. Yeni içerik eklerseniz aynı kontroller içerik bazında uygulanır.</InfoNote>
             )}

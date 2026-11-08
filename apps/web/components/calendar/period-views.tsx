@@ -43,7 +43,7 @@ export function DayView({ rows, emptyText }: { rows: CalendarRow[]; emptyText: s
 }
 
 /** Ay görünümü: pazartesiden başlayan ızgara, günde en fazla 3 kart + "n daha". */
-export function MonthView({ days, rows, month, today, dayHref }: { days: string[]; rows: CalendarRow[]; month: number; today: string; dayHref: (d: string) => string }) {
+export function MonthView({ days, rows, month, today, dayHref, labelBy = "influencer" }: { days: string[]; rows: CalendarRow[]; month: number; today: string; dayHref: (d: string) => string; labelBy?: "influencer" | "campaign" }) {
   const byDay = new Map<string, Card[]>();
   for (const c of flatten(rows)) byDay.set(c.day, [...(byDay.get(c.day) ?? []), c]);
   return (
@@ -74,7 +74,7 @@ export function MonthView({ days, rows, month, today, dayHref }: { days: string[
                     <Link href={c.href} className={cn("flex items-center gap-1 truncate rounded-md border px-1.5 py-0.5 text-[11px]", tone(c))} title={`${c.time} · ${c.influencerName} · ${c.campaignName}`}>
                       <PlatformIcon platform={c.platform} size={10} />
                       <span className="tabular-nums">{c.time}</span>
-                      <span className="truncate">{c.influencerName}</span>
+                      <span className="truncate">{labelBy === "campaign" ? c.campaignName : c.influencerName}</span>
                     </Link>
                   </li>
                 ))}

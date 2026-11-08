@@ -32,7 +32,9 @@ export const COPILOT_ACTIONS: Record<CopilotRole, CopilotAction[]> = {
     { id: "docs", label: "Dokümantasyon", href: "/docs" },
   ],
   BRAND: [
-    { id: "campaigns", label: "Kampanyalarım", href: "/marka" },
+    { id: "campaigns", label: "Kampanyalar", href: "/marka/kampanyalar" },
+    { id: "new-campaign", label: "Yeni kampanya oluştur", href: "/marka/kampanyalar/yeni" },
+    { id: "calendar", label: "Takvim", href: "/marka/takvim" },
     { id: "discover", label: "Influencer bul", href: "/marka/kesfet" },
     { id: "offers", label: "Teklifler ve açık çağrılar", href: "/marka/teklifler" },
     { id: "creative", label: "Creative (AI görsel/video)", href: "/creative" },
@@ -94,8 +96,8 @@ const RULES: Rule[] = [
         form: "campaign-start",
       },
       BRAND: {
-        reply: "Kampanya talebinizi ajansınıza buradan iletebilirsiniz. Hedefinizi, tarih aralığını ve yaklaşık bütçenizi yazın; ajans ekibi taslağı hazırlayıp onayınıza sunar.",
-        actions: ["campaigns"],
+        reply: "Kampanyayı kendiniz adım adım oluşturabilirsiniz: amaç, ülke ve hedef kitle, tarih ve bütçe, içerik planı, brief, fotoğraf/video ve influencer seçimi. Son adımda kaydedip ajansa gönderirsiniz. Kısa bir talep bırakmak isterseniz aşağıdaki formu kullanın.",
+        actions: ["new-campaign", "campaigns"],
         form: "campaign-request",
       },
       INFLUENCER: {
@@ -113,8 +115,8 @@ const RULES: Rule[] = [
         actions: ["active-campaigns", "draft-campaigns", "influencers"],
       },
       BRAND: {
-        reply: "Influencer seçimini ajansınız yapar; tercihlerinizi (kategori, şehir, takipçi aralığı, istemediğiniz isimler) kampanya talebinde belirtin. Atanan isimleri kampanya sayfanızda görürsünüz.",
-        actions: ["campaigns"],
+        reply: "Kampanya oluştururken Influencerlar adımında istediğiniz kişileri toplu seçebilirsiniz (arama, kategori, platform filtresi ve “tümünü seç”). Ajans uygunluk ve bedelleri kontrol edip hepsini tek seferde atar.",
+        actions: ["new-campaign", "discover"],
         form: "campaign-request",
       },
     },
@@ -128,7 +130,7 @@ const RULES: Rule[] = [
         actions: ["calendar", "campaigns"],
       },
       BRAND: {
-        reply: "Onayınızı bekleyen taslaklar Kampanyalarım sayfasının üstünde listelenir. Taslağı açıp onaylayın veya revizyon notu yazın; not içerik üreticisine iletilir.",
+        reply: "Onayınızı bekleyen taslaklar Genel bakış sayfasında listelenir. Taslağı açıp onaylayın veya revizyon notu yazın; not içerik üreticisine iletilir.",
         actions: ["campaigns"],
       },
       INFLUENCER: {
@@ -164,7 +166,7 @@ const RULES: Rule[] = [
         actions: ["campaigns", "brands", "agents"],
       },
       BRAND: {
-        reply: "Kampanyalarım sayfasında her kampanyanın skoru, erişim ve etkileşimi görünür; kapanan kampanyalar için PDF raporu indirebilirsiniz.",
+        reply: "Kampanyalar sayfasında her kampanyanın skoru, erişim ve etkileşimi görünür; kapanan kampanyalar için PDF raporu indirebilirsiniz.",
         actions: ["campaigns"],
       },
       INFLUENCER: {

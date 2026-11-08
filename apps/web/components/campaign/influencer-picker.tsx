@@ -36,7 +36,7 @@ const FOLLOWER_STEPS = [0, 10_000, 50_000, 100_000, 500_000, 1_000_000];
  * → ortak bedeli herkese uygula → tek tıkla ekle (50'den fazlası parça parça gönderilir).
  * Marka çakışması olanlar eklenmez ve gerekçeli tekli atamaya yönlendirilir.
  */
-export function InfluencerPicker({ campaignId, influencers }: { campaignId: string; influencers: PickerInfluencer[] }) {
+export function InfluencerPicker({ campaignId, influencers, preselected = [] }: { campaignId: string; influencers: PickerInfluencer[]; preselected?: string[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [cats, setCats] = useState<Set<string>>(new Set());
@@ -44,7 +44,10 @@ export function InfluencerPicker({ campaignId, influencers }: { campaignId: stri
   const [platform, setPlatform] = useState<"" | Platform>("");
   const [minFollowers, setMinFollowers] = useState(0);
   const [sort, setSort] = useState<"suggested" | "followers" | "er" | "name">("suggested");
-  const [selected, setSelected] = useState<Map<string, string>>(new Map());
+  // Markanın önerdiği (kısa liste) influencerlar önceden seçili gelir; bedel son atamadan önerilir.
+  const [selected, setSelected] = useState<Map<string, string>>(
+    () => new Map(influencers.filter((i) => preselected.includes(i.id)).map((i) => [i.id, i.lastFeeTl ? String(i.lastFeeTl) : ""])),
+  );
   const [commissionPct, setCommissionPct] = useState("20");
   const [result, setResult] = useState<BulkAssignResult | null>(null);
   const [pending, start] = useTransition();

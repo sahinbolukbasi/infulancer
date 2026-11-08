@@ -74,3 +74,23 @@ export async function updateUsageRights(_prev: ActionState, fd: FormData): Promi
     return { ok: true, message: "Kullanım hakları kaydedildi." };
   });
 }
+
+/**
+ * Kampanya medyasını siler (yükleyen kullanıcı ya da ajans). Marka yalnız kendi kampanyasındaki,
+ * kendi yüklediği dosyayı ve kampanya kapanmadan siler. Nesne depodan da kaldırılır.
+ */
+export async function deleteCampaignAsset(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const actor = await requireActor("ADMIN", "BRAND");
+  return attempt(async () => {
+    const asset = await prisma.asset.findUnique({ where: { id: str(fd, "assetId") }, include: { campaign: { select: { brandId: true, status: true } } } });
+    if (!asset?.campaign) throw new DomainError("BULUNAMADI", "Dosya bulunamadı.");
+    if (actor.role === "BRAND" && (asset.campaign.brandId !== actor.brandId || asset.uploadedById !== actor.userId)) throw new DomainError("BULUNAMADI", "Dosya bulunamadı.");
+    if (asset.campaign.status === "KAPANDI") throw new DomainError("KURAL_IHLALI", "Kapanmış kampanyanın dosyası silinemez.");
+    await prisma.asset.delete({ where: { id: asset.id } });
+    const { deleteObject } = await import("@infulancer/core/storage/s3");
+    await deleteObject(asset.key).catch(() => undefined);
+    await audit.append({ actor: toAuditActor(actor), action: "ASSET_DELETED", entityType: "Asset", entityId: asset.id, data: { key: asset.key, campaignId: asset.campaignId } });
+    revalidateAll();
+    return { ok: true, message: "Dosya silindi." };
+  });
+}

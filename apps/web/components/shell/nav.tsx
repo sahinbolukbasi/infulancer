@@ -55,7 +55,9 @@ export const navByRole: Record<Role, NavItem[]> = {
   // Ajans çalışanı: yönetici ekranları (kullanıcılar, yetkiler, finans, tanıtım, AI sağlayıcıları) hariç.
   AGENCY: [],
   BRAND: [
-    { href: "/marka", label: "Kampanyalarım", icon: MegaphoneIcon, exact: true },
+    { href: "/marka", label: "Genel bakış", icon: HomeIcon, exact: true },
+    { href: "/marka/kampanyalar", label: "Kampanyalar", icon: MegaphoneIcon },
+    { href: "/marka/takvim", label: "Takvim", icon: CalendarIcon },
     { href: "/marka/kesfet", label: "Influencer bul", icon: UsersIcon },
     { href: "/marka/teklifler", label: "Teklifler", icon: WalletIcon },
     { href: "/creative", label: "Creative", icon: SparkleIcon },
@@ -70,6 +72,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   ],
   INFLUENCER: [
     { href: "/influencer", label: "İşlerim", icon: HomeIcon, exact: true },
+    { href: "/influencer/takvim", label: "Takvim", icon: CalendarIcon },
     { href: "/influencer/teklifler", label: "Teklifler", icon: MegaphoneIcon },
     { href: "/influencer/davetlerim", label: "Davetlerim", icon: CalendarIcon },
     { href: "/creative", label: "Creative", icon: SparkleIcon },

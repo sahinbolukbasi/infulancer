@@ -17,6 +17,7 @@ import {
 import { isStory, platformRules } from "@infulancer/core/domain/platform-rules";
 import { BriefPanel } from "@/components/brief-panel";
 import { AssetList } from "@/components/files/asset-list";
+import { CampaignMedia } from "@/components/campaign/campaign-media";
 import { FileUploader } from "@/components/files/file-uploader";
 import { ContractDecision, TransitionPanel } from "@/components/forms/small-forms";
 import { ChevronLeftIcon } from "@/components/icons";
@@ -193,6 +194,16 @@ export default async function InfluencerJobPage({ params }: { params: Promise<{ 
         <CardTitle>Brief</CardTitle>
         {brief ? <BriefPanel brief={brief} disclosureLabel={rule.disclosureLabel} /> : <p className="text-sm text-fg-passive">Brief henüz paylaşılmadı.</p>}
       </Card>
+      {assignment.campaign.assets.some((a) => a.mime.startsWith("image/") || a.mime.startsWith("video/")) ? (
+        <Card interactive={false} className="flex flex-col gap-4">
+          <CardTitle>Kampanya fotoğraf ve videoları</CardTitle>
+          <CampaignMedia
+            items={assignment.campaign.assets
+              .filter((a) => a.mime.startsWith("image/") || a.mime.startsWith("video/"))
+              .map((a) => ({ id: a.id, fileName: a.fileName, mime: a.mime, kind: a.kind, size: a.size, uploadedById: a.uploadedById }))}
+          />
+        </Card>
+      ) : null}
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">

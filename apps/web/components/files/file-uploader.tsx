@@ -44,6 +44,7 @@ export function FileUploader({
   label = "Dosya yükle",
   hint,
   accept,
+  multiple = false,
   onUploaded,
 }: {
   target: Target;
@@ -51,6 +52,7 @@ export function FileUploader({
   label?: string;
   hint?: string;
   accept?: string;
+  multiple?: boolean;
   onUploaded?: (asset: Uploaded) => void;
 }) {
   const router = useRouter();
@@ -123,9 +125,11 @@ export function FileUploader({
         hint={hint ?? "50 MB üzeri dosyalar 10 MB'lık parçalar halinde yüklenir."}
         accept={accept}
         disabled={busy}
+        multiple={multiple}
         onFiles={(files) => {
-          const f = files[0];
-          if (f) void upload(f);
+          void (async () => {
+            for (const f of multiple ? files : files.slice(0, 1)) await upload(f);
+          })();
         }}
       />
       {progress ? (

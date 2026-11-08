@@ -28,6 +28,9 @@ import { PageHeader } from "@/components/ui/layout";
 import { CampaignLifecycle } from "@/components/campaign/campaign-lifecycle";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
+import { prisma } from "@infulancer/core/db";
+import { CampaignMedia } from "@/components/campaign/campaign-media";
+import { FileUploader } from "@/components/files/file-uploader";
 import { buildCalendarRows, resolveWeek } from "@/lib/calendar";
 import { num, pct, pct1 } from "@/lib/format";
 import { campaignTone } from "@/lib/status-tone";
@@ -35,6 +38,13 @@ import { AGENCY_TZ, fmtDate, fmtDateTime, fmtDayLabel } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Kampanya raporu" };
 
+const BRAND_MEDIA_KINDS = [
+  { value: "URUN_FOTO" as const, label: "Ürün fotoğrafı" },
+  { value: "ORNEK_CEKIM" as const, label: "Örnek çekim (video/fotoğraf)" },
+  { value: "MARKA_LOGO" as const, label: "Marka logosu" },
+  { value: "BRIEF_PDF" as const, label: "Brief PDF" },
+  { value: "DIGER" as const, label: "Diğer" },
+];
 const roasFmt = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
 
 export default async function BrandCampaignPage({
@@ -42,11 +52,11 @@ export default async function BrandCampaignPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ hafta?: string | string[] }>;
+  searchParams: Promise<{ hafta?: string | string[]; gonderildi?: string }>;
 }) {
   const actor = await requireActor("BRAND");
   const { id } = await params;
-  const { hafta } = await searchParams;
+  const { hafta, gonderildi } = await searchParams;
   const now = new Date();
 
   // Yalnız core DTO'su (bedel/komisyon/bütçe içermez); başka markanın kampanyası → 404.
@@ -55,6 +65,31 @@ export default async function BrandCampaignPage({
     throw err;
   });
   const { campaign, score } = report;
+  const media = await prisma.asset.findMany({
+    where: { campaignId: campaign.id, uploadStatus: "TAMAM" },
+    orderBy: { createdAt: "desc" },
+    include: { uploadedBy: { select: { name: true } } },
+  });
+  const draft = campaign.status === "TASLAK";
+  const mediaCard = (
+    <Card interactive={false} className="flex flex-col gap-4" id="medya">
+      <CardTitle>Kampanya fotoğraf ve videoları</CardTitle>
+      <CampaignMedia
+        items={media.map((a) => ({ id: a.id, fileName: a.fileName, mime: a.mime, kind: a.kind, size: a.size, uploadedById: a.uploadedById, uploadedByName: a.uploadedBy.name }))}
+        canDelete={(m) => m.uploadedById === actor.userId && campaign.status !== "KAPANDI"}
+      />
+      {campaign.status !== "KAPANDI" && campaign.status !== "IPTAL" ? (
+        <FileUploader
+          target={{ type: "campaign", id: campaign.id }}
+          multiple
+          label="Fotoğraf veya video ekle"
+          hint="Ürün görselleri, örnek çekimler, logo veya brief PDF. Atanan influencerlar görür."
+          accept="image/*,video/*,application/pdf"
+          kinds={BRAND_MEDIA_KINDS}
+        />
+      ) : null}
+    </Card>
+  );
 
   const inRange = now >= campaign.startsAt && now <= campaign.endsAt;
   const week = { ...resolveWeek(hafta, inRange ? now : campaign.startsAt), today: resolveWeek(undefined, now).today };
@@ -305,13 +340,25 @@ export default async function BrandCampaignPage({
           </span>
         }
         actions={
-          <a href={`/api/raporlar/kampanya/${campaign.id}/pdf`} download className={buttonClass("primary")}>
-            Raporu indir (PDF)
-          </a>
+          draft ? (
+            <Link href={`${base}/olustur?adim=ozet`} className={buttonClass("primary")}>
+              Kampanyayı düzenle
+            </Link>
+          ) : (
+            <a href={`/api/raporlar/kampanya/${campaign.id}/pdf`} download className={buttonClass("primary")}>
+              Raporu indir (PDF)
+            </a>
+          )
         }
       />
+      {gonderildi ? (
+        <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-[14px] text-emerald-700 dark:text-emerald-400">
+          Kampanya kaydedildi ve ajansa gönderildi. Ajans influencer atamalarını ve bedelleri onayladığında bildirim alacaksınız.
+        </p>
+      ) : null}
       <CampaignLifecycle campaignId={campaign.id} />
       {summary}
+      {mediaCard}
       {drafts}
       {report.deliverables.length === 0 ? <EmptyState message="Bu kampanyada henüz planlanmış içerik yok." /> : calendar}
       {performance}

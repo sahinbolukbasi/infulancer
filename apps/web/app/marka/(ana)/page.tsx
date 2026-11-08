@@ -1,98 +1,122 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { toBrandCampaignView } from "@infulancer/core/access/dto";
 import { prisma } from "@infulancer/core/db";
-import { campaignStatusLabels, formatKurus } from "@infulancer/core/domain/labels";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader, Stagger } from "@/components/ui/layout";
-import { ProgressBar } from "@/components/ui/progress";
-import { StatusDot } from "@/components/ui/status";
-import { requireActor } from "@/lib/auth-guard";
+import { contentTypeLabels, platformLabels } from "@infulancer/core/domain/labels";
 import { CopilotHome } from "@/components/copilot/copilot-home";
-import { pct } from "@/lib/format";
-import { loadCampaignScores } from "@/lib/queries";
-import { campaignTone } from "@/lib/status-tone";
-import { fmtDate } from "@/lib/time";
+import { PlatformIcon } from "@/components/platform-icon";
+import { Card, CardTitle } from "@/components/ui/card";
+import { ButtonLink } from "@/components/ui/form";
+import { PageHeader, Stagger } from "@/components/ui/layout";
+import { requireActor } from "@/lib/auth-guard";
+import { fmtDateTime } from "@/lib/time";
 
-export const metadata: Metadata = { title: "Kampanyalarım" };
+export const metadata: Metadata = { title: "Genel bakış" };
+export const dynamic = "force-dynamic";
 
+function Stat({ label, value, href, hint }: { label: string; value: number | string; href: string; hint?: string }) {
+  return (
+    <Link href={href} className="block rounded-[8px] focus-visible:outline-offset-4">
+      <Card className="flex h-full flex-col gap-2">
+        <span className="text-label text-fg-muted">{label}</span>
+        <span className="text-[30px] leading-none font-semibold tabular-nums">{value}</span>
+        {hint ? <span className="text-[12px] text-fg-passive">{hint}</span> : null}
+      </Card>
+    </Link>
+  );
+}
+
+/**
+ * Marka genel bakışı: sayılar, yapılacaklar ve yaklaşan paylaşımlar. Kampanya listesi ayrı sayfada
+ * (/marka/kampanyalar); burada yalnız özet ve kısayollar durur.
+ */
 export default async function BrandHomePage() {
   const actor = await requireActor("BRAND");
-  const rows = await prisma.campaign.findMany({
-    where: { brandId: actor.brandId!, status: { not: "TASLAK" } },
-    orderBy: [{ startsAt: "desc" }],
-    include: { assignments: { include: { influencer: { select: { id: true, name: true } } } } },
-  });
-  // Marka ekranına yalnız DTO (bütçe/bedel/komisyon yok).
-  const campaigns = rows.map((c) => toBrandCampaignView(c));
-  const [scores, pending] = await Promise.all([
-    loadCampaignScores(campaigns.map((c) => c.id)),
+  const brandId = actor.brandId!;
+  const now = new Date();
+  const week = new Date(now.getTime() + 7 * 86_400_000);
+  const [byStatus, drafts, pending, upcoming] = await Promise.all([
+    prisma.campaign.groupBy({ by: ["status"], where: { brandId }, _count: true }),
+    prisma.campaign.findMany({ where: { brandId, status: "TASLAK" }, orderBy: { updatedAt: "desc" }, take: 5, select: { id: true, name: true, submittedAt: true, updatedAt: true } }),
+    prisma.deliverable.count({ where: { status: "ICERIK_YUKLENDI", assignment: { contractStatus: { not: "RED" }, campaign: { brandId } } } }),
     prisma.deliverable.findMany({
-      where: {
-        status: "ICERIK_YUKLENDI",
-        assignment: { contractStatus: { not: "RED" }, campaign: { brandId: actor.brandId! } },
-      },
-      select: { assignment: { select: { campaignId: true } } },
+      where: { plannedAt: { gte: now, lt: week }, status: { not: "IPTAL" }, assignment: { contractStatus: { not: "RED" }, campaign: { brandId } } },
+      orderBy: { plannedAt: "asc" },
+      take: 8,
+      select: { id: true, platform: true, contentType: true, plannedAt: true, assignment: { select: { campaignId: true, campaign: { select: { name: true } }, influencer: { select: { name: true } } } } },
     }),
   ]);
-  const pendingByCampaign = new Map<string, number>();
-  for (const p of pending) {
-    const cid = p.assignment.campaignId;
-    pendingByCampaign.set(cid, (pendingByCampaign.get(cid) ?? 0) + 1);
-  }
-
+  const count = (s: string) => byStatus.find((b) => b.status === s)?._count ?? 0;
   return (
     <Stagger className="flex flex-col gap-8">
-      <PageHeader title="Kampanyalarım" description="Kampanya skorları, yayın takvimi ve onayınızı bekleyen taslaklar." />
+      <PageHeader
+        title="Genel bakış"
+        description="Kampanyalarınızın durumu, onayınızı bekleyenler ve bu haftanın paylaşımları."
+        actions={
+          <ButtonLink href="/marka/kampanyalar/yeni">Yeni kampanya</ButtonLink>
+        }
+      />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Stat label="Aktif kampanya" value={count("AKTIF")} href="/marka/kampanyalar?durum=AKTIF" />
+        <Stat label="Taslak" value={count("TASLAK")} href="/marka/kampanyalar?durum=TASLAK" hint="Tamamlayıp ajansa gönderin" />
+        <Stat label="Onay bekleyen içerik" value={pending} href="/marka/kampanyalar?durum=AKTIF" hint="Taslağı açıp onaylayın" />
+        <Stat label="7 gün içinde paylaşım" value={upcoming.length} href="/marka/takvim?gorunum=hafta" />
+      </div>
+      <div className="grid-12">
+        <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Taslak kampanyalar</CardTitle>
+            <Link href="/marka/kampanyalar?durum=TASLAK" className="text-[12px] text-fg-muted hover:text-fg">
+              Tümü →
+            </Link>
+          </div>
+          {drafts.length === 0 ? (
+            <p className="text-sm text-fg-passive">Taslak yok. Yeni kampanyayı adım adım oluşturabilirsiniz.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-line">
+              {drafts.map((d) => (
+                <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="flex flex-col">
+                    <span className="text-sm text-fg">{d.name}</span>
+                    <span className="text-[12px] text-fg-passive">{d.submittedAt ? "Ajansa gönderildi · kurulum bekliyor" : "Gönderilmedi"}</span>
+                  </span>
+                  <Link href={`/marka/kampanyalar/${d.id}/olustur?adim=ozet`} className="text-[13px] font-medium underline-offset-4 hover:underline">
+                    {d.submittedAt ? "Düzenle" : "Devam et"}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Bu haftanın paylaşımları</CardTitle>
+            <Link href="/marka/takvim" className="text-[12px] text-fg-muted hover:text-fg">
+              Takvim →
+            </Link>
+          </div>
+          {upcoming.length === 0 ? (
+            <p className="text-sm text-fg-passive">Önümüzdeki 7 günde planlı paylaşım yok.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-line">
+              {upcoming.map((d) => (
+                <li key={d.id}>
+                  <Link href={`/marka/kampanyalar/${d.assignment.campaignId}#is-${d.id}`} className="flex items-center gap-3 py-2.5 text-sm hover:text-fg">
+                    <PlatformIcon platform={d.platform} size={15} title={platformLabels[d.platform]} />
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-fg">
+                        {d.assignment.influencer.name} · {contentTypeLabels[d.contentType]}
+                      </span>
+                      <span className="truncate text-[12px] text-fg-passive">{d.assignment.campaign.name}</span>
+                    </span>
+                    <span className="ml-auto text-[12px] whitespace-nowrap text-fg-muted tabular-nums">{fmtDateTime(d.plannedAt)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
       <CopilotHome actor={actor} />
-      {campaigns.length === 0 ? (
-        <EmptyState
-          message="Ajansınız bir kampanya başlattığında skoru ve raporu burada görünecek."
-          action={{ label: "Sayfayı yenile", href: "/marka" }}
-        />
-      ) : (
-        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {campaigns.map((c) => {
-            const score = scores.get(c.id)?.score ?? null;
-            const waiting = pendingByCampaign.get(c.id) ?? 0;
-            return (
-              <li key={c.id}>
-                <Link href={`/marka/kampanyalar/${c.id}`} className="block h-full rounded-[8px] focus-visible:outline-offset-4">
-                  <Card className="flex h-full flex-col gap-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <h2 className="text-section">{c.name}</h2>
-                      <StatusDot tone={campaignTone(c.status)}>{campaignStatusLabels[c.status]}</StatusDot>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-label text-fg-muted">Skor</span>
-                        <span className="text-[28px] leading-none font-semibold tabular-nums">{score == null ? "—" : pct.format(score)}</span>
-                      </div>
-                      <ProgressBar value={score ?? 0} label={`${c.name} skoru`} />
-                    </div>
-                    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
-                      <dt className="text-fg-passive">Tarih</dt>
-                      <dd className="text-fg-muted tabular-nums">
-                        {fmtDate(c.startsAt)} – {fmtDate(c.endsAt)}
-                      </dd>
-                      <dt className="text-fg-passive">Toplam ödenen</dt>
-                      <dd className="text-fg-muted tabular-nums">{formatKurus(c.brandTotalFeeKurus)}</dd>
-                      <dt className="text-fg-passive">Influencer</dt>
-                      <dd className="text-fg-muted tabular-nums">{c.influencers.length}</dd>
-                    </dl>
-                    {waiting > 0 ? (
-                      <p className="text-[13px] text-fg">
-                        {waiting} taslak görüşünüzü bekliyor
-                      </p>
-                    ) : null}
-                  </Card>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
     </Stagger>
   );
 }

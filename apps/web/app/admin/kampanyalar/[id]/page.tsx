@@ -60,11 +60,11 @@ export default async function CampaignDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sekme?: string }>;
+  searchParams: Promise<{ sekme?: string; kaydedildi?: string }>;
 }) {
   await requireActor("ADMIN");
   const { id } = await params;
-  const { sekme } = await searchParams;
+  const { sekme, kaydedildi } = await searchParams;
   const campaign = await prisma.campaign.findUnique({
     where: { id },
     include: {
@@ -443,6 +443,11 @@ export default async function CampaignDetailPage({
           </>
         }
       />
+      {kaydedildi ? (
+        <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-[14px] text-emerald-700 dark:text-emerald-400">
+          Kampanya taslak olarak kaydedildi. Kuruluma istediğiniz an “Kurulum” ile dönebilirsiniz.
+        </p>
+      ) : null}
       <CampaignLifecycle campaignId={campaign.id} base={`/admin/kampanyalar/${campaign.id}`} />
       <Tabs
         key={sekme ?? "genel"}
