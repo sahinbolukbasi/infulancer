@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -13,6 +14,7 @@ export const metadata: Metadata = { title: "Arama" };
 const LIMIT = 10;
 
 export default async function AdminSearchPage({ searchParams }: { searchParams: Promise<{ q?: string | string[] }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const raw = (await searchParams).q;
   const q = (Array.isArray(raw) ? raw[0] : raw)?.trim().slice(0, 100) ?? "";
@@ -20,8 +22,8 @@ export default async function AdminSearchPage({ searchParams }: { searchParams: 
   if (q.length < 2) {
     return (
       <div className="flex flex-col gap-8">
-        <PageHeader title="Arama" />
-        <EmptyState message="Aramak için en az 2 karakter yazın." action={{ label: "Genel bakışa dön", href: "/admin" }} />
+        <PageHeader title={tt("Arama")} />
+        <EmptyState message={tt("Aramak için en az 2 karakter yazın.")} action={{ label: "Genel bakışa dön", href: "/admin" }} />
       </div>
     );
   }
@@ -52,22 +54,22 @@ export default async function AdminSearchPage({ searchParams }: { searchParams: 
 
   return (
     <Stagger className="flex flex-col gap-8">
-      <PageHeader title="Arama" description={`“${q}” için ${total} sonuç`} />
+      <PageHeader title={tt("Arama")} description={`“${q}” için ${total} sonuç`} />
       {total === 0 ? (
-        <EmptyState message="Eşleşen kampanya, influencer veya marka bulunamadı." action={{ label: "Kampanyalara git", href: "/admin/kampanyalar" }} />
+        <EmptyState message={tt("Eşleşen kampanya, influencer veya marka bulunamadı.")} action={{ label: "Kampanyalara git", href: "/admin/kampanyalar" }} />
       ) : (
         <div className="grid-12">
-          <ResultGroup title="Kampanyalar" icon={<MegaphoneIcon size={16} />}>
+          <ResultGroup title={tt("Kampanyalar")} icon={<MegaphoneIcon size={16} />}>
             {campaigns.map((c) => (
               <ResultLink key={c.id} href={`/admin/kampanyalar/${c.id}`} title={c.name} meta={`${c.brand.name} · ${campaignStatusLabels[c.status]}`} />
             ))}
           </ResultGroup>
-          <ResultGroup title="Influencerlar" icon={<UsersIcon size={16} />}>
+          <ResultGroup title={tt("Influencerlar")} icon={<UsersIcon size={16} />}>
             {influencers.map((i) => (
               <ResultLink key={i.id} href={`/admin/influencerlar/${i.id}`} title={i.name} meta={i.category} />
             ))}
           </ResultGroup>
-          <ResultGroup title="Markalar" icon={<BuildingIcon size={16} />}>
+          <ResultGroup title={tt("Markalar")} icon={<BuildingIcon size={16} />}>
             {brands.map((b) => (
               <ResultLink key={b.id} href={`/admin/markalar/${b.id}`} title={b.name} meta={b.category} />
             ))}
@@ -78,7 +80,8 @@ export default async function AdminSearchPage({ searchParams }: { searchParams: 
   );
 }
 
-function ResultGroup({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode[] }) {
+async function ResultGroup({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode[] }) {
+  const tt = await getTT();
   return (
     <Card interactive={false} className="flex flex-col gap-4 md:col-span-4">
       <h2 className="flex items-center gap-2 text-label text-fg-muted">
@@ -86,7 +89,7 @@ function ResultGroup({ title, icon, children }: { title: string; icon: React.Rea
         {title}
         <span className="text-fg-passive tabular-nums">{children.length}</span>
       </h2>
-      {children.length === 0 ? <p className="text-sm text-fg-passive">Sonuç yok.</p> : <ul className="flex flex-col">{children}</ul>}
+      {children.length === 0 ? <p className="text-sm text-fg-passive">{tt("Sonuç yok.")}</p> : <ul className="flex flex-col">{children}</ul>}
     </Card>
   );
 }

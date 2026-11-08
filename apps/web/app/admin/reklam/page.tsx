@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { getConfig } from "@infulancer/core/config/store";
@@ -18,6 +19,7 @@ import { fmtDateTime } from "@/lib/time";
 export const metadata: Metadata = { title: "Reklam" };
 
 export default async function AdminAdsPage({ searchParams }: { searchParams: Promise<{ asset?: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { asset: defaultAssetId } = await searchParams;
   const [limits, quota, changes, codes, brands, assets, pendingAds] = await Promise.all([
@@ -36,21 +38,19 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Reklam"
-        description="Meta ve TikTok reklam taslakları, onay akışı, bütçe optimizasyonu ve Partnership Ads kodları."
-        actions={<RunJobButton job="ads-budget-batch" label="Bekleyenleri şimdi uygula" />}
+        title={tt("Reklam")}
+        description={tt("Meta ve TikTok reklam taslakları, onay akışı, bütçe optimizasyonu ve Partnership Ads kodları.")}
+        actions={<RunJobButton job="ads-budget-batch" label={tt("Bekleyenleri şimdi uygula")} />}
       />
 
       <Card interactive={false} className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Reklam kampanyaları</CardTitle>
-          {pendingAds > 0 ? <StatusDot tone="passive">{pendingAds} taslak onay bekliyor</StatusDot> : null}
+          <CardTitle>{tt("Reklam kampanyaları")}</CardTitle>
+          {pendingAds > 0 ? <StatusDot tone="passive">{pendingAds}{" "}{tt("taslak onay bekliyor")}</StatusDot> : null}
         </div>
-        <InfoNote>
-          Reklam taslakları onay akışında ilerler (Taslak → Onay bekliyor → Onaylandı). Onay <strong>gerçek harcama başlatmaz</strong>; canlı Meta/TikTok yayını, reklam hesabı anahtarları eklendiğinde ayrı adımda açılacaktır.
-        </InfoNote>
+        <InfoNote>{" "}{tt("Reklam taslakları onay akışında ilerler (Taslak → Onay bekliyor → Onaylandı). Onay")}{" "}<strong>{tt("gerçek harcama başlatmaz")}</strong>{tt("; canlı Meta/TikTok yayını, reklam hesabı anahtarları eklendiğinde ayrı adımda açılacaktır.")}</InfoNote>
         <Tabs
-          label="Reklam oluşturma"
+          label={tt("Reklam oluşturma")}
           tabs={[
             { id: "tek", label: "Tek reklam", content: <AdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin defaultAssetId={defaultAssetId} /> },
             { id: "toplu", label: "Toplu kampanya", content: <BulkAdDraftForm brands={brands} metaObjectives={metaObjectives} tiktokObjectives={tiktokObjectives} assets={assetOptions} isAdmin defaultAssetId={defaultAssetId} /> },
@@ -69,11 +69,11 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
         ]}
       />
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Bütçe değişikliği iste</CardTitle>
+        <CardTitle>{tt("Bütçe değişikliği iste")}</CardTitle>
         <BudgetRequestForm brands={brands} />
       </Card>
 
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Yazma limitleri">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label={tt("Yazma limitleri")}>
         {[
           ["Mutation", `${limits.mutationQps} istek/sn`],
           ["Aynı nesne", `${limits.sameObjectEditSeconds} sn'de 1`],
@@ -87,18 +87,17 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
         ))}
       </section>
       <DocLink slug="meta-marketing-api" />
-      <p className="text-[12px] text-fg-passive">Full Access eşiği: son {quota.fullAccessThreshold.days} günde {quota.fullAccessThreshold.calls} çağrı, hata oranı %{quota.fullAccessThreshold.maxErrorRate * 100} altı.</p>
+      <p className="text-[12px] text-fg-passive">{tt("Full Access eşiği: son")}{" "}{quota.fullAccessThreshold.days}{" "}{tt("günde")}{" "}{quota.fullAccessThreshold.calls}{" "}{tt("çağrı, hata oranı %")}{quota.fullAccessThreshold.maxErrorRate * 100}{" "}{tt("altı.")}</p>
 
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Bütçe değişiklik kuyruğu</CardTitle>
+        <CardTitle>{tt("Bütçe değişiklik kuyruğu")}</CardTitle>
         {changes.length === 0 ? (
-          <p className="text-sm text-fg-passive">Kayıt yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Kayıt yok.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border text-sm">
             {changes.map((c) => (
               <li key={c.id} className="flex flex-wrap justify-between gap-2 py-2">
-                <span>
-                  Ad set {c.adSetId} → {c.newBudgetMinor}
+                <span>{" "}{tt("Ad set")}{" "}{c.adSetId} → {c.newBudgetMinor}
                 </span>
                 <StatusDot tone={c.status === "applied" ? "active" : "muted"}>
                   {c.status === "queued" ? `Ötelendi: ${fmtDateTime(c.scheduledFor)}` : c.status}
@@ -111,12 +110,12 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Partnership Ads</CardTitle>
+        <CardTitle>{tt("Partnership Ads")}</CardTitle>
         <DocLink slug="meta-partnership-ads" />
         <ul className="flex flex-col divide-y divide-border text-sm">
           {codes.map((c) => (
             <li key={c.id} className="flex justify-between py-2">
-              <span>Medya {c.igMediaId}</span>
+              <span>{tt("Medya")}{" "}{c.igMediaId}</span>
               <StatusDot tone={c.state === "revoked" ? "critical" : "active"}>{c.state}</StatusDot>
             </li>
           ))}
@@ -124,7 +123,7 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-2">
-        <CardTitle>TikTok</CardTitle>
+        <CardTitle>{tt("TikTok")}</CardTitle>
         <DocLink slug="tiktok-content-api" />
         <DocLink slug="tiktok-marketing-api" />
       </Card>

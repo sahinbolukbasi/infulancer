@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { BrandForm } from "@/components/forms/brand-forms";
@@ -9,11 +10,12 @@ import { categoryTree } from "@infulancer/core/domain/categories";
 export const metadata: Metadata = { title: "Yeni marka" };
 
 export default async function NewBrandPage() {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const brands = await prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, category: true } });
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Yeni marka" />
+      <PageHeader title={tt("Yeni marka")} />
       <Card interactive={false}>
         <BrandForm otherBrands={brands} categories={await categoryTree()} />
       </Card>

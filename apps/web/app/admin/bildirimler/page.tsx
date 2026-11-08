@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { NOTIF_EVENTS } from "@infulancer/core/notify/catalog";
@@ -18,6 +19,7 @@ const chTr: Record<string, string> = { INAPP: "Sistem içi", EMAIL: "E-posta", W
 const stTr: Record<string, string> = { QUEUED: "Kuyrukta", SENT: "Gönderildi", MOCKED: "Mock", FAILED: "Hata", SKIPPED: "Atlandı" };
 
 export default async function AdminNotificationsPage() {
+  const tt = await getTT();
   await requireAdmin();
   const [rules, templates, logs, links] = await Promise.all([
     prisma.notificationRule.findMany(),
@@ -32,7 +34,7 @@ export default async function AdminNotificationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Bildirimler" description="Hangi olayda hangi kanaldan (sistem içi, e-posta, WhatsApp, Instagram) bildirim gideceğini ve şablonları yönetin." />
+      <PageHeader title={tt("Bildirimler")} description={tt("Hangi olayda hangi kanaldan (sistem içi, e-posta, WhatsApp, Instagram) bildirim gideceğini ve şablonları yönetin.")} />
       <StatusCards
         items={[
           { title: "Sistem içi", state: "ok", value: "Aktif", text: "her zaman açık" },
@@ -42,7 +44,7 @@ export default async function AdminNotificationsPage() {
         ]}
       />
       <Tabs
-        label="Bildirim bölümleri"
+        label={tt("Bildirim bölümleri")}
         tabs={[
           {
             id: "kurallar",
@@ -60,7 +62,7 @@ export default async function AdminNotificationsPage() {
                       </div>
                       <RuleForm eventKey={e.key} active={active} enabled={rule?.enabled ?? true} />
                       <details className="rounded-[8px] border border-border">
-                        <summary className="cursor-pointer px-3 py-2 text-[13px] text-fg-muted hover:text-fg">Şablonları düzenle ({Object.keys(e.templates).length} kanal)</summary>
+                        <summary className="cursor-pointer px-3 py-2 text-[13px] text-fg-muted hover:text-fg">{tt("Şablonları düzenle (")}{Object.keys(e.templates).length}{" "}{tt("kanal)")}</summary>
                         <div className="flex flex-col gap-4 border-t border-border p-3">
                           {(Object.keys(e.templates) as (keyof typeof e.templates)[]).map((channel) => {
                             const saved = tplMap.get(`${e.key}:${channel}`);
@@ -85,8 +87,8 @@ export default async function AdminNotificationsPage() {
             label: "Özel duyuru",
             content: (
               <Card interactive={false} className="flex flex-col gap-3">
-                <CardTitle>Toplu duyuru gönder</CardTitle>
-                <p className="text-[13px] text-fg-muted">Seçilen kitleye ANNOUNCEMENT olayının açık kanallarından duyuru gider.</p>
+                <CardTitle>{tt("Toplu duyuru gönder")}</CardTitle>
+                <p className="text-[13px] text-fg-muted">{tt("Seçilen kitleye ANNOUNCEMENT olayının açık kanallarından duyuru gider.")}</p>
                 <AnnouncementForm />
               </Card>
             ),
@@ -97,12 +99,12 @@ export default async function AdminNotificationsPage() {
             content: (
               <div className="flex flex-col gap-4">
                 <Card interactive={false} className="flex flex-col gap-3">
-                  <CardTitle>Link kısalt</CardTitle>
+                  <CardTitle>{tt("Link kısalt")}</CardTitle>
                   <ShortLinkForm />
                 </Card>
                 {links.length ? (
                   <Card interactive={false} className="flex flex-col gap-2">
-                    <CardTitle>Linkler ve tıklamalar</CardTitle>
+                    <CardTitle>{tt("Linkler ve tıklamalar")}</CardTitle>
                     <ul className="flex flex-col divide-y divide-line text-sm">
                       {links.map((l) => (
                         <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
@@ -110,7 +112,7 @@ export default async function AdminNotificationsPage() {
                             <span className="font-mono text-[13px]">{base}/l/{l.slug}</span>
                             <span className="truncate text-[12px] text-fg-muted">{l.label ? `${l.label} · ` : ""}{l.targetUrl}</span>
                           </span>
-                          <span className="tabular-nums text-[13px]">{l.clicks} tıklama</span>
+                          <span className="tabular-nums text-[13px]">{l.clicks}{" "}{tt("tıklama")}</span>
                         </li>
                       ))}
                     </ul>
@@ -124,16 +126,16 @@ export default async function AdminNotificationsPage() {
             label: "Gönderim kaydı",
             content: (
               <Card interactive={false} className="flex flex-col gap-2">
-                <CardTitle>Son gönderimler</CardTitle>
+                <CardTitle>{tt("Son gönderimler")}</CardTitle>
                 {logs.length === 0 ? (
-                  <p className="text-sm text-fg-passive">Henüz gönderim yok.</p>
+                  <p className="text-sm text-fg-passive">{tt("Henüz gönderim yok.")}</p>
                 ) : (
                   <ul className="flex flex-col divide-y divide-line text-sm">
                     {logs.map((l) => (
                       <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                         <span className="flex flex-col">
                           <span>{l.eventKey} · {chTr[l.channel]}</span>
-                          <span className="text-[12px] text-fg-muted">{l.toAddress ?? "sistem içi"} · {fmtDateTime(l.createdAt)}</span>
+                          <span className="text-[12px] text-fg-muted">{l.toAddress ?? tt("sistem içi")} · {fmtDateTime(l.createdAt)}</span>
                         </span>
                         <StatusDot tone={l.status === "SENT" ? "active" : l.status === "FAILED" ? "critical" : "muted"}>{stTr[l.status]}</StatusDot>
                       </li>

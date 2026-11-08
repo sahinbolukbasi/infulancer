@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -21,6 +22,7 @@ const FILTERS = [
 
 /** Ajans: markaların gönderdiği teklifler; kabul edilenler tek tıkla kampanyaya eklenir. */
 export default async function AdminOffersPage({ searchParams }: { searchParams: Promise<{ durum?: string; sonuc?: string; kampanya?: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { durum, sonuc, kampanya } = await searchParams;
   const status = FILTERS.find((f) => f.id === (durum ?? "KABUL"))?.id ?? "KABUL";
@@ -38,18 +40,14 @@ export default async function AdminOffersPage({ searchParams }: { searchParams: 
   const n = (s: string) => (s ? (counts.find((c) => c.status === s)?._count ?? 0) : counts.reduce((x, c) => x + c._count, 0));
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Teklifler" description="Kabul edilen teklifleri kampanyaya ekleyin; brief ve içerik planı oradan devam eder." />
+      <PageHeader title={tt("Teklifler")} description={tt("Kabul edilen teklifleri kampanyaya ekleyin; brief ve içerik planı oradan devam eder.")} />
       {sonuc === "eklendi" ? (
-        <p role="status" className="flex flex-wrap items-center gap-3 rounded-2xl border border-neon-lime/50 bg-neon-lime/10 px-4 py-3 text-sm">
-          ✓ Kampanyaya eklendi. İçerik planı ve brief için kampanyaya geçin.
-          {kampanya ? (
-            <Link href={`/admin/kampanyalar/${kampanya}?sekme=influencerlar`} className="font-medium underline underline-offset-4">
-              Kampanyayı aç →
-            </Link>
+        <p role="status" className="flex flex-wrap items-center gap-3 rounded-2xl border border-neon-lime/50 bg-neon-lime/10 px-4 py-3 text-sm">{" "}{tt("✓ Kampanyaya eklendi. İçerik planı ve brief için kampanyaya geçin.")}{kampanya ? (
+            <Link href={`/admin/kampanyalar/${kampanya}?sekme=influencerlar`} className="font-medium underline underline-offset-4">{" "}{tt("Kampanyayı aç →")}</Link>
           ) : null}
         </p>
       ) : null}
-      <nav aria-label="Durum" className="flex flex-wrap gap-2">
+      <nav aria-label={tt("Durum")} className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <Link key={f.id || "all"} href={`/admin/teklifler?durum=${f.id}`} aria-current={status === f.id ? "page" : undefined} className={cn("rounded-full border px-3 py-1 text-[13px] tabular-nums", status === f.id ? "border-fg text-fg" : "border-line text-fg-muted hover:text-fg")}>
             {f.label} · {n(f.id)}
@@ -57,14 +55,14 @@ export default async function AdminOffersPage({ searchParams }: { searchParams: 
         ))}
       </nav>
       {offers.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line p-10 text-center text-sm text-fg-passive">Bu durumda teklif yok.</p>
+        <p className="rounded-2xl border border-dashed border-line p-10 text-center text-sm text-fg-passive">{tt("Bu durumda teklif yok.")}</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {offers.map((o) => (
             <li key={o.id} className="flex flex-wrap items-center gap-4 rounded-3xl border border-line bg-glass p-4">
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="font-medium">
-                  {bName.get(o.brandId) ?? "Marka"} → <Link href={`/admin/influencerlar/${o.influencerId}`} className="hover:underline">{iName.get(o.influencerId) ?? "Üretici"}</Link>
+                  {bName.get(o.brandId) ?? tt("Marka")} → <Link href={`/admin/influencerlar/${o.influencerId}`} className="hover:underline">{iName.get(o.influencerId) ?? tt("Üretici")}</Link>
                 </span>
                 <span className="text-[13px]">{o.title}</span>
                 <span className="truncate text-[12px] text-fg-muted">{itemsSummary(o.items).join(" · ")}</span>
@@ -80,9 +78,7 @@ export default async function AdminOffersPage({ searchParams }: { searchParams: 
               </div>
               {o.status === "KABUL" ? <ConvertOffer offerId={o.id} campaigns={camps.filter((c) => c.brandId === o.brandId)} defaultCampaignId={o.campaignId} /> : null}
               {o.status === "KAMPANYAYA_EKLENDI" && o.campaignId ? (
-                <Link href={`/admin/kampanyalar/${o.campaignId}?sekme=influencerlar`} className="text-[13px] text-fg-muted hover:text-fg">
-                  Kampanyaya git →
-                </Link>
+                <Link href={`/admin/kampanyalar/${o.campaignId}?sekme=influencerlar`} className="text-[13px] text-fg-muted hover:text-fg">{" "}{tt("Kampanyaya git →")}</Link>
               ) : null}
             </li>
           ))}

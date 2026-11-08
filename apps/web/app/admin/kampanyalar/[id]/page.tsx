@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -62,6 +63,7 @@ export default async function CampaignDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ sekme?: string; kaydedildi?: string }>;
 }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const { sekme, kaydedildi } = await searchParams;
@@ -129,32 +131,32 @@ export default async function CampaignDetailPage({
     <div className="flex flex-col gap-6">
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-6 md:col-span-8">
-          <CardTitle>Kampanya skoru</CardTitle>
+          <CardTitle>{tt("Kampanya skoru")}</CardTitle>
           <KpiBreakdown score={score} />
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-4">
-          <CardTitle>Özet</CardTitle>
+          <CardTitle>{tt("Özet")}</CardTitle>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            <dt className="text-fg-passive">Marka</dt>
+            <dt className="text-fg-passive">{tt("Marka")}</dt>
             <dd>
               <Link href={`/admin/markalar/${campaign.brand.id}`} className="hover:underline">
                 {campaign.brand.name}
               </Link>
             </dd>
-            <dt className="text-fg-passive">Tarih</dt>
+            <dt className="text-fg-passive">{tt("Tarih")}</dt>
             <dd>
               {fmtDate(campaign.startsAt)} – {fmtDate(campaign.endsAt)}
             </dd>
-            <dt className="text-fg-passive">Bütçe</dt>
+            <dt className="text-fg-passive">{tt("Bütçe")}</dt>
             <dd className="tabular-nums">{formatKurus(Number(campaign.budgetKurus))}</dd>
-            <dt className="text-fg-passive">Marka bedeli</dt>
+            <dt className="text-fg-passive">{tt("Marka bedeli")}</dt>
             <dd className="tabular-nums">{formatKurus(Number(campaign.brandTotalFeeKurus))}</dd>
-            <dt className="text-fg-passive">UTM</dt>
+            <dt className="text-fg-passive">{tt("UTM")}</dt>
             <dd className="font-mono text-[13px]">{campaign.slug}</dd>
-            <dt className="text-fg-passive">Kapanış</dt>
+            <dt className="text-fg-passive">{tt("Kapanış")}</dt>
             <dd>{campaign.closedAt ? fmtDateTime(campaign.closedAt) : "—"}</dd>
-            <dt className="text-fg-passive">Marka ödemesi</dt>
-            <dd>{campaign.brandPaymentReceivedAt ? fmtDate(campaign.brandPaymentReceivedAt) : "Bekleniyor"}</dd>
+            <dt className="text-fg-passive">{tt("Marka ödemesi")}</dt>
+            <dd>{campaign.brandPaymentReceivedAt ? fmtDate(campaign.brandPaymentReceivedAt) : tt("Bekleniyor")}</dd>
           </dl>
           <div className="flex flex-col gap-3 border-t border-border pt-4">
             {campaign.status === "AKTIF" ? <CloseCampaignForm campaignId={campaign.id} /> : null}
@@ -164,16 +166,15 @@ export default async function CampaignDetailPage({
       </div>
       <Card interactive={false} className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle>Influencerlar</CardTitle>
+          <CardTitle>{tt("Influencerlar")}</CardTitle>
           {editable ? (
             <ButtonLink href={`/admin/kampanyalar/${campaign.id}?sekme=influencerlar`} variant="secondary" size="sm">
-              <UserPlusIcon size={14} /> Ekle
-            </ButtonLink>
+              <UserPlusIcon size={14} />{" "}{tt("Ekle")}</ButtonLink>
           ) : null}
         </div>
         <DataTable
-          caption="Kampanya influencerları"
-          emptyText="Henüz atama yok."
+          caption={tt("Kampanya influencerları")}
+          emptyText={tt("Henüz atama yok.")}
           columns={[
             { key: "name", header: "Influencer", sortable: true },
             { key: "contract", header: "Sözleşme", sortable: true },
@@ -206,9 +207,9 @@ export default async function CampaignDetailPage({
         />
       </Card>
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>İçerik galerisi</CardTitle>
+        <CardTitle>{tt("İçerik galerisi")}</CardTitle>
         {published.length === 0 ? (
-          <p className="text-sm text-fg-passive">Henüz yayınlanmış içerik yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Henüz yayınlanmış içerik yok.")}</p>
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {published.map((d) => {
@@ -224,9 +225,8 @@ export default async function CampaignDetailPage({
                       <PlatformIcon platform={d.platform} size={12} /> {contentTypeLabels[d.contentType]}
                     </span>
                     {d.postUrl ? (
-                      <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-fg-muted hover:text-fg">
-                        Paylaşımı aç <ExternalIcon size={12} />
-                        <span className="sr-only">(yeni sekmede açılır)</span>
+                      <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-fg-muted hover:text-fg">{" "}{tt("Paylaşımı aç")}{" "}<ExternalIcon size={12} />
+                        <span className="sr-only">{tt("(yeni sekmede açılır)")}</span>
                       </a>
                     ) : null}
                   </div>
@@ -242,7 +242,7 @@ export default async function CampaignDetailPage({
   const delivery = (
     <div className="flex flex-col gap-6">
       {campaign.assignments.length === 0 ? (
-        <EmptyState message="Kampanyaya henüz influencer atanmadı. Influencerlar sekmesinden ekleyin." />
+        <EmptyState message={tt("Kampanyaya henüz influencer atanmadı. Influencerlar sekmesinden ekleyin.")} />
       ) : (
         campaign.assignments.map((a) => {
           const tz = a.influencer.audienceTimezone;
@@ -253,11 +253,10 @@ export default async function CampaignDetailPage({
                 <div className="flex flex-col gap-1">
                   <h3 className="text-section">{a.influencer.name}</h3>
                   <p className="text-[13px] text-fg-muted">
-                    {formatKurus(a.feeKurus)} bedel · {formatKurus(a.commissionKurus)} komisyon
-                    {a.couponCode ? ` · kupon ${a.couponCode}` : ""}
+                    {formatKurus(a.feeKurus)}{" "}{tt("bedel ·")}{" "}{formatKurus(a.commissionKurus)}{" "}{tt("komisyon")}{a.couponCode ? ` · kupon ${a.couponCode}` : ""}
                     {a.exclusivityDays ? ` · ${a.exclusivityDays} gün münhasırlık${a.exclusivityCategory ? ` (${a.exclusivityCategory})` : ""}` : ""}
                   </p>
-                  {a.conflictOverrideReason ? <p className="text-[13px] text-fg-muted">Çakışma ezme gerekçesi: {a.conflictOverrideReason}</p> : null}
+                  {a.conflictOverrideReason ? <p className="text-[13px] text-fg-muted">{tt("Çakışma ezme gerekçesi:")}{" "}{a.conflictOverrideReason}</p> : null}
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <StatusDot tone={contractTone(a.contractStatus)}>{contractUiLabels[a.contractStatus]}</StatusDot>
@@ -265,7 +264,7 @@ export default async function CampaignDetailPage({
                 </div>
               </div>
               {a.deliverables.length === 0 ? (
-                <p className="text-sm text-fg-passive">Bu atamada planlanmış iş yok.</p>
+                <p className="text-sm text-fg-passive">{tt("Bu atamada planlanmış iş yok.")}</p>
               ) : (
                 <ul className="flex flex-col divide-y divide-border">
                   {a.deliverables.map((d) => (
@@ -284,7 +283,7 @@ export default async function CampaignDetailPage({
                         </span>
                         <StatusDot tone={deliverableTone(d.status, { overdue: isOverdue(d, now), violation: d.contractViolation })}>
                           {deliverableStatusLabels[d.status]}
-                          {isOverdue(d, now) ? " · gecikti" : ""}
+                          {isOverdue(d, now) ? tt(" · gecikti") : ""}
                         </StatusDot>
                       </Link>
                     </li>
@@ -293,7 +292,7 @@ export default async function CampaignDetailPage({
               )}
               {a.contractStatus !== "RED" && editable ? (
                 <details className="rounded-[8px] border border-border">
-                  <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Yeni iş planla</summary>
+                  <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{tt("Yeni iş planla")}</summary>
                   <div className="border-t border-border p-4">
                     <DeliverableForm
                       assignmentId={a.id}
@@ -315,8 +314,8 @@ export default async function CampaignDetailPage({
       )}
       {live.some((a) => a.couponCode) ? (
         <Card interactive={false} className="flex flex-col gap-4">
-          <CardTitle>Marka verisi (kupon koduyla)</CardTitle>
-          <p className="text-[13px] text-fg-muted">Kupon tıklama/satış/ciro, o atamanın iptal olmayan işlerine eşit bölünür. Kaynak: marka verisi (yüksek güven).</p>
+          <CardTitle>{tt("Marka verisi (kupon koduyla)")}</CardTitle>
+          <p className="text-[13px] text-fg-muted">{tt("Kupon tıklama/satış/ciro, o atamanın iptal olmayan işlerine eşit bölünür. Kaynak: marka verisi (yüksek güven).")}</p>
           <BrandDataForm campaignId={campaign.id} />
         </Card>
       ) : null}
@@ -326,22 +325,22 @@ export default async function CampaignDetailPage({
   const files = (
     <div className="grid-12">
       <Card interactive={false} className="flex flex-col gap-4 md:col-span-7">
-        <CardTitle>Ajans dosyaları</CardTitle>
+        <CardTitle>{tt("Ajans dosyaları")}</CardTitle>
         <AssetList
           assets={campaign.assets.map((a) => ({ ...a, uploadedByName: a.uploadedBy.name }))}
-          emptyText="Kampanyaya bağlı dosya yok."
+          emptyText={tt("Kampanyaya bağlı dosya yok.")}
         />
-        <CardTitle className="pt-4">İş dosyaları</CardTitle>
+        <CardTitle className="pt-4">{tt("İş dosyaları")}</CardTitle>
         <AssetList
           editableRights
           assets={campaign.assignments.flatMap((a) =>
             a.deliverables.flatMap((d) => d.assets.map((as) => ({ ...as, uploadedByName: `${as.uploadedBy.name} · ${a.influencer.name}` }))),
           )}
-          emptyText="İşlere yüklenmiş dosya yok."
+          emptyText={tt("İşlere yüklenmiş dosya yok.")}
         />
       </Card>
       <Card interactive={false} className="flex flex-col gap-4 md:col-span-5">
-        <CardTitle>Influencer&apos;lara dosya gönder</CardTitle>
+        <CardTitle>{tt("Influencer'lara dosya gönder")}</CardTitle>
         <FileUploader target={{ type: "campaign", id: campaign.id }} kinds={AGENCY_KINDS.map((k) => ({ value: k, label: assetKindLabels[k] }))} />
       </Card>
     </div>
@@ -350,12 +349,12 @@ export default async function CampaignDetailPage({
   const briefTab = (
     <Card interactive={false} className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
-        <CardTitle>Brief</CardTitle>
+        <CardTitle>{tt("Brief")}</CardTitle>
         <ButtonLink href={`/admin/kampanyalar/${campaign.id}/brief`} variant="secondary" size="sm">
-          {brief ? "Yeni sürüm" : "Brief yaz"}
+          {brief ? tt("Yeni sürüm") : tt("Brief yaz")}
         </ButtonLink>
       </div>
-      {brief ? <BriefPanel brief={brief} /> : <p className="text-sm text-fg-passive">Henüz brief yok.</p>}
+      {brief ? <BriefPanel brief={brief} /> : <p className="text-sm text-fg-passive">{tt("Henüz brief yok.")}</p>}
     </Card>
   );
 
@@ -366,26 +365,22 @@ export default async function CampaignDetailPage({
           <Card interactive={false} className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-col gap-1">
-                <CardTitle>Influencer ekle</CardTitle>
-                <p className="text-[13px] text-fg-muted">
-                  Filtreleyin, işaretleyin, bedeli girin. Eklenen herkese sözleşme teklifi gider; rakip markayla çakışanlar otomatik engellenir.
-                </p>
+                <CardTitle>{tt("Influencer ekle")}</CardTitle>
+                <p className="text-[13px] text-fg-muted">{" "}{tt("Filtreleyin, işaretleyin, bedeli girin. Eklenen herkese sözleşme teklifi gider; rakip markayla çakışanlar otomatik engellenir.")}</p>
               </div>
               <RecommendButton campaignId={campaign.id} />
             </div>
             <InfluencerPicker campaignId={campaign.id} influencers={pickerInfluencers} />
           </Card>
           <details className="rounded-[8px] border border-border">
-            <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">
-              Tekli atama (kupon, münhasırlık veya çakışma gerekçesiyle)
-            </summary>
+            <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{" "}{tt("Tekli atama (kupon, münhasırlık veya çakışma gerekçesiyle)")}</summary>
             <div className="border-t border-border p-4">
               <AssignmentForm campaignId={campaign.id} influencers={influencers.map((i) => ({ id: i.id, name: i.name, category: i.category }))} />
             </div>
           </details>
         </>
       ) : (
-        <EmptyState message="Kapanmış veya iptal edilmiş kampanyaya influencer eklenemez." />
+        <EmptyState message={tt("Kapanmış veya iptal edilmiş kampanyaya influencer eklenemez.")} />
       )}
     </div>
   );
@@ -394,23 +389,23 @@ export default async function CampaignDetailPage({
   const agent = (
     <div className="flex flex-col gap-6">
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Takip agent&apos;ları</CardTitle>
-        <TrackerList trackers={trackers} emptyText="Bu kampanyada takipçi yok." />
+        <CardTitle>{tt("Takip agent'ları")}</CardTitle>
+        <TrackerList trackers={trackers} emptyText={tt("Bu kampanyada takipçi yok.")} />
         <TrackerGallery templates={templateViews()} targets={{ CAMPAIGN: [], INFLUENCER: [], BRAND: [] }} fixedTarget={{ scope: "CAMPAIGN", id: campaign.id }} />
       </Card>
       {summaryDraft && draftText ? (
         <Card interactive={false} className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle>Rapor özeti taslağı</CardTitle>
+            <CardTitle>{tt("Rapor özeti taslağı")}</CardTitle>
             <ApproveSummaryButton runId={summaryDraft.id} />
           </div>
           <p className="whitespace-pre-line text-sm text-fg-muted">{draftText}</p>
-          {campaign.reportSummary ? <p className="text-[13px] text-fg-passive">Rapordaki mevcut özet bu taslakla değiştirilir.</p> : null}
+          {campaign.reportSummary ? <p className="text-[13px] text-fg-passive">{tt("Rapordaki mevcut özet bu taslakla değiştirilir.")}</p> : null}
         </Card>
       ) : null}
     <AgentRunList
       runs={runs.map((r) => ({ ...r, resolvedByName: r.resolvedBy?.name }))}
-      emptyText="Bu kampanya için agent bulgusu yok."
+      emptyText={tt("Bu kampanya için agent bulgusu yok.")}
     />
     </div>
   );
@@ -429,29 +424,22 @@ export default async function CampaignDetailPage({
           <>
             {editable ? (
               <ButtonLink href={`/admin/kampanyalar/${campaign.id}?sekme=influencerlar`}>
-                <UserPlusIcon size={16} /> Influencer ekle
-              </ButtonLink>
+                <UserPlusIcon size={16} />{" "}{tt("Influencer ekle")}</ButtonLink>
             ) : null}
-            <ButtonLink href={`/admin/kampanyalar/${campaign.id}/brief`} variant="secondary">
-              Brief
-            </ButtonLink>
+            <ButtonLink href={`/admin/kampanyalar/${campaign.id}/brief`} variant="secondary">{" "}{tt("Brief")}</ButtonLink>
             {campaign.status !== "KAPANDI" ? (
-              <ButtonLink href={`/admin/kampanyalar/${campaign.id}/duzenle`} variant="secondary">
-                Düzenle
-              </ButtonLink>
+              <ButtonLink href={`/admin/kampanyalar/${campaign.id}/duzenle`} variant="secondary">{" "}{tt("Düzenle")}</ButtonLink>
             ) : null}
           </>
         }
       />
       {kaydedildi ? (
-        <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-[14px] text-emerald-700 dark:text-emerald-400">
-          Kampanya taslak olarak kaydedildi. Kuruluma istediğiniz an “Kurulum” ile dönebilirsiniz.
-        </p>
+        <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-[14px] text-emerald-700 dark:text-emerald-400">{" "}{tt("Kampanya taslak olarak kaydedildi. Kuruluma istediğiniz an “Kurulum” ile dönebilirsiniz.")}</p>
       ) : null}
       <CampaignLifecycle campaignId={campaign.id} base={`/admin/kampanyalar/${campaign.id}`} />
       <Tabs
         key={sekme ?? "genel"}
-        label="Kampanya bölümleri"
+        label={tt("Kampanya bölümleri")}
         defaultTab={sekme}
         tabs={[
           { id: "genel", label: "Genel", content: general },

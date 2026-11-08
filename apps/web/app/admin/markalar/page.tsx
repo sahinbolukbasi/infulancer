@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -9,6 +10,7 @@ import { requireActor } from "@/lib/auth-guard";
 export const metadata: Metadata = { title: "Markalar" };
 
 export default async function BrandsPage() {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const brands = await prisma.brand.findMany({
     orderBy: { name: "asc" },
@@ -24,10 +26,10 @@ export default async function BrandsPage() {
   });
   return (
     <Stagger className="flex flex-col gap-8">
-      <PageHeader title="Markalar" description="Vergi, sözleşme ve rakip bilgileri; marka kullanıcıları." actions={<ButtonLink href="/admin/markalar/yeni">Yeni marka</ButtonLink>} />
+      <PageHeader title={tt("Markalar")} description={tt("Vergi, sözleşme ve rakip bilgileri; marka kullanıcıları.")} actions={<ButtonLink href="/admin/markalar/yeni">{tt("Yeni marka")}</ButtonLink>} />
       <DataTable
-        caption="Markalar"
-        emptyText="Henüz marka yok."
+        caption={tt("Markalar")}
+        emptyText={tt("Henüz marka yok.")}
         initialSort={{ key: "name", dir: "asc" }}
         columns={[
           { key: "name", header: "Marka", sortable: true },

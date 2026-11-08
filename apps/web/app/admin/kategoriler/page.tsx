@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { CategoryEditForm } from "@/components/forms/category-admin-form";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 /** Kategori listesi yönetimi (ana › alt). Influencer ve marka formları ile filtreler bu listeyi kullanır. */
 export default async function CategoriesPage() {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const all = await prisma.category.findMany({
     orderBy: [{ sort: "asc" }, { name: "asc" }],
@@ -19,10 +21,10 @@ export default async function CategoriesPage() {
   const roots = all.filter((c) => !c.parentId);
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Kategoriler" description="Influencer ve marka kategorileri. Ana kategori seçimi alt kategorileri de kapsar (filtreleme ve öneride)." />
-      <InfoNote>Kullanılan bir kategori silinmez; “pasif” yapılırsa yeni seçimlerde görünmez ama mevcut kayıtlar korunur.</InfoNote>
+      <PageHeader title={tt("Kategoriler")} description={tt("Influencer ve marka kategorileri. Ana kategori seçimi alt kategorileri de kapsar (filtreleme ve öneride).")} />
+      <InfoNote>{tt("Kullanılan bir kategori silinmez; “pasif” yapılırsa yeni seçimlerde görünmez ama mevcut kayıtlar korunur.")}</InfoNote>
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Yeni kategori</CardTitle>
+        <CardTitle>{tt("Yeni kategori")}</CardTitle>
         <CategoryEditForm roots={roots.map((r) => ({ id: r.id, name: r.name }))} />
       </Card>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -31,11 +33,10 @@ export default async function CategoriesPage() {
             <div className="flex items-center justify-between gap-3">
               <CardTitle>
                 {r.name}
-                {!r.active ? <span className="ml-2 text-[12px] text-fg-passive">(pasif)</span> : null}
+                {!r.active ? <span className="ml-2 text-[12px] text-fg-passive">{tt("(pasif)")}</span> : null}
               </CardTitle>
               <span className="text-[13px] tabular-nums text-fg-muted">
-                {r._count.influencers} influencer · {r._count.brands} marka
-              </span>
+                {r._count.influencers}{" "}{tt("influencer ·")}{" "}{r._count.brands}{" "}{tt("marka")}</span>
             </div>
             <ul className="flex flex-col divide-y divide-border text-sm">
               {all
@@ -44,16 +45,15 @@ export default async function CategoriesPage() {
                   <li key={c.id} className="flex justify-between py-2">
                     <span className={c.active ? "" : "text-fg-passive"}>
                       {c.name}
-                      {!c.active ? " (pasif)" : ""}
+                      {!c.active ? tt(" (pasif)") : ""}
                     </span>
                     <span className="text-[13px] tabular-nums text-fg-muted">
-                      {c._count.influencers} influencer · {c._count.brands} marka
-                    </span>
+                      {c._count.influencers}{" "}{tt("influencer ·")}{" "}{c._count.brands}{" "}{tt("marka")}</span>
                   </li>
                 ))}
             </ul>
             <details>
-              <summary className="cursor-pointer text-[13px] text-fg-muted">Düzenle</summary>
+              <summary className="cursor-pointer text-[13px] text-fg-muted">{tt("Düzenle")}</summary>
               <div className="pt-3">
                 <CategoryEditForm roots={roots.filter((x) => x.id !== r.id).map((x) => ({ id: x.id, name: x.name }))} category={{ id: r.id, name: r.name, parentId: null, sort: r.sort, active: r.active }} />
               </div>
@@ -62,7 +62,7 @@ export default async function CategoriesPage() {
               .filter((c) => c.parentId === r.id)
               .map((c) => (
                 <details key={c.id}>
-                  <summary className="cursor-pointer text-[12px] text-fg-passive">{c.name} düzenle</summary>
+                  <summary className="cursor-pointer text-[12px] text-fg-passive">{c.name}{" "}{tt("düzenle")}</summary>
                   <div className="pt-3">
                     <CategoryEditForm roots={roots.map((x) => ({ id: x.id, name: x.name }))} category={{ id: c.id, name: c.name, parentId: c.parentId, sort: c.sort, active: c.active }} />
                   </div>

@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { CampaignWizardPage } from "@/components/campaign/wizard/wizard-page";
@@ -6,14 +7,15 @@ import { PageHeader } from "@/components/ui/layout";
 import { requireActor } from "@/lib/auth-guard";
 export const metadata: Metadata = { title: "Yeni kampanya" };
 export default async function NewCampaignPage({ searchParams }: { searchParams: Promise<{ marka?: string }> }) {
+  const tt = await getTT();
   const { marka } = await searchParams;
   const actor = await requireActor("ADMIN");
   const brands = await prisma.brand.findMany({ select: { id: true } });
   if (brands.length === 0) {
     return (
       <div className="flex flex-col gap-8">
-        <PageHeader title="Yeni kampanya" />
-        <EmptyState message="Kampanya açmak için önce bir marka ekleyin." action={{ label: "Marka ekle", href: "/admin/markalar/yeni" }} />
+        <PageHeader title={tt("Yeni kampanya")} />
+        <EmptyState message={tt("Kampanya açmak için önce bir marka ekleyin.")} action={{ label: "Marka ekle", href: "/admin/markalar/yeni" }} />
       </div>
     );
   }

@@ -1,10 +1,12 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { startTransition, useActionState } from "react";
 import { approveCreditRequestAction, rejectCreditRequestAction } from "@/lib/actions/credit-requests";
 import { idleState } from "@/lib/action-state";
 
 /** Yönetici: bakiye talebini onayla / reddet. */
 export function CreditRequestActions({ id }: { id: string }) {
+  const tt = useTT();
   const [, approve, approving] = useActionState(approveCreditRequestAction, idleState);
   const [, reject, rejecting] = useActionState(rejectCreditRequestAction, idleState);
   const run = (action: (fd: FormData) => void) => {
@@ -20,16 +22,14 @@ export function CreditRequestActions({ id }: { id: string }) {
         onClick={() => run(approve)}
         className="rounded-full bg-fg px-3 py-1.5 text-[13px] font-semibold text-bg transition-standard hover:opacity-90 disabled:opacity-40"
       >
-        {approving ? "Onaylanıyor…" : "Onayla ve yükle"}
+        {approving ? tt("Onaylanıyor…") : tt("Onayla ve yükle")}
       </button>
       <button
         type="button"
         disabled={approving || rejecting}
         onClick={() => run(reject)}
         className="rounded-full border border-border px-3 py-1.5 text-[13px] text-fg-muted transition-standard hover:text-fg disabled:opacity-40"
-      >
-        Reddet
-      </button>
+      >{" "}{tt("Reddet")}</button>
     </div>
   );
 }

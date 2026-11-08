@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { freeTierStatus } from "@infulancer/core/messaging/cost";
@@ -20,6 +21,7 @@ export const metadata: Metadata = { title: "Kanallar" };
 const num = new Intl.NumberFormat("tr-TR");
 
 export default async function AdminChannelsPage() {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const [connections, numbers, templates, brands] = await Promise.all([
     prisma.channelConnection.findMany({ orderBy: { createdAt: "desc" } }),
@@ -51,9 +53,9 @@ export default async function AdminChannelsPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Kanallar"
+        title={tt("Kanallar")}
         description={`WhatsApp (Embedded Signup ${EMBEDDED_SIGNUP_VERSION}), Instagram ve Messenger bağlantıları, template sağlığı ve mesaj kotası.`}
-        actions={<RunJobButton job="channel-health" label="Bağlantıları şimdi kontrol et" />}
+        actions={<RunJobButton job="channel-health" label={tt("Bağlantıları şimdi kontrol et")} />}
       />
       <PageGuide
         what="Markaların müşterileriyle WhatsApp ve Instagram üzerinden konuştuğu kanalların kontrol paneli. Her markanın kendi numarası ve bağlantısı olur; mesajlar markanın Gelen kutusu’na düşer, sohbet asistanı ilk cevabı verir."
@@ -67,18 +69,18 @@ export default async function AdminChannelsPage() {
         ]}
       />
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Marka hazırlık durumu</CardTitle>
+        <CardTitle>{tt("Marka hazırlık durumu")}</CardTitle>
         <table className="w-full text-sm">
-          <caption className="sr-only">Marka bazında kanal hazırlığı</caption>
+          <caption className="sr-only">{tt("Marka bazında kanal hazırlığı")}</caption>
           <thead>
             <tr className="border-b border-border text-left text-fg-muted">
-              <th className="py-2 font-normal">Marka</th>
-              <th className="py-2 font-normal">WhatsApp</th>
-              <th className="py-2 font-normal">Ödeme yöntemi</th>
-              <th className="py-2 font-normal">Onaylı template</th>
-              <th className="py-2 font-normal">Instagram</th>
-              <th className="py-2 font-normal">Asistan</th>
-              <th className="py-2 font-normal">Canlı</th>
+              <th className="py-2 font-normal">{tt("Marka")}</th>
+              <th className="py-2 font-normal">{tt("WhatsApp")}</th>
+              <th className="py-2 font-normal">{tt("Ödeme yöntemi")}</th>
+              <th className="py-2 font-normal">{tt("Onaylı template")}</th>
+              <th className="py-2 font-normal">{tt("Instagram")}</th>
+              <th className="py-2 font-normal">{tt("Asistan")}</th>
+              <th className="py-2 font-normal">{tt("Canlı")}</th>
             </tr>
           </thead>
           <tbody>
@@ -91,7 +93,7 @@ export default async function AdminChannelsPage() {
                 </td>
                 {(["whatsapp", "payment", "template", "instagram", "assistant", "live"] as const).map((k) => (
                   <td key={k} className="py-2">
-                    <StatusDot tone={r[k] ? "active" : "passive"}>{r[k] ? "Var" : "Yok"}</StatusDot>
+                    <StatusDot tone={r[k] ? "active" : "passive"}>{r[k] ? tt("Var") : tt("Yok")}</StatusDot>
                   </td>
                 ))}
               </tr>
@@ -100,39 +102,37 @@ export default async function AdminChannelsPage() {
         </table>
       </Card>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2" aria-label="WhatsApp numaraları">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2" aria-label={tt("WhatsApp numaraları")}>
         {quotas.map(({ n, q }) => (
           <Card key={n.id} interactive={false} className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
               <CardTitle>{brandName.get(n.tenantId) ?? n.tenantId}</CardTitle>
               <StatusDot tone={n.paymentMethod === "payment_method_confirmed" ? "active" : "critical"}>
-                {n.paymentMethod === "payment_method_confirmed" ? "Onboarding tamam" : "Ödeme yöntemi bekleniyor"}
+                {n.paymentMethod === "payment_method_confirmed" ? tt("Onboarding tamam") : tt("Ödeme yöntemi bekleniyor")}
               </StatusDot>
             </div>
             <p className="text-sm text-fg-muted">{n.displayNumber ?? n.phoneNumberId}</p>
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-fg-muted">Mesaj limiti (portföy)</dt>
+                <dt className="text-fg-muted">{tt("Mesaj limiti (portföy)")}</dt>
                 <dd className="tabular-nums">
-                  {n.messagingLimit} · {Number.isFinite(tierCapacity(n.messagingLimit)) ? `${num.format(tierCapacity(n.messagingLimit))} tekil alıcı / 24 sa` : "sınırsız"}
+                  {n.messagingLimit} · {Number.isFinite(tierCapacity(n.messagingLimit)) ? `${num.format(tierCapacity(n.messagingLimit))} tekil alıcı / 24 sa` : tt("sınırsız")}
                 </dd>
               </div>
               <div>
-                <dt className="text-fg-muted">Ücretsiz servis mesajı (bu ay)</dt>
+                <dt className="text-fg-muted">{tt("Ücretsiz servis mesajı (bu ay)")}</dt>
                 <dd className="tabular-nums">
-                  {num.format(q.remaining)} / {num.format(q.free)} kaldı{q.exhaustAt ? ` · tahmini bitiş ${fmtDate(q.exhaustAt)}` : ""}
+                  {num.format(q.remaining)} / {num.format(q.free)}{" "}{tt("kaldı")}{q.exhaustAt ? ` · tahmini bitiş ${fmtDate(q.exhaustAt)}` : ""}
                 </dd>
               </div>
               <div>
-                <dt className="text-fg-muted">Kalite</dt>
+                <dt className="text-fg-muted">{tt("Kalite")}</dt>
                 <dd>{n.qualityRating ?? "—"}</dd>
               </div>
               <div>
-                <dt className="text-fg-muted">
-                  Throughput
-                  <UnverifiedBadge title={UNVERIFIED_FACTS.waThroughput} />
+                <dt className="text-fg-muted">{" "}{tt("Throughput")}<UnverifiedBadge title={UNVERIFIED_FACTS.waThroughput} />
                 </dt>
-                <dd>{n.throughputLevel ?? "Meta bildirimi bekleniyor"}</dd>
+                <dd>{n.throughputLevel ?? tt("Meta bildirimi bekleniyor")}</dd>
               </div>
             </dl>
           </Card>
@@ -141,15 +141,14 @@ export default async function AdminChannelsPage() {
       <DocLink slug="whatsapp-cloud-api" />
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Bağlantılar</CardTitle>
+        <CardTitle>{tt("Bağlantılar")}</CardTitle>
         <ul className="flex flex-col divide-y divide-border text-sm">
           {connections.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <span>
                 {brandName.get(c.tenantId) ?? c.tenantId} · {c.provider}
               </span>
-              <span className="text-fg-muted">
-                Son doğrulama: {c.lastVerifiedAt ? fmtDateTime(c.lastVerifiedAt) : "—"}
+              <span className="text-fg-muted">{" "}{tt("Son doğrulama:")}{" "}{c.lastVerifiedAt ? fmtDateTime(c.lastVerifiedAt) : "—"}
                 {c.lastError ? ` · ${c.lastError}` : ""}
               </span>
               <StatusDot tone={c.status === "ACTIVE" ? "active" : c.status === "REVOKED" ? "critical" : "muted"}>{c.status}</StatusDot>
@@ -159,20 +158,18 @@ export default async function AdminChannelsPage() {
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Template’ler</CardTitle>
-        <p className="text-[13px] text-fg-muted">
-          Kalite Orta olunca gönderim hızı %50’ye kısılır; Düşük olunca gönderim otomatik durur. 1. duraklatma 3 saat, 2. duraklatma 6 saat; 3. duraklatmada template devre dışı kalır.
-        </p>
+        <CardTitle>{tt("Template’ler")}</CardTitle>
+        <p className="text-[13px] text-fg-muted">{" "}{tt("Kalite Orta olunca gönderim hızı %50’ye kısılır; Düşük olunca gönderim otomatik durur. 1. duraklatma 3 saat, 2. duraklatma 6 saat; 3. duraklatmada template devre dışı kalır.")}</p>
         <table className="w-full text-sm">
-          <caption className="sr-only">Template durumu ve kalitesi</caption>
+          <caption className="sr-only">{tt("Template durumu ve kalitesi")}</caption>
           <thead>
             <tr className="border-b border-border text-left text-fg-muted">
-              <th className="py-2 font-normal">Marka</th>
-              <th className="py-2 font-normal">Template</th>
-              <th className="py-2 font-normal">Kategori</th>
-              <th className="py-2 font-normal">Durum</th>
-              <th className="py-2 font-normal">Kalite</th>
-              <th className="py-2 font-normal">Hız</th>
+              <th className="py-2 font-normal">{tt("Marka")}</th>
+              <th className="py-2 font-normal">{tt("Template")}</th>
+              <th className="py-2 font-normal">{tt("Kategori")}</th>
+              <th className="py-2 font-normal">{tt("Durum")}</th>
+              <th className="py-2 font-normal">{tt("Kalite")}</th>
+              <th className="py-2 font-normal">{tt("Hız")}</th>
             </tr>
           </thead>
           <tbody>
@@ -193,7 +190,7 @@ export default async function AdminChannelsPage() {
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-2">
-        <CardTitle>Kanal kuralları</CardTitle>
+        <CardTitle>{tt("Kanal kuralları")}</CardTitle>
         <DocLink slug="whatsapp-cloud-api" />
         <DocLink slug="messenger-instagram-dm" />
         <DocLink slug="tiktok-content-api" />

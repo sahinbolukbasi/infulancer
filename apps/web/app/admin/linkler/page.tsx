@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { envStr } from "@infulancer/core/env";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 /** Link kısaltma ve tıklama takibi: /l/<slug> bağlantıları, tıklama ve son tıklama. */
 export default async function AdminLinksPage() {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const base = envStr("APP_URL", "http://localhost:3000").replace(/\/$/, "");
   const raw = await prisma.shortLink.findMany({ orderBy: { createdAt: "desc" }, take: 500 });
@@ -21,7 +23,7 @@ export default async function AdminLinksPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Linkler" description="Uzun bağlantıları kısaltın ve her tıklamayı ölçün. Kampanya, duyuru ve sosyal paylaşımlarda kullanın." />
+      <PageHeader title={tt("Linkler")} description={tt("Uzun bağlantıları kısaltın ve her tıklamayı ölçün. Kampanya, duyuru ve sosyal paylaşımlarda kullanın.")} />
       {links.length ? (
         <StatStrip
           stats={[
@@ -33,14 +35,14 @@ export default async function AdminLinksPage() {
         />
       ) : null}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5 lg:sticky lg:top-6 lg:self-start" aria-label="Link kısalt">
-          <h2 className="text-[15px] font-semibold text-fg">Yeni kısa link</h2>
+        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5 lg:sticky lg:top-6 lg:self-start" aria-label={tt("Link kısalt")}>
+          <h2 className="text-[15px] font-semibold text-fg">{tt("Yeni kısa link")}</h2>
           <ShortLinkCreate />
-          <p className="text-[12px] text-fg-passive">Kısa link biçimi: {base}/l/xxxxxxx</p>
+          <p className="text-[12px] text-fg-passive">{tt("Kısa link biçimi:")}{" "}{base}{tt("/l/xxxxxxx")}</p>
           <DocLink slug="link-kisaltma" />
         </section>
-        <section className="flex flex-col gap-3" aria-label="Linkler ve tıklamalar">
-          <h2 className="text-[15px] font-semibold text-fg">Linkler ve tıklamalar</h2>
+        <section className="flex flex-col gap-3" aria-label={tt("Linkler ve tıklamalar")}>
+          <h2 className="text-[15px] font-semibold text-fg">{tt("Linkler ve tıklamalar")}</h2>
           <ShortLinkList links={links} />
         </section>
       </div>

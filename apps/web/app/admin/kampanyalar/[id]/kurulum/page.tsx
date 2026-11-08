@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -41,6 +42,7 @@ function defaultStartDay(startsAt: Date): string {
 }
 
 export default async function CampaignSetupPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ adim?: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const { adim } = await searchParams;
@@ -81,25 +83,23 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
   const brandRequest = (
     <div className="flex flex-col gap-3 rounded-[8px] border border-border p-4 text-[13px]">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm text-fg">{c.submittedAt ? "Markanın kampanya talebi" : "Kampanya özeti"}</h3>
-        <Link href={`/admin/kampanyalar/${id}/olustur?adim=ozet`} className="text-[12px] text-fg-muted underline-offset-4 hover:text-fg hover:underline">
-          Sihirbazda düzenle
-        </Link>
+        <h3 className="text-sm text-fg">{c.submittedAt ? tt("Markanın kampanya talebi") : tt("Kampanya özeti")}</h3>
+        <Link href={`/admin/kampanyalar/${id}/olustur?adim=ozet`} className="text-[12px] text-fg-muted underline-offset-4 hover:text-fg hover:underline">{" "}{tt("Sihirbazda düzenle")}</Link>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-        <dt className="text-fg-passive">Amaç</dt>
+        <dt className="text-fg-passive">{tt("Amaç")}</dt>
         <dd>{OBJECTIVES.find((o) => o.id === c.objective)?.title ?? "—"}</dd>
-        <dt className="text-fg-passive">Ülkeler</dt>
+        <dt className="text-fg-passive">{tt("Ülkeler")}</dt>
         <dd>{c.targetCountries.length ? c.targetCountries.map(countryName).join(", ") : "—"}</dd>
-        <dt className="text-fg-passive">Platformlar</dt>
+        <dt className="text-fg-passive">{tt("Platformlar")}</dt>
         <dd>{c.platforms.length ? c.platforms.map((p) => platformLabels[p]).join(", ") : "—"}</dd>
-        <dt className="text-fg-passive">Kitle</dt>
+        <dt className="text-fg-passive">{tt("Kitle")}</dt>
         <dd>
-          {c.audienceAgeMin ?? "?"}–{c.audienceAgeMax ?? "?"} yaş{c.audienceInterests.length ? ` · ${c.audienceInterests.join(", ")}` : ""}
+          {c.audienceAgeMin ?? "?"}–{c.audienceAgeMax ?? "?"}{" "}{tt("yaş")}{c.audienceInterests.length ? ` · ${c.audienceInterests.join(", ")}` : ""}
         </dd>
-        <dt className="text-fg-passive">İçerik planı</dt>
+        <dt className="text-fg-passive">{tt("İçerik planı")}</dt>
         <dd>{plan.length ? `${plan.map((p) => `${p.count}× ${contentTypeLabels[p.contentType]} (${platformLabels[p.platform]})`).join(", ")} · kişi başı ${planTotal(plan)}` : "—"}</dd>
-        <dt className="text-fg-passive">Önerilen influencer</dt>
+        <dt className="text-fg-passive">{tt("Önerilen influencer")}</dt>
         <dd>{shortlist.length ? shortlist.map((s) => s.name).join(", ") : "—"}</dd>
       </dl>
       {c.description ? <p className="text-fg-muted whitespace-pre-line">{c.description}</p> : null}
@@ -107,13 +107,13 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
   );
   const mediaBlock = (
     <div className="flex flex-col gap-3 border-t border-border pt-5">
-      <h3 className="text-sm text-fg">Kampanya fotoğraf ve videoları ({media.length})</h3>
+      <h3 className="text-sm text-fg">{tt("Kampanya fotoğraf ve videoları (")}{media.length})</h3>
       <CampaignMedia items={media.map((a) => ({ id: a.id, fileName: a.fileName, mime: a.mime, kind: a.kind, size: a.size, uploadedById: a.uploadedById, uploadedByName: a.uploadedBy.name }))} canDelete={() => c.status !== "KAPANDI"} />
       {editable ? (
         <FileUploader
           target={{ type: "campaign", id }}
           multiple
-          label="Fotoğraf veya video ekle"
+          label={tt("Fotoğraf veya video ekle")}
           accept="image/*,video/*,application/pdf"
           kinds={(["URUN_FOTO", "ORNEK_CEKIM", "MARKA_LOGO", "BRIEF_PDF", "ONAYLI_CAPTION", "DIGER"] as const).map((k) => ({ value: k, label: assetKindLabels[k] }))}
         />
@@ -129,9 +129,7 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
         title={`${c.name} · kurulum`}
         description={`${setup.completed}/${setup.steps.length} adım tamam. Her adım kampanya sayfasındaki aynı bilgileri düzenler.`}
         actions={
-          <ButtonLink href={`/admin/kampanyalar/${id}`} variant="secondary">
-            Kampanya sayfası
-          </ButtonLink>
+          <ButtonLink href={`/admin/kampanyalar/${id}`} variant="secondary">{" "}{tt("Kampanya sayfası")}</ButtonLink>
         }
       />
       <SetupSteps campaignId={id} steps={setup.steps} active={active} />
@@ -174,7 +172,7 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
         {active === "influencerlar" ? (
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
-              <h3 className="text-sm text-fg">Kampanyadaki influencerlar ({c.assignments.length})</h3>
+              <h3 className="text-sm text-fg">{tt("Kampanyadaki influencerlar (")}{c.assignments.length})</h3>
               {c.assignments.length ? (
                 <ul className="flex flex-wrap gap-2">
                   {c.assignments.map((a) => (
@@ -188,7 +186,7 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
                   ))}
                 </ul>
               ) : (
-                <p className="text-[13px] text-fg-passive">Henüz influencer yok. Aşağıdan kategoriye göre toplu seçip tek seferde ekleyin.</p>
+                <p className="text-[13px] text-fg-passive">{tt("Henüz influencer yok. Aşağıdan kategoriye göre toplu seçip tek seferde ekleyin.")}</p>
               )}
             </div>
             {editable ? (
@@ -196,15 +194,15 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
                 <div className="flex flex-col gap-4 rounded-[8px] border border-border p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex flex-col gap-1">
-                      <h3 className="text-sm text-fg">Influencer seç ve ekle</h3>
-                      <p className="text-[13px] text-fg-muted">Kategori seçip “Tümünü seç” ile toplu işaretleyin, bedeli hepsine birden uygulayın. Eklenen herkese teklif gider; rakip markayla çakışanlar otomatik engellenir.{shortlist.length ? ` Markanın önerdiği ${shortlist.length} kişi önceden seçili.` : ""}</p>
+                      <h3 className="text-sm text-fg">{tt("Influencer seç ve ekle")}</h3>
+                      <p className="text-[13px] text-fg-muted">{tt("Kategori seçip “Tümünü seç” ile toplu işaretleyin, bedeli hepsine birden uygulayın. Eklenen herkese teklif gider; rakip markayla çakışanlar otomatik engellenir.")}{shortlist.length ? ` Markanın önerdiği ${shortlist.length} kişi önceden seçili.` : ""}</p>
                     </div>
                     <RecommendButton campaignId={id} />
                   </div>
                   <InfluencerPicker campaignId={id} influencers={picker} preselected={c.shortlistInfluencerIds} />
                 </div>
                 <details className="rounded-[8px] border border-border">
-                  <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Tekli atama (kupon, münhasırlık veya çakışma gerekçesiyle)</summary>
+                  <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{tt("Tekli atama (kupon, münhasırlık veya çakışma gerekçesiyle)")}</summary>
                   <div className="border-t border-border p-4">
                     <AssignmentForm campaignId={id} influencers={pool.map((i) => ({ id: i.id, name: i.name, category: i.category }))} />
                   </div>
@@ -215,14 +213,14 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
         ) : null}
         {active === "icerik" ? (
           c.assignments.length === 0 ? (
-            <InfoNote>Önce influencer atayın; içerik planı influencer başına yapılır.</InfoNote>
+            <InfoNote>{tt("Önce influencer atayın; içerik planı influencer başına yapılır.")}</InfoNote>
           ) : (
             <div className="flex flex-col gap-6">
               {editable ? (
                 <div className="flex flex-col gap-4 rounded-[8px] border border-fg/30 p-4">
                   <div className="flex flex-col gap-1">
-                    <h3 className="text-sm text-fg">Toplu içerik planı</h3>
-                    <p className="text-[13px] text-fg-muted">Aynı planı seçilen tüm influencerlara tek seferde uygulayın. Saatler her kişinin kitle saat diliminde yorumlanır; sonra iş bazında düzenleyebilirsiniz.</p>
+                    <h3 className="text-sm text-fg">{tt("Toplu içerik planı")}</h3>
+                    <p className="text-[13px] text-fg-muted">{tt("Aynı planı seçilen tüm influencerlara tek seferde uygulayın. Saatler her kişinin kitle saat diliminde yorumlanır; sonra iş bazında düzenleyebilirsiniz.")}</p>
                   </div>
                   <BulkPlanForm
                     campaignId={id}
@@ -239,7 +237,7 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
                   />
                 </div>
               ) : null}
-              <h3 className="text-sm text-fg-muted">Kişi bazında içerikler</h3>
+              <h3 className="text-sm text-fg-muted">{tt("Kişi bazında içerikler")}</h3>
               {c.assignments.map((a) => {
                 const tz = a.influencer.audienceTimezone;
                 return (
@@ -256,17 +254,17 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
                             </Link>
                             <span className="text-[13px] tabular-nums text-fg-muted">{fmtDateTime(d.plannedAt, tz)}</span>
                             <span className="text-[12px] text-fg-passive">
-                              {d.usageRightsDays != null ? `Kullanım hakkı ${d.usageRightsDays} gün · ${d.usageRightsChannel === "PAID_DAHIL" ? "paid dahil" : "organik"} · ${d.usageRightsGeo.join(", ")}` : "Kullanım hakkı eksik"}
+                              {d.usageRightsDays != null ? `Kullanım hakkı ${d.usageRightsDays} gün · ${d.usageRightsChannel === "PAID_DAHIL" ? "paid dahil" : "organik"} · ${d.usageRightsGeo.join(", ")}` : tt("Kullanım hakkı eksik")}
                             </span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-[13px] text-fg-passive">Bu influencer için içerik yok.</p>
+                      <p className="text-[13px] text-fg-passive">{tt("Bu influencer için içerik yok.")}</p>
                     )}
                     {editable && a.contractStatus !== "RED" ? (
                       <details className="rounded-[8px] border border-border" open={a.deliverables.length === 0}>
-                        <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">İçerik ekle (post, reels, story…)</summary>
+                        <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{tt("İçerik ekle (post, reels, story…)")}</summary>
                         <div className="border-t border-border p-4">
                           <DeliverableForm
                             assignmentId={a.id}
@@ -306,7 +304,7 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
             </ul>
             {step.issues.length ? (
               <div className="flex flex-col gap-2">
-                <h3 className="text-sm text-fg">md. 23/A ve kullanım hakkı sorunları</h3>
+                <h3 className="text-sm text-fg">{tt("md. 23/A ve kullanım hakkı sorunları")}</h3>
                 <ul className="flex list-disc flex-col gap-1 pl-5 text-[13px] text-fg-muted">
                   {step.issues.map((i) => (
                     <li key={i}>{i}</li>
@@ -316,35 +314,29 @@ export default async function CampaignSetupPage({ params, searchParams }: { para
             ) : null}
             {c.status === "TASLAK" ? (
               <div className="flex flex-col gap-3 rounded-[8px] border border-border p-4">
-                <p className="text-[13px] text-fg-muted">Tüm adımlar girildiği anda kaydedildi. Kampanyayı taslak olarak bırakabilir ya da kontroller tamamsa yayına alabilirsiniz.</p>
+                <p className="text-[13px] text-fg-muted">{tt("Tüm adımlar girildiği anda kaydedildi. Kampanyayı taslak olarak bırakabilir ya da kontroller tamamsa yayına alabilirsiniz.")}</p>
                 {!setup.readyToActivate ? (
-                  <InfoNote>Eksik adımlar tamamlanmadan kampanya yayına alınamaz. Etiketsiz içerikle yayın yasal olarak engellidir.</InfoNote>
+                  <InfoNote>{tt("Eksik adımlar tamamlanmadan kampanya yayına alınamaz. Etiketsiz içerikle yayın yasal olarak engellidir.")}</InfoNote>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-3">
                   {setup.readyToActivate ? <ActivateCampaignButton campaignId={id} /> : null}
-                  <ButtonLink href={`/admin/kampanyalar/${id}?kaydedildi=1`} variant={setup.readyToActivate ? "secondary" : "primary"}>
-                    Taslak olarak kaydet ve çık
-                  </ButtonLink>
+                  <ButtonLink href={`/admin/kampanyalar/${id}?kaydedildi=1`} variant={setup.readyToActivate ? "secondary" : "primary"}>{" "}{tt("Taslak olarak kaydet ve çık")}</ButtonLink>
                 </div>
               </div>
             ) : (
-              <InfoNote>Kampanya {c.status === "AKTIF" ? "yayında" : "kapandı"}. Yeni içerik eklerseniz aynı kontroller içerik bazında uygulanır.</InfoNote>
+              <InfoNote>{tt("Kampanya")}{" "}{c.status === "AKTIF" ? tt("yayında") : tt("kapandı")}{tt(". Yeni içerik eklerseniz aynı kontroller içerik bazında uygulanır.")}</InfoNote>
             )}
           </div>
         ) : null}
 
         <div className="flex justify-between gap-3 border-t border-border pt-4">
           {prev ? (
-            <ButtonLink href={`/admin/kampanyalar/${id}/kurulum?adim=${prev}`} variant="secondary" size="sm">
-              ← Önceki adım
-            </ButtonLink>
+            <ButtonLink href={`/admin/kampanyalar/${id}/kurulum?adim=${prev}`} variant="secondary" size="sm">{" "}{tt("← Önceki adım")}</ButtonLink>
           ) : (
             <span />
           )}
           {next ? (
-            <ButtonLink href={`/admin/kampanyalar/${id}/kurulum?adim=${next}`} size="sm">
-              Sonraki adım →
-            </ButtonLink>
+            <ButtonLink href={`/admin/kampanyalar/${id}/kurulum?adim=${next}`} size="sm">{" "}{tt("Sonraki adım →")}</ButtonLink>
           ) : null}
         </div>
       </Card>

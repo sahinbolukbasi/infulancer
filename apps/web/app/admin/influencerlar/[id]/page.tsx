@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -46,6 +47,7 @@ function demographicsSummary(raw: unknown): string {
 }
 
 export default async function InfluencerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const now = new Date();
@@ -110,7 +112,7 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-4">
         <Avatar name={inf.name} src={pickAvatar(inf.socialAccounts)} size={64} className="ring-2 ring-neon-pink/50" />
-        <span className="text-[12px] text-fg-passive">{pickAvatar(inf.socialAccounts) ? "Profil fotoğrafı bağlı hesaptan" : "Hesap senkronlanınca profil fotoğrafı gelir"}</span>
+        <span className="text-[12px] text-fg-passive">{pickAvatar(inf.socialAccounts) ? tt("Profil fotoğrafı bağlı hesaptan") : tt("Hesap senkronlanınca profil fotoğrafı gelir")}</span>
       </div>
       <PageHeader
         title={inf.name}
@@ -118,12 +120,12 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
         actions={
           <div className="flex gap-2">
             <SyncAccountsButton influencerId={inf.id} />
-            <ButtonLink href={`/admin/influencerlar/${inf.id}/duzenle`}>Düzenle</ButtonLink>
+            <ButtonLink href={`/admin/influencerlar/${inf.id}/duzenle`}>{tt("Düzenle")}</ButtonLink>
           </div>
         }
       />
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2" aria-label="Kategoriler">
+        <div className="flex flex-wrap gap-2" aria-label={tt("Kategoriler")}>
           {inf.categories.map((c) => (
             <span key={c.categoryId} className={`rounded-full border px-3 py-1 text-[13px] ${c.primary ? "border-fg text-fg" : "border-border text-fg-muted"}`}>
               {c.primary ? "★ " : ""}
@@ -134,7 +136,7 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
         {inf.bio ? <p className="max-w-3xl text-sm text-fg-muted">{inf.bio}</p> : null}
       </div>
 
-      <section aria-label="Hesaplar" className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section aria-label={tt("Hesaplar")} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {inf.socialAccounts.map((a) => (
           <Card key={a.id} interactive={false} className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
@@ -146,11 +148,11 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
             </div>
             <dl className="grid grid-cols-2 gap-2">
               <div>
-                <dt className="text-label text-fg-muted">Takipçi</dt>
+                <dt className="text-label text-fg-muted">{tt("Takipçi")}</dt>
                 <dd className="text-[24px] font-semibold tabular-nums">{compact.format(a.followers)}</dd>
               </div>
               <div>
-                <dt className="text-label text-fg-muted">ER</dt>
+                <dt className="text-label text-fg-muted">{tt("ER")}</dt>
                 <dd className="text-[24px] font-semibold tabular-nums">{pct1.format(Number(a.engagementRate))}</dd>
               </div>
             </dl>
@@ -163,52 +165,50 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
                 {a.avgViews != null ? ` · ort. ${compact.format(a.avgViews)} izlenme` : ""}
               </p>
             ) : null}
-            <p className="text-[12px] text-fg-passive">
-              Kaynak: {syncSourceLabels[a.syncSource] ?? a.syncSource}
-              {a.lastSyncedAt ? ` · son senkron ${fmtDate(a.lastSyncedAt)}` : " · henüz senkronlanmadı"}
+            <p className="text-[12px] text-fg-passive">{" "}{tt("Kaynak:")}{" "}{syncSourceLabels[a.syncSource] ?? a.syncSource}
+              {a.lastSyncedAt ? ` · son senkron ${fmtDate(a.lastSyncedAt)}` : tt(" · henüz senkronlanmadı")}
             </p>
             {a.syncError ? <p className="text-[12px] text-critical">{a.syncError}</p> : null}
             {a.profileUrl ? (
-              <a href={a.profileUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] text-fg-muted underline-offset-4 hover:underline">
-                Profili aç <span className="sr-only">(yeni sekmede açılır)</span>
+              <a href={a.profileUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] text-fg-muted underline-offset-4 hover:underline">{" "}{tt("Profili aç")}{" "}<span className="sr-only">{tt("(yeni sekmede açılır)")}</span>
               </a>
             ) : null}
           </Card>
         ))}
-        {inf.socialAccounts.length === 0 ? <p className="text-sm text-fg-passive">Kayıtlı hesap yok.</p> : null}
+        {inf.socialAccounts.length === 0 ? <p className="text-sm text-fg-passive">{tt("Kayıtlı hesap yok.")}</p> : null}
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card interactive={false} className="flex flex-col gap-1">
-          <span className="text-label text-fg-muted">Tamamlanan kampanya</span>
+          <span className="text-label text-fg-muted">{tt("Tamamlanan kampanya")}</span>
           <span className="text-metric tabular-nums">{st?.completedCampaigns ?? 0}</span>
         </Card>
         <Card interactive={false} className="flex flex-col gap-1">
-          <span className="text-label text-fg-muted">Zamanında teslim</span>
+          <span className="text-label text-fg-muted">{tt("Zamanında teslim")}</span>
           <span className="text-metric tabular-nums">{st?.onTimeRate == null ? "—" : pct.format(st.onTimeRate)}</span>
           <span className="text-[13px] text-fg-passive">{st ? `${st.onTimeCount} / ${st.publishedCount} yayın (≤ 30 dk)` : ""}</span>
         </Card>
         <Card interactive={false} className="flex flex-col gap-1">
-          <span className="text-label text-fg-muted">Ortalama performans</span>
+          <span className="text-label text-fg-muted">{tt("Ortalama performans")}</span>
           <span className="text-metric tabular-nums">
             {st?.performance == null ? "—" : st.performance.kind === "ERISIM_ORANI" ? pct.format(st.performance.value) : pct1.format(st.performance.value)}
           </span>
           <span className="text-[13px] text-fg-passive">
-            {st?.performance?.kind === "ERISIM_ORANI" ? "Erişim / kişi başı hedef" : st?.performance ? "Ortalama ER" : "Ölçüm yok"}
+            {st?.performance?.kind === "ERISIM_ORANI" ? tt("Erişim / kişi başı hedef") : st?.performance ? tt("Ortalama ER") : tt("Ölçüm yok")}
           </span>
         </Card>
         <Card interactive={false} className="flex flex-col gap-1">
-          <span className="text-label text-fg-muted">Risk skoru</span>
+          <span className="text-label text-fg-muted">{tt("Risk skoru")}</span>
           <span className={`text-metric tabular-nums ${inf.riskScore != null && inf.riskScore >= 70 ? "text-critical" : ""}`}>{inf.riskScore ?? "—"}</span>
           <span className="text-[13px] text-fg-passive">
             {st?.activeExclusivities.length
               ? `Münhasırlık: ${st.activeExclusivities.map((e) => `${e.category} (${fmtDate(e.until)})`).join(", ")}`
-              : "Aktif münhasırlık yok"}
+              : tt("Aktif münhasırlık yok")}
           </span>
         </Card>
       </div>
 
-      <section aria-label="Performans grafikleri" className="grid-12">
+      <section aria-label={tt("Performans grafikleri")} className="grid-12">
         {inf.socialAccounts.map((a) => (
           <Card key={a.id} interactive={false} className="flex flex-col gap-4 md:col-span-6">
             <CardTitle className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
             </CardTitle>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div className="flex flex-col gap-1">
-                <span className="text-label text-fg-muted">ER</span>
+                <span className="text-label text-fg-muted">{tt("ER")}</span>
                 <LineChart
                   label={`${a.handle} ER geçmişi`}
                   format={(v) => pct1.format(v)}
@@ -224,7 +224,7 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-label text-fg-muted">Takipçi</span>
+                <span className="text-label text-fg-muted">{tt("Takipçi")}</span>
                 <LineChart
                   label={`${a.handle} takipçi geçmişi`}
                   format={(v) => compact.format(v)}
@@ -235,30 +235,27 @@ export default async function InfluencerProfilePage({ params }: { params: Promis
           </Card>
         ))}
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-12">
-          <CardTitle>İçerik başına erişim (son 12 yayın)</CardTitle>
-          <BarChart label="İçerik başına erişim" format={(v) => compact.format(v)} bars={reachBars} />
+          <CardTitle>{tt("İçerik başına erişim (son 12 yayın)")}</CardTitle>
+          <BarChart label={tt("İçerik başına erişim")} format={(v) => compact.format(v)} bars={reachBars} />
         </Card>
       </section>
 
-      <section aria-label="Bakiye" className="flex flex-col gap-4">
-        <h2 className="text-section">Bakiye</h2>
+      <section aria-label={tt("Bakiye")} className="flex flex-col gap-4">
+        <h2 className="text-section">{tt("Bakiye")}</h2>
         <BalanceCards balances={balances} holdDays={holdDays()} />
-        <p className="text-[13px] text-fg-passive">
-          Toplam ödenen: {formatKurus(st?.totalPaidKurus ?? 0)} ·{" "}
-          <Link href="/admin/finans" className="hover:text-fg">
-            Finans ekranı →
-          </Link>
+        <p className="text-[13px] text-fg-passive">{" "}{tt("Toplam ödenen:")}{" "}{formatKurus(st?.totalPaidKurus ?? 0)} ·{" "}
+          <Link href="/admin/finans" className="hover:text-fg">{" "}{tt("Finans ekranı →")}</Link>
         </p>
       </section>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>İş ve ödeme geçmişi</CardTitle>
+        <CardTitle>{tt("İş ve ödeme geçmişi")}</CardTitle>
         <WorkHistory influencerId={inf.id} mode="admin" />
       </Card>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Agent bulguları</CardTitle>
-        <AgentRunList runs={runs.map((r) => ({ ...r, resolvedByName: r.resolvedBy?.name }))} emptyText="Bu influencer için agent bulgusu yok." />
+        <CardTitle>{tt("Agent bulguları")}</CardTitle>
+        <AgentRunList runs={runs.map((r) => ({ ...r, resolvedByName: r.resolvedBy?.name }))} emptyText={tt("Bu influencer için agent bulgusu yok.")} />
       </Card>
     </div>
   );

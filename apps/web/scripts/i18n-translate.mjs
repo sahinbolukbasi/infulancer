@@ -1,7 +1,7 @@
 /**
- * Sayfa metinlerini çevirir: kaynak koddaki tt("Türkçe") anahtarlarını toplar, eksik olanları
- * Bedrock (Claude) ile EN/DE/FR'ye çevirip lib/i18n/messages/<dil>.json dosyalarına yazar.
- * Mevcut çeviriler korunur (elle düzeltilenler ezilmez).
+ * Sayfa ve sunucu metinlerini çevirir: koddaki tt("Türkçe") anahtarlarını, DomainError mesajlarını
+ * ve action dönüş mesajlarını toplar; eksik olanları Bedrock (Claude) ile EN/DE/FR'ye çevirip
+ * lib/i18n/messages/<dil>.json dosyalarına yazar. Mevcut (elle düzeltilmiş) çeviriler korunur.
  *
  *   AWS kimlik bilgileriyle: node scripts/i18n-translate.mjs
  */
@@ -23,6 +23,7 @@ function walk(dir, out = []) {
   }
   return out;
 }
+
 const keys = new Set();
 for (const f of [...walk(path.join(ROOT, "app")), ...walk(path.join(ROOT, "components")), ...walk(path.join(ROOT, "lib"))]) {
   const src = readFileSync(f, "utf8");
@@ -35,46 +36,63 @@ for (const f of ["components/landing/landing-page.tsx", "components/landing/audi
     const v = JSON.parse(m[1]);
     if (/[A-Za-zÇĞİÖŞÜçğıöşü]{3,}/.test(v) && !/^(from-|bg-|text-|\/)/.test(v)) keys.add(v);
   }
-  // Demo tabloları: ["Bütçe", "450 bin TL"] gibi kısa diziler
-  if (f.includes("scroll-demo")) for (const q of src.matchAll(/"((?:[^"\\]|\\.)*)"/g)) if (/[A-Za-zÇĞİÖŞÜçğıöşü]{3,}/.test(q[1]) && !/^(from-|bg-|text-|rounded|flex|grid|h-|w-|p-|m-|border|\/|@|#[a-z]+\b$)/.test(q[1]) && !/[-:]/.test(q[1].split(" ")[0] ?? "")) keys.add(JSON.parse(`"${q[1]}"`));
-  // Satır içi listeler: ["A", "B"].map( ve ["#id", "Etiket"] çiftleri; kişi/marka/değer alanları
-  if (f.includes("landing")) {
-    for (const m of src.matchAll(/\[((?:\s*"(?:[^"\\]|\\.)*"\s*,?)+)\]/g)) for (const q of m[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)) if (/[A-Za-zÇĞİÖŞÜçğıöşü]{3,}\s/.test(q[1]) || /^[A-ZÇĞİÖŞÜ][a-zçğıöşü]+( [a-zçğıöşü]+)?$/.test(q[1])) keys.add(JSON.parse(`"${q[1]}"`));
-    for (const m of src.matchAll(/\b(?:name|person|brand|value|label|kind)\s*:\s*("(?:[^"\\]|\\.)*")/g)) { const v = JSON.parse(m[1]); if (/[a-zçğıöşü]{3,}/.test(v)) keys.add(v); }
-  }
-  // Dizi içindeki madde metinleri: items/words/bullets: ["…", "…"]
   for (const m of src.matchAll(/\b(?:items|words|bullets|points)\s*:\s*\[([^\]]*)\]/g)) {
     for (const q of m[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)) if (/[A-Za-zÇĞİÖŞÜçğıöşü]{3,}/.test(q[1])) keys.add(JSON.parse(`"${q[1]}"`));
   }
 }
+// Sunucudan dönen kullanıcı mesajları (FormMessage ve bildirimler tt ile çevirir).
+const CORE = path.resolve(ROOT, "../../packages/core/src");
+function collectServer(dir) {
+  for (const f of readdirSync(dir)) {
+    if (f === "node_modules" || f === "generated") continue;
+    const p = path.join(dir, f);
+    if (statSync(p).isDirectory()) { collectServer(p); continue; }
+    if (!/\.ts$/.test(f)) continue;
+    const src = readFileSync(p, "utf8");
+    for (const re of [
+      /new (?:DomainError\([^,]+,\s*|\w*Error\()("(?:[^"\\]|\\.)*")/g,
+      /\b(?:error|message):\s*("(?:[^"\\]|\\.)*")\s*[},]/g,
+    ]) {
+      for (const m of src.matchAll(re)) {
+        let v; try { v = JSON.parse(m[1]); } catch { continue; }
+        if (/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(v) && v.length >= 4 && !/\$\{|^[a-z0-9_.-]+$|^https?:/.test(v) && /\s|[.?!]/.test(v)) keys.add(v);
+      }
+    }
+  }
+}
+collectServer(CORE);
+collectServer(path.join(ROOT, "lib/actions"));
 console.log(`${keys.size} anahtar`);
 
 const SYSTEM = (lang) =>
   `You translate the user interface of "Nordvow", an influencer marketing SaaS (agencies, brands, creators), from Turkish to ${lang}. ` +
-  `Return ONLY a JSON object mapping each input string (exact, unchanged) to its translation. Keep it short and natural for UI. ` +
-  `Keep punctuation, leading/trailing symbols (→, ·, ×, :, parentheses), emoji, placeholders, @handles, #hashtags, numbers, units and brand/platform names (Nordvow, Instagram, TikTok, YouTube, Reels, Story, Shorts, Creative, C2PA) unchanged. ` +
-  `Fragments may be partial sentences around values; translate them as fragments. Legal terms: "md. 23/A" stays as is; "Reklam" as an ad disclosure label becomes the target-language equivalent only when it is UI text, not inside quotes.`;
+  `Input is a numbered list, one item per line as "<n>\\t<Turkish>". Output the SAME numbers, one per line, as "<n>\\t<translation>", nothing else — no code fences, no commentary. ` +
+  `Keep it short and natural for UI. Keep punctuation, leading/trailing symbols (→, ·, ×, :, parentheses), emoji, placeholders, @handles, #hashtags, numbers, units and brand/platform names (Nordvow, Instagram, TikTok, YouTube, Reels, Story, Shorts, Creative, C2PA) unchanged. ` +
+  `Fragments may be partial sentences around values; translate them as fragments. The legal reference "md. 23/A" stays unchanged. Never merge lines.`;
 
-async function translateBatch(lang, batch) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await client.send(
-      new ConverseCommand({
-        modelId: MODEL,
-        system: [{ text: SYSTEM(LANGS[lang]) }],
-        messages: [{ role: "user", content: [{ text: JSON.stringify(batch) }] }],
-        inferenceConfig: { maxTokens: 8000, temperature: 0 },
-      }),
-    );
-    const text = res.output?.message?.content?.map((c) => c.text ?? "").join("") ?? "";
-    const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-    try {
-      const obj = JSON.parse(json);
-      return obj;
-    } catch {
-      console.warn(`  ${lang}: JSON okunamadı, tekrar (${attempt + 1})`, process.env.I18N_DEBUG ? JSON.stringify({ stop: res.stopReason, out: res.output }).slice(0, 600) : "");
-    }
+async function translateBatch(lang, batch, depth = 0) {
+  const numbered = batch.map((t, i) => `${i}\t${t.replace(/\r?\n/g, " ")}`).join("\n");
+  const res = await client.send(
+    new ConverseCommand({
+      modelId: MODEL,
+      system: [{ text: SYSTEM(LANGS[lang]) }],
+      messages: [{ role: "user", content: [{ text: numbered }] }],
+      inferenceConfig: { maxTokens: 8000, temperature: 0 },
+    }),
+  );
+  const text = res.output?.message?.content?.map((c) => c.text ?? "").join("") ?? "";
+  const out = {};
+  for (const line of text.split("\n")) {
+    const m = /^\s*(\d+)\t([\s\S]*)$/.exec(line);
+    if (m) { const i = Number(m[1]); if (batch[i] != null && m[2].trim()) out[batch[i]] = m[2].trim(); }
   }
-  return {};
+  const missing = batch.filter((t) => !(t in out));
+  if (missing.length && depth < 4) {
+    // Eksik kalanları (model kesti veya atladı) daha küçük parçayla tamamla.
+    const half = missing.length > 4 ? Math.ceil(missing.length / 2) : missing.length;
+    for (let i = 0; i < missing.length; i += half) Object.assign(out, await translateBatch(lang, missing.slice(i, i + half), depth + 1));
+  }
+  return out;
 }
 
 for (const lang of Object.keys(LANGS)) {
@@ -82,11 +100,11 @@ for (const lang of Object.keys(LANGS)) {
   const cur = JSON.parse(readFileSync(file, "utf8"));
   const todo = [...keys].filter((k) => !(k in cur));
   console.log(`${lang}: ${todo.length} çevrilecek`);
-  for (let i = 0; i < todo.length; i += 30) {
-    const batch = todo.slice(i, i + 30);
+  for (let i = 0; i < todo.length; i += 40) {
+    const batch = todo.slice(i, i + 40);
     const out = await translateBatch(lang, batch);
     for (const k of batch) if (typeof out[k] === "string" && out[k].trim()) cur[k] = out[k];
-    process.stdout.write(`  ${Math.min(i + 30, todo.length)}/${todo.length}\r`);
+    process.stdout.write(`  ${Math.min(i + 40, todo.length)}/${todo.length}\r`);
     writeFileSync(file, JSON.stringify(Object.fromEntries(Object.entries(cur).sort(([a], [b]) => a.localeCompare(b, "tr"))), null, 1) + "\n");
   }
   console.log("");

@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -20,6 +21,7 @@ import { fmtDate } from "@/lib/time";
 export const metadata: Metadata = { title: "Influencerlar" };
 
 export default async function InfluencersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const now = new Date();
   const sp = await searchParams;
@@ -54,14 +56,14 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
   return (
     <Stagger className="flex flex-col gap-8">
       <PageHeader
-        title="Influencerlar"
-        description="Hesaplar, ER trendi, teslim disiplini, performans, risk ve ödemeler."
-        actions={<ButtonLink href="/admin/influencerlar/yeni">Yeni influencer</ButtonLink>}
+        title={tt("Influencerlar")}
+        description={tt("Hesaplar, ER trendi, teslim disiplini, performans, risk ve ödemeler.")}
+        actions={<ButtonLink href="/admin/influencerlar/yeni">{tt("Yeni influencer")}</ButtonLink>}
       />
       <InfluencerFilterBar categories={tree} sp={sp} count={influencers.length} total={total} active={active} />
       <DataTable
-        caption="Influencer takip listesi"
-        emptyText={active ? "Filtrelere uyan influencer yok. Filtreleri gevşetin." : "Henüz influencer yok."}
+        caption={tt("Influencer takip listesi")}
+        emptyText={active ? tt("Filtrelere uyan influencer yok. Filtreleri gevşetin.") : tt("Henüz influencer yok.")}
         initialSort={filters.sort === "followers" ? { key: "accounts", dir: "desc" } : { key: "name", dir: "asc" }}
         columns={[
           { key: "name", header: "Influencer", sortable: true },
@@ -99,7 +101,7 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
                     </span>
                     <span className="text-[12px] text-fg-passive">
                       {i.city ? `${i.city} · ` : ""}
-                      {i.user?.email ?? "Giriş hesabı yok"}
+                      {i.user?.email ?? tt("Giriş hesabı yok")}
                     </span>
                   </span>
                   </Link>
@@ -136,9 +138,9 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
               performance: {
                 display:
                   st?.performance == null ? "—" : st.performance.kind === "ERISIM_ORANI" ? (
-                    <span title="Erişim / kişi başı erişim hedefi">{pct.format(st.performance.value)} hedef</span>
+                    <span title={tt("Erişim / kişi başı erişim hedefi")}>{pct.format(st.performance.value)}{" "}{tt("hedef")}</span>
                   ) : (
-                    <span title="Ortalama etkileşim oranı">{pct1.format(st.performance.value)} ER</span>
+                    <span title={tt("Ortalama etkileşim oranı")}>{pct1.format(st.performance.value)}{" "}{tt("ER")}</span>
                   ),
                 sort: st?.performance?.value ?? null,
               },
@@ -156,13 +158,12 @@ export default async function InfluencersPage({ searchParams }: { searchParams: 
               exclusivity: {
                 display:
                   excl.length === 0 ? (
-                    <span className="text-fg-passive">Yok</span>
+                    <span className="text-fg-passive">{tt("Yok")}</span>
                   ) : (
                     <span className="flex flex-col text-[13px]">
                       {excl.map((e) => (
                         <span key={e.campaignId}>
-                          {e.category} · {fmtDate(e.until)}&apos;e kadar
-                        </span>
+                          {e.category} · {fmtDate(e.until)}{tt("'e kadar")}</span>
                       ))}
                     </span>
                   ),

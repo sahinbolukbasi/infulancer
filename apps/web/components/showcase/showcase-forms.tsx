@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useState } from "react";
 import { ActionForm } from "@/components/forms/action-form";
 import { ArrowDownIcon, ArrowUpIcon, XIcon } from "@/components/icons";
@@ -7,14 +8,15 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { addPortfolioAction, portfolioOpAction, saveShowcaseAction } from "@/lib/actions/showcase";
 
 export function ShowcaseSettingsForm({ v }: { v: { headline: string | null; bio: string | null; showcaseVisible: boolean; showPrices: boolean; showCollaborations: boolean } }) {
+  const tt = useTT();
   return (
-    <ActionForm action={saveShowcaseAction} submitLabel="Vitrini kaydet" aria-label="Vitrin ayarları">
-      <Field label="Başlık" hint="Markaların ilk gördüğü cümle (ör. 'Güzellik ve cilt bakımı içerikleri, 400B Instagram').">
+    <ActionForm action={saveShowcaseAction} submitLabel={tt("Vitrini kaydet")} aria-label={tt("Vitrin ayarları")}>
+      <Field label={tt("Başlık")} hint={tt("Markaların ilk gördüğü cümle (ör. 'Güzellik ve cilt bakımı içerikleri, 400B Instagram').")}>
         {(p) => <Input {...p} name="headline" defaultValue={v.headline ?? ""} maxLength={120} />}
       </Field>
-      <Field label="Hakkımda">{(p) => <Textarea {...p} name="bio" defaultValue={v.bio ?? ""} rows={4} maxLength={1500} />}</Field>
+      <Field label={tt("Hakkımda")}>{(p) => <Textarea {...p} name="bio" defaultValue={v.bio ?? ""} rows={4} maxLength={1500} />}</Field>
       <fieldset className="flex flex-col gap-2 rounded-2xl border border-line p-4 text-[14px]">
-        <legend className="px-1 text-label text-fg-muted">Markalar neyi görsün?</legend>
+        <legend className="px-1 text-label text-fg-muted">{tt("Markalar neyi görsün?")}</legend>
         {[
           ["showcaseVisible", "Profilim 'Influencer bul' sayfasında listelensin", v.showcaseVisible],
           ["showPrices", "İçerik ücretlerim görünsün", v.showPrices],
@@ -31,10 +33,11 @@ export function ShowcaseSettingsForm({ v }: { v: { headline: string | null; bio:
 }
 
 export function AddPortfolioForm({ published }: { published: { id: string; label: string }[] }) {
+  const tt = useTT();
   const [mode, setMode] = useState<"link" | "job">(published.length ? "job" : "link");
   return (
     <div className="flex flex-col gap-3">
-      <div role="tablist" aria-label="Ekleme yöntemi" className="inline-flex w-fit rounded-full border border-line p-1 text-[13px]">
+      <div role="tablist" aria-label={tt("Ekleme yöntemi")} className="inline-flex w-fit rounded-full border border-line p-1 text-[13px]">
         {(
           [
             ["job", `Platformdaki işlerimden (${published.length})`],
@@ -48,8 +51,8 @@ export function AddPortfolioForm({ published }: { published: { id: string; label
       </div>
       {mode === "job" ? (
         published.length ? (
-          <ActionForm action={addPortfolioAction} submitLabel="Vitrine ekle" submitSize="sm" aria-label="İşten ekle" className="gap-2">
-            <Select name="deliverableId" aria-label="İş seçin" required>
+          <ActionForm action={addPortfolioAction} submitLabel={tt("Vitrine ekle")} submitSize="sm" aria-label={tt("İşten ekle")} className="gap-2">
+            <Select name="deliverableId" aria-label={tt("İş seçin")} required>
               {published.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}
@@ -58,15 +61,15 @@ export function AddPortfolioForm({ published }: { published: { id: string; label
             </Select>
           </ActionForm>
         ) : (
-          <p className="text-[13px] text-fg-passive">Yayın bağlantısı girilmiş işiniz yok.</p>
+          <p className="text-[13px] text-fg-passive">{tt("Yayın bağlantısı girilmiş işiniz yok.")}</p>
         )
       ) : (
-        <ActionForm action={addPortfolioAction} submitLabel="Vitrine ekle" submitSize="sm" resetOnSuccess aria-label="Bağlantı ile ekle" className="gap-3">
+        <ActionForm action={addPortfolioAction} submitLabel={tt("Vitrine ekle")} submitSize="sm" resetOnSuccess aria-label={tt("Bağlantı ile ekle")} className="gap-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Field label="Başlık">{(p) => <Input {...p} name="title" required maxLength={120} placeholder="Yaz koleksiyonu Reels" />}</Field>
-            <Field label="Bağlantı">{(p) => <Input {...p} name="url" type="url" required placeholder="https://www.instagram.com/reel/…" />}</Field>
-            <Field label="Marka (isteğe bağlı)">{(p) => <Input {...p} name="brandName" maxLength={80} />}</Field>
-            <Field label="Kısa not (isteğe bağlı)">{(p) => <Input {...p} name="note" maxLength={300} placeholder="1,2M izlenme" />}</Field>
+            <Field label={tt("Başlık")}>{(p) => <Input {...p} name="title" required maxLength={120} placeholder={tt("Yaz koleksiyonu Reels")} />}</Field>
+            <Field label={tt("Bağlantı")}>{(p) => <Input {...p} name="url" type="url" required placeholder="https://www.instagram.com/reel/…" />}</Field>
+            <Field label={tt("Marka (isteğe bağlı)")}>{(p) => <Input {...p} name="brandName" maxLength={80} />}</Field>
+            <Field label={tt("Kısa not (isteğe bağlı)")}>{(p) => <Input {...p} name="note" maxLength={300} placeholder={tt("1,2M izlenme")} />}</Field>
           </div>
         </ActionForm>
       )}
@@ -93,7 +96,8 @@ function Op({ id, op, label, children }: { id: string; op: "up" | "down" | "dele
 }
 
 export function PortfolioList({ items }: { items: { id: string; title: string; url: string; platformLabel: string; brandName: string | null }[] }) {
-  if (!items.length) return <p className="text-sm text-fg-passive">Henüz öne çıkarılan iş yok.</p>;
+  const tt = useTT();
+  if (!items.length) return <p className="text-sm text-fg-passive">{tt("Henüz öne çıkarılan iş yok.")}</p>;
   return (
     <ol className="flex flex-col divide-y divide-line rounded-2xl border border-line">
       {items.map((it) => (
@@ -107,13 +111,13 @@ export function PortfolioList({ items }: { items: { id: string; title: string; u
               {it.brandName ? ` · ${it.brandName}` : ""}
             </span>
           </span>
-          <Op id={it.id} op="up" label="Yukarı taşı">
+          <Op id={it.id} op="up" label={tt("Yukarı taşı")}>
             <ArrowUpIcon size={15} />
           </Op>
-          <Op id={it.id} op="down" label="Aşağı taşı">
+          <Op id={it.id} op="down" label={tt("Aşağı taşı")}>
             <ArrowDownIcon size={15} />
           </Op>
-          <Op id={it.id} op="delete" label="Vitrinden kaldır">
+          <Op id={it.id} op="delete" label={tt("Vitrinden kaldır")}>
             <XIcon size={15} />
           </Op>
         </li>

@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -60,6 +61,7 @@ function auditDetail(action: string, data: Record<string, unknown>, tz: string):
 }
 
 export default async function DeliverableDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const d = await prisma.deliverable.findUnique({
@@ -111,53 +113,51 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
           <span className="inline-flex flex-wrap items-center gap-3">
             <StatusDot tone={deliverableTone(d.status, { overdue, violation: d.contractViolation })}>
               {deliverableStatusLabels[d.status]}
-              {overdue ? " · gecikti" : ""}
-              {d.contractViolation ? " · sözleşme ihlali" : ""}
+              {overdue ? tt(" · gecikti") : ""}
+              {d.contractViolation ? tt(" · sözleşme ihlali") : ""}
             </StatusDot>
             <Link href={`/admin/kampanyalar/${assignment.campaign.id}`} className="hover:underline">
               {assignment.campaign.name}
             </Link>
-            <span>Sözleşme: {contractStatusLabels[assignment.contractStatus]}</span>
+            <span>{tt("Sözleşme:")}{" "}{contractStatusLabels[assignment.contractStatus]}</span>
           </span>
         }
         actions={
-          <ButtonLink href={`/admin/takvim`} variant="secondary">
-            Takvim
-          </ButtonLink>
+          <ButtonLink href={`/admin/takvim`} variant="secondary">{" "}{tt("Takvim")}</ButtonLink>
         }
       />
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-7">
-          <CardTitle>Plan</CardTitle>
+          <CardTitle>{tt("Plan")}</CardTitle>
           <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-            <dt className="text-fg-passive">Paylaşım</dt>
+            <dt className="text-fg-passive">{tt("Paylaşım")}</dt>
             <dd className="tabular-nums">
               {fmtDateTime(d.plannedAt, tz)} ({tzLabel})
-              {tz !== AGENCY_TZ ? <span className="text-fg-muted"> · İstanbul {fmtDateTime(d.plannedAt)}</span> : null}
+              {tz !== AGENCY_TZ ? <span className="text-fg-muted">{" "}{tt("· İstanbul")}{" "}{fmtDateTime(d.plannedAt)}</span> : null}
             </dd>
-            <dt className="text-fg-passive">Onay son tarihi</dt>
+            <dt className="text-fg-passive">{tt("Onay son tarihi")}</dt>
             <dd className="tabular-nums">
               {fmtDateTime(d.approvalDeadline, tz)}
-              {tz !== AGENCY_TZ ? <span className="text-fg-muted"> · İstanbul {fmtDateTime(d.approvalDeadline)}</span> : null}
+              {tz !== AGENCY_TZ ? <span className="text-fg-muted">{" "}{tt("· İstanbul")}{" "}{fmtDateTime(d.approvalDeadline)}</span> : null}
             </dd>
-            <dt className="text-fg-passive">Yayın</dt>
+            <dt className="text-fg-passive">{tt("Yayın")}</dt>
             <dd className="flex flex-col gap-1">
               {d.publishedAt ? <span className="tabular-nums">{fmtDateTime(d.publishedAt, tz)}</span> : null}
               <PostUrlForm deliverableId={d.id} current={d.postUrl} editable={["YAYINLANDI", "METRIK_BEKLIYOR", "TAMAMLANDI"].includes(d.status)} />
             </dd>
-            <dt className="text-fg-passive">Caption</dt>
+            <dt className="text-fg-passive">{tt("Caption")}</dt>
             <dd className="whitespace-pre-line">{d.caption || "—"}</dd>
-            <dt className="text-fg-passive">Etiketler</dt>
+            <dt className="text-fg-passive">{tt("Etiketler")}</dt>
             <dd>{[...d.hashtags, ...d.mentions].join(" ") || "—"}</dd>
-            <dt className="text-fg-passive">UTM link</dt>
+            <dt className="text-fg-passive">{tt("UTM link")}</dt>
             <dd className="font-mono text-[12px] break-all text-fg-muted">{d.link ?? "—"}</dd>
-            <dt className="text-fg-passive">Reklam ibaresi</dt>
-            <dd>{d.disclosureRequired ? "Zorunlu" : "Zorunlu değil"}</dd>
+            <dt className="text-fg-passive">{tt("Reklam ibaresi")}</dt>
+            <dd>{d.disclosureRequired ? tt("Zorunlu") : tt("Zorunlu değil")}</dd>
           </dl>
           {canEdit ? (
             <details className="rounded-[8px] border border-border">
-              <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Planı düzenle</summary>
+              <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{tt("Planı düzenle")}</summary>
               <div className="border-t border-border p-4">
                 <DeliverableForm
                   assignmentId={assignment.id}
@@ -193,7 +193,7 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
         </Card>
         <div className="flex flex-col gap-4 md:col-span-5">
           <Card interactive={false} className="flex flex-col gap-4">
-            <CardTitle>Durum geçişi</CardTitle>
+            <CardTitle>{tt("Durum geçişi")}</CardTitle>
             <TransitionPanel deliverableId={d.id} targets={targets} role="ADMIN" currentPostUrl={d.postUrl} />
           </Card>
           <PlatformRulePanel platform={d.platform} contentType={d.contentType} />
@@ -202,7 +202,7 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
-          <CardTitle>Durum geçmişi</CardTitle>
+          <CardTitle>{tt("Durum geçmişi")}</CardTitle>
           <ol className="flex flex-col gap-3">
             {d.statusChanges.map((s) => (
               <li key={s.id} className="flex flex-col gap-0.5 border-l border-border pl-4">
@@ -211,7 +211,7 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
                   {deliverableStatusLabels[s.to]}
                 </span>
                 <span className="text-[12px] text-fg-passive">
-                  {fmtDateTime(s.at)} · {s.byUser?.name ?? "Sistem"}
+                  {fmtDateTime(s.at)} · {s.byUser?.name ?? tt("Sistem")}
                   {s.note ? ` · ${s.note}` : ""}
                 </span>
               </li>
@@ -219,9 +219,9 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
           </ol>
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
-          <CardTitle>Audit kaydı</CardTitle>
+          <CardTitle>{tt("Audit kaydı")}</CardTitle>
           {history.length === 0 ? (
-            <p className="text-sm text-fg-passive">Kayıt yok.</p>
+            <p className="text-sm text-fg-passive">{tt("Kayıt yok.")}</p>
           ) : (
             <ol className="flex max-h-96 flex-col gap-3 overflow-auto">
               {history.map((h) => (
@@ -231,7 +231,7 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
                     <span className="text-fg-muted"> {auditDetail(h.action, h.data, tz)}</span>
                   </span>
                   <span className="text-[12px] text-fg-passive">
-                    {fmtDateTime(h.at)} · {h.actorId ? (actors.get(h.actorId) ?? h.actorRole) : "Sistem"} · <span className="font-mono">{h.hash.slice(0, 10)}</span>
+                    {fmtDateTime(h.at)} · {h.actorId ? (actors.get(h.actorId) ?? h.actorRole) : tt("Sistem")} · <span className="font-mono">{h.hash.slice(0, 10)}</span>
                   </span>
                 </li>
               ))}
@@ -242,13 +242,13 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-7">
-          <CardTitle>Dosyalar</CardTitle>
-          <AssetList editableRights assets={d.assets.map((a) => ({ ...a, uploadedByName: a.uploadedBy.name }))} emptyText="Bu işe dosya yüklenmedi." />
+          <CardTitle>{tt("Dosyalar")}</CardTitle>
+          <AssetList editableRights assets={d.assets.map((a) => ({ ...a, uploadedByName: a.uploadedBy.name }))} emptyText={tt("Bu işe dosya yüklenmedi.")} />
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-5">
-          <CardTitle>Dosya yükle</CardTitle>
+          <CardTitle>{tt("Dosya yükle")}</CardTitle>
           {d.status === "IPTAL" ? (
-            <p className="text-sm text-fg-passive">İptal edilmiş işe dosya yüklenemez.</p>
+            <p className="text-sm text-fg-passive">{tt("İptal edilmiş işe dosya yüklenemez.")}</p>
           ) : (
             <FileUploader
               target={{ type: "deliverable", id: d.id }}
@@ -267,10 +267,10 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
       </div>
 
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Metrikler</CardTitle>
+        <CardTitle>{tt("Metrikler")}</CardTitle>
         <DataTable
-          caption="Metrik ölçümleri"
-          emptyText="Henüz metrik girilmedi."
+          caption={tt("Metrik ölçümleri")}
+          emptyText={tt("Henüz metrik girilmedi.")}
           columns={[
             { key: "measuredAt", header: "Ölçüm", sortable: true },
             { key: "stage", header: "Aşama", sortable: true },
@@ -298,9 +298,7 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
                         {m.screenshotAsset ? (
                           <>
                             {" · "}
-                            <a href={`/api/assets/${m.screenshotAsset.id}/download`} className="hover:underline">
-                              görüntü
-                            </a>
+                            <a href={`/api/assets/${m.screenshotAsset.id}/download`} className="hover:underline">{" "}{tt("görüntü")}</a>
                           </>
                         ) : null}
                       </span>
@@ -320,16 +318,16 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
         />
         {published ? (
           <details className="rounded-[8px] border border-border">
-            <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Metrik gir</summary>
+            <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{tt("Metrik gir")}</summary>
             <div className="border-t border-border p-4">
               <MetricEntryForm deliverableId={d.id} platform={d.platform} isStory={isStory(d)} role="ADMIN" tzLabel={tzLabel} screenshots={freeShots} />
             </div>
           </details>
         ) : (
-          <p className="text-[13px] text-fg-passive">Metrik girişi yayından sonra açılır.</p>
+          <p className="text-[13px] text-fg-passive">{tt("Metrik girişi yayından sonra açılır.")}</p>
         )}
         <details className="rounded-[8px] border border-border">
-          <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Marka verisi gir (UTM tıklama, satış, ciro)</summary>
+          <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{tt("Marka verisi gir (UTM tıklama, satış, ciro)")}</summary>
           <div className="border-t border-border p-4">
             <BrandDataForm deliverableId={d.id} />
           </div>
@@ -338,13 +336,13 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-7">
-          <CardTitle>Agent bulguları</CardTitle>
-          <AgentRunList runs={runs.map((r) => ({ ...r, resolvedByName: r.resolvedBy?.name }))} emptyText="Bu iş için agent bulgusu yok." />
+          <CardTitle>{tt("Agent bulguları")}</CardTitle>
+          <AgentRunList runs={runs.map((r) => ({ ...r, resolvedByName: r.resolvedBy?.name }))} emptyText={tt("Bu iş için agent bulgusu yok.")} />
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-5">
-          <CardTitle>Marka incelemeleri</CardTitle>
+          <CardTitle>{tt("Marka incelemeleri")}</CardTitle>
           {d.reviews.length === 0 ? (
-            <p className="text-sm text-fg-passive">Marka henüz inceleme bırakmadı.</p>
+            <p className="text-sm text-fg-passive">{tt("Marka henüz inceleme bırakmadı.")}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-border">
               {d.reviews.map((r) => (
@@ -359,8 +357,7 @@ export default async function DeliverableDetailPage({ params }: { params: Promis
             </ul>
           )}
           <p className="flex items-center gap-2 text-[12px] text-fg-passive">
-            <PlatformIcon platform={d.platform} size={12} /> Durumu yalnız admin değiştirir; marka notları kuyruğa düşer.
-          </p>
+            <PlatformIcon platform={d.platform} size={12} />{" "}{tt("Durumu yalnız admin değiştirir; marka notları kuyruğa düşer.")}</p>
         </Card>
       </div>
     </div>

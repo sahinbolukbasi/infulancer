@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -54,6 +55,7 @@ export default async function BrandProfilePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ sekme?: string }>;
 }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const { sekme } = await searchParams;
@@ -225,7 +227,7 @@ export default async function BrandProfilePage({
   const general = <div className="flex flex-col gap-6">
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
-          <CardTitle>Kategoriler ve rakipler</CardTitle>
+          <CardTitle>{tt("Kategoriler ve rakipler")}</CardTitle>
           <div className="flex flex-wrap gap-2">
             {brand.categories.map((c) => (
               <span key={c.categoryId} className={`rounded-full border px-3 py-1 text-[13px] ${c.primary ? "border-fg text-fg" : "border-border text-fg-muted"}`}>
@@ -234,8 +236,7 @@ export default async function BrandProfilePage({
               </span>
             ))}
           </div>
-          <p className="text-[13px] text-fg-muted">
-            Rakip markalar:{" "}
+          <p className="text-[13px] text-fg-muted">{" "}{tt("Rakip markalar:")}{" "}
             {competitors.length
               ? competitors.map((b, i) => (
                   <span key={b.id}>
@@ -245,20 +246,18 @@ export default async function BrandProfilePage({
                     </Link>
                   </span>
                 ))
-              : "tanımlı değil"}
-            . Aynı ana kategorideki markalar da otomatik rakip sayılır (influencer ataması 30 gün engellenir).
-          </p>
+              : tt("tanımlı değil")}{" "}{tt(". Aynı ana kategorideki markalar da otomatik rakip sayılır (influencer ataması 30 gün engellenir).")}</p>
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-6">
-          <CardTitle>İletişim ve sözleşme</CardTitle>
+          <CardTitle>{tt("İletişim ve sözleşme")}</CardTitle>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            <dt className="text-fg-passive">Yetkili</dt>
+            <dt className="text-fg-passive">{tt("Yetkili")}</dt>
             <dd>{brand.contactName}</dd>
-            <dt className="text-fg-passive">E-posta</dt>
+            <dt className="text-fg-passive">{tt("E-posta")}</dt>
             <dd>{brand.contactEmail}</dd>
-            <dt className="text-fg-passive">Telefon</dt>
+            <dt className="text-fg-passive">{tt("Telefon")}</dt>
             <dd>{brand.contactPhone}</dd>
-            <dt className="text-fg-passive">Sözleşme</dt>
+            <dt className="text-fg-passive">{tt("Sözleşme")}</dt>
             <dd>
               {brand.contractRef ?? "—"}
               {brand.contractStartsAt ? ` · ${fmtDate(brand.contractStartsAt)}` : ""}
@@ -269,9 +268,9 @@ export default async function BrandProfilePage({
 
       <div className="grid-12">
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-12">
-          <CardTitle>Panel kullanıcıları</CardTitle>
+          <CardTitle>{tt("Panel kullanıcıları")}</CardTitle>
           {brand.users.length === 0 ? (
-            <p className="text-sm text-fg-passive">Henüz kullanıcı yok.</p>
+            <p className="text-sm text-fg-passive">{tt("Henüz kullanıcı yok.")}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-border text-sm">
               {brand.users.map((u) => (
@@ -286,45 +285,38 @@ export default async function BrandProfilePage({
         </Card>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Kanal ve uyum durumu">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label={tt("Kanal ve uyum durumu")}>
         <Card interactive={false} className="flex flex-col gap-2">
-          <CardTitle>Mesaj kanalları</CardTitle>
-          <p className="text-sm text-fg-muted">
-            WhatsApp: {number ? `${number.displayNumber ?? number.phoneNumberId} · ${number.paymentMethod === "payment_method_confirmed" ? "kurulum tamam" : "ödeme yöntemi bekleniyor"}` : "bağlı değil"}
+          <CardTitle>{tt("Mesaj kanalları")}</CardTitle>
+          <p className="text-sm text-fg-muted">{" "}{tt("WhatsApp:")}{" "}{number ? `${number.displayNumber ?? number.phoneNumberId} · ${number.paymentMethod === "payment_method_confirmed" ? "kurulum tamam" : "ödeme yöntemi bekleniyor"}` : tt("bağlı değil")}
           </p>
           {connections.map((c) => (
             <StatusDot key={c.id} tone={c.status === "ACTIVE" ? "active" : "critical"}>
               {c.provider} · {c.status}
             </StatusDot>
           ))}
-          <p className="text-[13px] text-fg-passive">{assistants} sohbet asistanı etkin.</p>
-          <Link href="/admin/kanallar" className="text-[13px] underline-offset-4 hover:underline">
-            Kanallar sayfası →
-          </Link>
+          <p className="text-[13px] text-fg-passive">{assistants}{" "}{tt("sohbet asistanı etkin.")}</p>
+          <Link href="/admin/kanallar" className="text-[13px] underline-offset-4 hover:underline">{" "}{tt("Kanallar sayfası →")}</Link>
         </Card>
         <Card interactive={false} className="flex flex-col gap-2">
-          <CardTitle>Uyum</CardTitle>
-          <StatusDot tone={brand.tenantSettings?.mode === "production" ? "active" : "muted"}>{brand.tenantSettings?.mode === "production" ? "Canlı mod" : "Sandbox (canlı değil)"}</StatusDot>
-          <p className="text-sm text-fg-muted">KVKK makbuzu: {kvkk.complete ? "tamam" : `${kvkk.missing.length} eksik`}</p>
-          <p className="text-sm text-fg-muted">İYS: {consents.map((c) => `${c.state} ${c._count}`).join(" · ") || "kayıt yok"}</p>
-          <Link href="/admin/uyum" className="text-[13px] underline-offset-4 hover:underline">
-            Uyum sayfası →
-          </Link>
+          <CardTitle>{tt("Uyum")}</CardTitle>
+          <StatusDot tone={brand.tenantSettings?.mode === "production" ? "active" : "muted"}>{brand.tenantSettings?.mode === "production" ? tt("Canlı mod") : tt("Sandbox (canlı değil)")}</StatusDot>
+          <p className="text-sm text-fg-muted">{tt("KVKK makbuzu:")}{" "}{kvkk.complete ? "tamam" : `${kvkk.missing.length} eksik`}</p>
+          <p className="text-sm text-fg-muted">{tt("İYS:")}{" "}{consents.map((c) => `${c.state} ${c._count}`).join(" · ") || tt("kayıt yok")}</p>
+          <Link href="/admin/uyum" className="text-[13px] underline-offset-4 hover:underline">{" "}{tt("Uyum sayfası →")}</Link>
         </Card>
         <Card interactive={false} className="flex flex-col gap-2">
-          <CardTitle>Creative bakiyesi</CardTitle>
+          <CardTitle>{tt("Creative bakiyesi")}</CardTitle>
           <p className="text-[24px] font-semibold tabular-nums">{credits ? Number(credits.balanceCredits) : 0}</p>
-          <p className="text-[13px] text-fg-muted">{credits ? `${Number(credits.balanceCredits)} TL bakiye · ${Number(credits.heldCredits)} TL blokede` : "Bakiye hesabı yok"}</p>
-          <Link href="/creative" className="text-[13px] underline-offset-4 hover:underline">
-            Creative sayfası →
-          </Link>
+          <p className="text-[13px] text-fg-muted">{credits ? `${Number(credits.balanceCredits)} TL bakiye · ${Number(credits.heldCredits)} TL blokede` : tt("Bakiye hesabı yok")}</p>
+          <Link href="/creative" className="text-[13px] underline-offset-4 hover:underline">{" "}{tt("Creative sayfası →")}</Link>
         </Card>
       </section>
   </div>;
   const campaignsTab = (
     <DataTable
-      caption="Marka kampanyaları"
-      emptyText="Bu markayla henüz kampanya yapılmadı."
+      caption={tt("Marka kampanyaları")}
+      emptyText={tt("Bu markayla henüz kampanya yapılmadı.")}
       initialSort={{ key: "dates", dir: "desc" }}
       columns={[
         { key: "name", header: "Kampanya", sortable: true },
@@ -357,7 +349,7 @@ export default async function BrandProfilePage({
                 c.status === "IPTAL" ? "—" : c.brandPaymentReceivedAt ? (
                   <StatusDot tone="active">{fmtDate(c.brandPaymentReceivedAt)}</StatusDot>
                 ) : (
-                  <StatusDot tone={c.status === "KAPANDI" ? "critical" : "muted"}>{c.status === "KAPANDI" ? "Gecikiyor" : "Bekleniyor"}</StatusDot>
+                  <StatusDot tone={c.status === "KAPANDI" ? "critical" : "muted"}>{c.status === "KAPANDI" ? tt("Gecikiyor") : tt("Bekleniyor")}</StatusDot>
                 ),
               sort: c.brandPaymentReceivedAt?.getTime() ?? 0,
             },
@@ -373,7 +365,7 @@ export default async function BrandProfilePage({
   );
   const paymentsTab = (
     <div className="flex flex-col gap-6">
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Ödeme özeti">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label={tt("Ödeme özeti")}>
         {[
           ["Tahsil edilen", formatKurus(collected), "Ödemesi alınan kampanyalar"],
           ["Bekleyen tahsilat", formatKurus(receivable), `${overdueCampaigns.length} kapanmış kampanyada gecikme`],
@@ -388,10 +380,10 @@ export default async function BrandProfilePage({
         ))}
       </section>
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Kampanya bazında tahsilat ve maliyet</CardTitle>
+        <CardTitle>{tt("Kampanya bazında tahsilat ve maliyet")}</CardTitle>
         <DataTable
-          caption="Tahsilat ve maliyet"
-          emptyText="Faturalanacak kampanya yok."
+          caption={tt("Tahsilat ve maliyet")}
+          emptyText={tt("Faturalanacak kampanya yok.")}
           columns={[
             { key: "name", header: "Kampanya", sortable: true },
             { key: "fee", header: "Marka bedeli", align: "right", sortable: true },
@@ -418,11 +410,11 @@ export default async function BrandProfilePage({
                   margin: { display: <span className={margin < 0 ? "text-critical" : undefined}>{formatKurus(margin)}</span>, sort: margin },
                   paid: {
                     display: c.brandPaymentReceivedAt ? (
-                      <StatusDot tone="active">Alındı · {fmtDate(c.brandPaymentReceivedAt)}</StatusDot>
+                      <StatusDot tone="active">{tt("Alındı ·")}{" "}{fmtDate(c.brandPaymentReceivedAt)}</StatusDot>
                     ) : c.status === "KAPANDI" ? (
-                      <StatusDot tone="critical">Gecikiyor (kapanış {c.closedAt ? fmtDate(c.closedAt) : "—"})</StatusDot>
+                      <StatusDot tone="critical">{tt("Gecikiyor (kapanış")}{" "}{c.closedAt ? fmtDate(c.closedAt) : "—"})</StatusDot>
                     ) : (
-                      <StatusDot tone="muted">{c.status === "TASLAK" ? "Taslak" : "Kampanya sürüyor"}</StatusDot>
+                      <StatusDot tone="muted">{c.status === "TASLAK" ? tt("Taslak") : tt("Kampanya sürüyor")}</StatusDot>
                     ),
                     sort: c.brandPaymentReceivedAt?.getTime() ?? 0,
                   },
@@ -430,18 +422,16 @@ export default async function BrandProfilePage({
               };
             })}
         />
-        <p className="text-[13px] text-fg-passive">
-          Marka ödemesi kampanya sayfasındaki &quot;Marka ödemesi alındı&quot; ile işaretlenir. Influencer ödemeleri hakediş üzerinden Finans sayfasında yürür.
-        </p>
+        <p className="text-[13px] text-fg-passive">{" "}{tt("Marka ödemesi kampanya sayfasındaki \"Marka ödemesi alındı\" ile işaretlenir. Influencer ödemeleri hakediş üzerinden Finans sayfasında yürür.")}</p>
       </Card>
     </div>
   );
   const peopleTab =
     people.size === 0 ? (
-      <EmptyState message="Bu markayla henüz influencer çalışmadı." />
+      <EmptyState message={tt("Bu markayla henüz influencer çalışmadı.")} />
     ) : (
       <DataTable
-        caption="Markayla çalışan influencerlar"
+        caption={tt("Markayla çalışan influencerlar")}
         initialSort={{ key: "last", dir: "desc" }}
         columns={[
           { key: "name", header: "Influencer", sortable: true },
@@ -466,7 +456,7 @@ export default async function BrandProfilePage({
     );
   const contentTab =
     published.length === 0 ? (
-      <EmptyState message="Bu marka için yayınlanmış içerik yok." />
+      <EmptyState message={tt("Bu marka için yayınlanmış içerik yok.")} />
     ) : (
       <Card interactive={false} className="flex flex-col gap-2">
         <ul className="flex flex-col divide-y divide-border">
@@ -482,9 +472,8 @@ export default async function BrandProfilePage({
               <span className="flex items-center gap-3">
                 <StatusDot tone={deliverableTone(d.status, { violation: d.contractViolation })}>{deliverableStatusLabels[d.status]}</StatusDot>
                 {d.postUrl ? (
-                  <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-fg-muted hover:text-fg">
-                    Paylaşım <ExternalIcon size={12} />
-                    <span className="sr-only">(yeni sekmede açılır)</span>
+                  <a href={d.postUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-fg-muted hover:text-fg">{" "}{tt("Paylaşım")}{" "}<ExternalIcon size={12} />
+                    <span className="sr-only">{tt("(yeni sekmede açılır)")}</span>
                   </a>
                 ) : null}
               </span>
@@ -495,12 +484,10 @@ export default async function BrandProfilePage({
     );
   const historyTab =
     timeline.length === 0 ? (
-      <EmptyState message="Henüz kayıtlı bir hareket yok." />
+      <EmptyState message={tt("Henüz kayıtlı bir hareket yok.")} />
     ) : (
       <Card interactive={false} className="flex flex-col gap-2">
-        <p className="text-[13px] text-fg-passive">
-          Marka, kampanya, brief, sözleşme ve ödeme hareketleri değiştirilemez denetim kaydından; marka incelemeleri ve yayınlar teslim kayıtlarından gelir.
-        </p>
+        <p className="text-[13px] text-fg-passive">{" "}{tt("Marka, kampanya, brief, sözleşme ve ödeme hareketleri değiştirilemez denetim kaydından; marka incelemeleri ve yayınlar teslim kayıtlarından gelir.")}</p>
         <ol className="flex flex-col">
           {timeline.slice(0, 300).map((t) => (
             <li key={t.key} className="grid grid-cols-[140px_1fr] gap-4 border-b border-border py-3 text-sm last:border-b-0">
@@ -529,15 +516,13 @@ export default async function BrandProfilePage({
         description={`${brand.categories.find((c) => c.primary)?.category.name ?? brand.category} · VKN ${brand.taxNumber} · ${brand.taxOffice}`}
         actions={
           <div className="flex gap-2">
-            <ButtonLink href={`/admin/kampanyalar/yeni?marka=${brand.id}`} variant="secondary">
-              Yeni kampanya
-            </ButtonLink>
-            <ButtonLink href={`/admin/markalar/${brand.id}/duzenle`}>Düzenle</ButtonLink>
+            <ButtonLink href={`/admin/kampanyalar/yeni?marka=${brand.id}`} variant="secondary">{" "}{tt("Yeni kampanya")}</ButtonLink>
+            <ButtonLink href={`/admin/markalar/${brand.id}/duzenle`}>{tt("Düzenle")}</ButtonLink>
           </div>
         }
       />
 
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Özet">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label={tt("Özet")}>
         {[
           ["Aktif / toplam kampanya", `${active} / ${brand.campaigns.length}`],
           ["Toplam marka bedeli", formatKurus(totalFee)],
@@ -557,7 +542,7 @@ export default async function BrandProfilePage({
 
       <Tabs
         key={sekme ?? "genel"}
-        label="Marka bölümleri"
+        label={tt("Marka bölümleri")}
         defaultTab={sekme}
         tabs={[
           { id: "genel", label: "Genel", content: general },

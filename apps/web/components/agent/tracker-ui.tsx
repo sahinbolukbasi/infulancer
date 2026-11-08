@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { useState } from "react";
 import { ActionForm } from "@/components/forms/action-form";
 import { Field, Input, Select } from "@/components/ui/form";
@@ -23,6 +24,7 @@ const TONE: Record<string, string> = { campaign: "from-neon-pink/25", story: "fr
 
 /** Şablon galerisi: karta tıkla → hedef seç → kur. `fixedTarget` verilirse (kampanya sayfası) hedef seçimi atlanır. */
 export function TrackerGallery({ templates, targets, fixedTarget }: { templates: TemplateView[]; targets: Record<"CAMPAIGN" | "INFLUENCER" | "BRAND", TargetOption[]>; fixedTarget?: { scope: "CAMPAIGN" | "INFLUENCER" | "BRAND"; id: string } }) {
+  const tt = useTT();
   const usable = fixedTarget ? templates.filter((t) => t.scope === fixedTarget.scope) : templates;
   const [open, setOpen] = useState<string | null>(null);
   const tpl = usable.find((t) => t.key === open);
@@ -46,7 +48,7 @@ export function TrackerGallery({ templates, targets, fixedTarget }: { templates:
               <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[10px] uppercase tracking-wide text-fg-muted">{SCOPE_LABEL[t.scope]}</span>
             </span>
             <span className="text-[12px] text-fg-muted">{t.summary}</span>
-            <span className="mt-1 text-[12px] font-medium text-fg">+ Kur</span>
+            <span className="mt-1 text-[12px] font-medium text-fg">{tt("+ Kur")}</span>
           </button>
         ))}
       </div>
@@ -67,9 +69,7 @@ export function TrackerGallery({ templates, targets, fixedTarget }: { templates:
                 <Field label={`Takip edilecek ${SCOPE_LABEL[tpl.scope].toLocaleLowerCase("tr")}`}>
                   {(p) => (
                     <Select {...p} name="targetId" required defaultValue="">
-                      <option value="" disabled>
-                        Seçin
-                      </option>
+                      <option value="" disabled>{" "}{tt("Seçin")}</option>
                       {targets[tpl.scope].map((o) => (
                         <option key={o.id} value={o.id}>
                           {o.name}
@@ -86,18 +86,15 @@ export function TrackerGallery({ templates, targets, fixedTarget }: { templates:
               ))}
             </div>
             <fieldset className="flex flex-wrap gap-4 text-[13px] text-fg-muted">
-              <legend className="mb-1 text-label">Bildirim</legend>
+              <legend className="mb-1 text-label">{tt("Bildirim")}</legend>
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked readOnly disabled className="h-4 w-4" /> Ajans
-              </label>
+                <input type="checkbox" checked readOnly disabled className="h-4 w-4" />{" "}{tt("Ajans")}</label>
               {tpl.scope !== "INFLUENCER" ? (
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name="notifyBrand" className="h-4 w-4 accent-[var(--color-fg)]" /> Marka
-                </label>
+                  <input type="checkbox" name="notifyBrand" className="h-4 w-4 accent-[var(--color-fg)]" />{" "}{tt("Marka")}</label>
               ) : (
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name="notifyInfluencer" className="h-4 w-4 accent-[var(--color-fg)]" /> Influencer
-                </label>
+                  <input type="checkbox" name="notifyInfluencer" className="h-4 w-4 accent-[var(--color-fg)]" />{" "}{tt("Influencer")}</label>
               )}
             </fieldset>
           </ActionForm>
@@ -131,6 +128,7 @@ const sevDot: Record<string, string> = { KRITIK: "bg-critical", UYARI: "bg-neon-
 
 /** Kurulu takipçiler: durum, son bulgular, aç/kapat/çalıştır/sil. */
 export function TrackerList({ trackers, emptyText }: { trackers: TrackerView[]; emptyText: string }) {
+  const tt = useTT();
   if (trackers.length === 0) return <p className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-fg-passive">{emptyText}</p>;
   return (
     <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -140,24 +138,20 @@ export function TrackerList({ trackers, emptyText }: { trackers: TrackerView[]; 
             <div className="flex min-w-0 flex-col">
               <span className="truncate font-medium">{t.name}</span>
               <span className="text-[12px] text-fg-muted">
-                {t.templateTitle} · {t.targetName} · {t.enabled ? "açık" : "durdu"}
+                {t.templateTitle} · {t.targetName} · {t.enabled ? tt("açık") : "durdu"}
                 {t.lastRunAt ? ` · son kontrol ${t.lastRunAt}` : ""}
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <OpButton id={t.id} op="run" label="Şimdi kontrol et">
-                Çalıştır
+              <OpButton id={t.id} op="run" label={tt("Şimdi kontrol et")}>{" "}{tt("Çalıştır")}</OpButton>
+              <OpButton id={t.id} op="toggle" label={t.enabled ? tt("Durdur") : tt("Aç")}>
+                {t.enabled ? tt("Durdur") : tt("Aç")}
               </OpButton>
-              <OpButton id={t.id} op="toggle" label={t.enabled ? "Durdur" : "Aç"}>
-                {t.enabled ? "Durdur" : "Aç"}
-              </OpButton>
-              <OpButton id={t.id} op="delete" label="Takipçiyi sil" danger>
-                Sil
-              </OpButton>
+              <OpButton id={t.id} op="delete" label={tt("Takipçiyi sil")} danger>{" "}{tt("Sil")}</OpButton>
             </div>
           </div>
           {t.findings.length === 0 ? (
-            <p className="text-[13px] text-neon-lime">✓ Sorun yok</p>
+            <p className="text-[13px] text-neon-lime">{tt("✓ Sorun yok")}</p>
           ) : (
             <ul className="flex flex-col gap-1.5">
               {t.findings.slice(0, 5).map((f) => (
@@ -171,7 +165,7 @@ export function TrackerList({ trackers, emptyText }: { trackers: TrackerView[]; 
                   </a>
                 </li>
               ))}
-              {t.findings.length > 5 ? <li className="px-2 text-[12px] text-fg-passive">+{t.findings.length - 5} bulgu daha</li> : null}
+              {t.findings.length > 5 ? <li className="px-2 text-[12px] text-fg-passive">+{t.findings.length - 5}{" "}{tt("bulgu daha")}</li> : null}
             </ul>
           )}
         </li>

@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
@@ -12,6 +13,7 @@ import { ButtonLink } from "@/components/ui/form";
 export const metadata: Metadata = { title: "Influencer düzenle" };
 
 export default async function EditInfluencerPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const inf = await prisma.influencer.findUnique({
@@ -23,11 +25,9 @@ export default async function EditInfluencerPage({ params }: { params: Promise<{
     <div className="flex flex-col gap-8">
       <PageHeader
         title={`${inf.name} · düzenle`}
-        description={inf.user ? `Giriş: ${inf.user.email}` : "Giriş hesabı yok"}
+        description={inf.user ? `Giriş: ${inf.user.email}` : tt("Giriş hesabı yok")}
         actions={
-          <ButtonLink href={`/admin/influencerlar/${inf.id}`} variant="secondary">
-            Profile dön
-          </ButtonLink>
+          <ButtonLink href={`/admin/influencerlar/${inf.id}`} variant="secondary">{" "}{tt("Profile dön")}</ButtonLink>
         }
       />
       <Card interactive={false}>

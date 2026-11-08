@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma, type Prisma } from "@infulancer/core/db";
@@ -27,6 +28,7 @@ function qs(base: Record<string, string | undefined>, patch: Record<string, stri
 
 /** Tüm kullanıcılar: rol ve duruma göre filtre, bağlı marka/influencer, askıya alma. */
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ rol?: string; durum?: string; q?: string }> }) {
+  const tt = await getTT();
   const actor = await requireAdmin();
   const sp = await searchParams;
   const rol = ROLES.find((r) => r === sp.rol);
@@ -67,27 +69,24 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Kullanıcılar"
-        description="Admin, ajans, marka ve influencer hesapları."
+        title={tt("Kullanıcılar")}
+        description={tt("Admin, ajans, marka ve influencer hesapları.")}
         actions={
           <div className="flex gap-2">
-            <ButtonLink href="/admin/yetkiler" variant="secondary">
-              Rol ve yetkiler
-            </ButtonLink>
-            <ButtonLink href="/admin/davetler">Davet oluştur</ButtonLink>
+            <ButtonLink href="/admin/yetkiler" variant="secondary">{" "}{tt("Rol ve yetkiler")}</ButtonLink>
+            <ButtonLink href="/admin/davetler">{tt("Davet oluştur")}</ButtonLink>
           </div>
         }
       />
       <details className="rounded-3xl border border-line bg-glass px-5 py-4">
-        <summary className="cursor-pointer text-sm font-medium">+ Ajans ekibine kullanıcı ekle</summary>
+        <summary className="cursor-pointer text-sm font-medium">{tt("+ Ajans ekibine kullanıcı ekle")}</summary>
         <div className="mt-4">
           <StaffUserForm />
         </div>
       </details>
       <div className="flex flex-col gap-3">
-        <nav aria-label="Rol filtresi" className="flex flex-wrap gap-2">
-          <Link href={qs(base, { rol: undefined })} aria-current={!rol ? "page" : undefined} className={chip(!rol)}>
-            Tüm roller · {total}
+        <nav aria-label={tt("Rol filtresi")} className="flex flex-wrap gap-2">
+          <Link href={qs(base, { rol: undefined })} aria-current={!rol ? "page" : undefined} className={chip(!rol)}>{" "}{tt("Tüm roller ·")}{" "}{total}
           </Link>
           {ROLES.map((r) => (
             <Link key={r} href={qs(base, { rol: r })} aria-current={rol === r ? "page" : undefined} className={chip(rol === r)}>
@@ -95,10 +94,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             </Link>
           ))}
         </nav>
-        <nav aria-label="Durum filtresi" className="flex flex-wrap gap-2">
-          <Link href={qs(base, { durum: undefined })} aria-current={!durum ? "page" : undefined} className={chip(!durum)}>
-            Tüm durumlar
-          </Link>
+        <nav aria-label={tt("Durum filtresi")} className="flex flex-wrap gap-2">
+          <Link href={qs(base, { durum: undefined })} aria-current={!durum ? "page" : undefined} className={chip(!durum)}>{" "}{tt("Tüm durumlar")}</Link>
           {STATUSES.map((s) => (
             <Link key={s} href={qs(base, { durum: s })} aria-current={durum === s ? "page" : undefined} className={chip(durum === s)}>
               {statusLabel[s]} · {statusCount[s] ?? 0}
@@ -108,16 +105,14 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         <form method="get" className="relative max-w-sm" role="search">
           {rol ? <input type="hidden" name="rol" value={rol} /> : null}
           {durum ? <input type="hidden" name="durum" value={durum} /> : null}
-          <label className="sr-only" htmlFor="user-q">
-            İsim veya e-posta ara
-          </label>
+          <label className="sr-only" htmlFor="user-q">{" "}{tt("İsim veya e-posta ara")}</label>
           <SearchIcon size={16} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-passive" />
-          <Input id="user-q" name="q" defaultValue={q} placeholder="İsim veya e-posta ara" className="pl-9" />
+          <Input id="user-q" name="q" defaultValue={q} placeholder={tt("İsim veya e-posta ara")} className="pl-9" />
         </form>
       </div>
       <DataTable
-        caption="Kullanıcılar"
-        emptyText="Bu filtreyle kullanıcı yok."
+        caption={tt("Kullanıcılar")}
+        emptyText={tt("Bu filtreyle kullanıcı yok.")}
         columns={[
           { key: "name", header: "Ad", sortable: true },
           { key: "email", header: "E-posta", sortable: true },
@@ -134,7 +129,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             id: u.id,
             label: u.name,
             cells: {
-              name: { display: <span className="text-fg">{u.name}{u.id === actor.userId ? <span className="text-fg-passive"> (siz)</span> : null}</span>, sort: u.name },
+              name: { display: <span className="text-fg">{u.name}{u.id === actor.userId ? <span className="text-fg-passive">{" "}{tt("(siz)")}</span> : null}</span>, sort: u.name },
               email: { display: <span className="text-fg-muted">{u.email}</span>, sort: u.email },
               role: { display: roleLabels[u.role], sort: u.role },
               status: { display: <StatusDot tone={statusTone[u.status]}>{statusLabel[u.status]}</StatusDot>, sort: u.status },
@@ -144,7 +139,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                     {linkName}
                   </Link>
                 ) : (
-                  <span className="text-fg-passive">{u.role === "ADMIN" || u.role === "AGENCY" ? "Ajans ekibi" : "—"}</span>
+                  <span className="text-fg-passive">{u.role === "ADMIN" || u.role === "AGENCY" ? tt("Ajans ekibi") : "—"}</span>
                 ),
                 sort: linkName ?? "",
               },
@@ -157,9 +152,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                       {u.role === "ADMIN" || u.role === "AGENCY" ? <StaffRoleButton userId={u.id} role={u.role} name={u.name} /> : null}
                     </span>
                   ) : (
-                    <Link href="/admin/davetler" className="text-[13px] text-fg-muted hover:text-fg">
-                      Başvuruyu incele →
-                    </Link>
+                    <Link href="/admin/davetler" className="text-[13px] text-fg-muted hover:text-fg">{" "}{tt("Başvuruyu incele →")}</Link>
                   ),
               },
             },

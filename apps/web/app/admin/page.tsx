@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma, type Severity } from "@infulancer/core/db";
@@ -72,6 +73,7 @@ const QUICK_LINKS: { href: string; label: string; icon: ComponentType<IconProps>
   { href: "/docs", label: "Dokümantasyon", icon: FileIcon },
 ];
 export default async function AdminHomePage({ searchParams }: { searchParams: Promise<{ yetki?: string }> }) {
+  const tt = await getTT();
   const { yetki } = await searchParams;
   const actor = await requireActor("ADMIN");
   const now = new Date();
@@ -283,16 +285,16 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
     copilot: <CopilotHome actor={actor} />,
     kpi: (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Aktif kampanya" value={activeCount} sparkline={sparkActive} hint="Son 8 hafta" />
-          <MetricCard label="Bekleyen onay" value={pending.length} sparkline={sparkPending} hint="Yüklenen taslak / hafta" />
-          <MetricCard label="Geciken teslim" value={overdue.length} sparkline={sparkOverdue} hint="Geç yayın / hafta" />
-          <MetricCard label="Ödenecek tutar" value={payable} format="currency-kurus" sparkline={sparkPayable} hint="Onaylı + ödeme listesinde" />
+          <MetricCard label={tt("Aktif kampanya")} value={activeCount} sparkline={sparkActive} hint={tt("Son 8 hafta")} />
+          <MetricCard label={tt("Bekleyen onay")} value={pending.length} sparkline={sparkPending} hint={tt("Yüklenen taslak / hafta")} />
+          <MetricCard label={tt("Geciken teslim")} value={overdue.length} sparkline={sparkOverdue} hint={tt("Geç yayın / hafta")} />
+          <MetricCard label={tt("Ödenecek tutar")} value={payable} format="currency-kurus" sparkline={sparkPayable} hint={tt("Onaylı + ödeme listesinde")} />
         </div>
     ),
     quick: (
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>Hızlı erişim</CardTitle>
-        <nav aria-label="Hızlı erişim" className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
+        <CardTitle>{tt("Hızlı erişim")}</CardTitle>
+        <nav aria-label={tt("Hızlı erişim")} className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
           {QUICK_LINKS.filter((l) => !(actor.staffRole && l.href === "/admin/finans")).map((l) => (
             <Link
               key={l.href}
@@ -309,13 +311,12 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
     queue: (
       <Card interactive={false} className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <CardTitle>Aksiyon kuyruğu</CardTitle>
+          <CardTitle>{tt("Aksiyon kuyruğu")}</CardTitle>
           <span className="text-[13px] text-fg-passive tabular-nums">
-            {queue.length > QUEUE_LIMIT ? `${QUEUE_LIMIT} / ${queue.length}` : queue.length} öğe
-          </span>
+            {queue.length > QUEUE_LIMIT ? `${QUEUE_LIMIT} / ${queue.length}` : queue.length}{" "}{tt("öğe")}</span>
         </div>
         {queue.length === 0 ? (
-          <EmptyState message="Bekleyen aksiyon yok. Yeni taslaklar ve agent uyarıları burada toplanır." />
+          <EmptyState message={tt("Bekleyen aksiyon yok. Yeni taslaklar ve agent uyarıları burada toplanır.")} />
         ) : (
           <ul className="flex flex-col gap-3">
             {queue.slice(0, QUEUE_LIMIT).map((q) => (
@@ -329,9 +330,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
                   q.agentRunId ? (
                     <AgentRunResolve id={q.agentRunId} />
                   ) : q.href ? (
-                    <ButtonLink href={q.href} variant="secondary" size="sm">
-                      İncele
-                    </ButtonLink>
+                    <ButtonLink href={q.href} variant="secondary" size="sm">{" "}{tt("İncele")}</ButtonLink>
                   ) : undefined
                 }
               />
@@ -339,19 +338,15 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
           </ul>
         )}
         {runs.length > 0 ? (
-          <Link href="/admin/agent" className="text-[13px] text-fg-muted hover:text-fg">
-            Tüm agent bulguları →
-          </Link>
+          <Link href="/admin/agent" className="text-[13px] text-fg-muted hover:text-fg">{" "}{tt("Tüm agent bulguları →")}</Link>
         ) : null}
       </Card>
     ),
     week: (
       <Card interactive={false} className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <CardTitle>Bu hafta</CardTitle>
-          <ButtonLink href="/admin/takvim" variant="secondary" size="sm">
-            Takvimi aç
-          </ButtonLink>
+          <CardTitle>{tt("Bu hafta")}</CardTitle>
+          <ButtonLink href="/admin/takvim" variant="secondary" size="sm">{" "}{tt("Takvimi aç")}</ButtonLink>
         </div>
         <WeekCalendar days={week.days} rows={rows} today={week.today} />
       </Card>
@@ -359,13 +354,11 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
     campaigns: (
       <Card interactive={false} className="flex h-full flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <CardTitle>Aktif ve taslak kampanyalar</CardTitle>
-          <ButtonLink href="/admin/kampanyalar" variant="secondary" size="sm">
-            Tümü
-          </ButtonLink>
+          <CardTitle>{tt("Aktif ve taslak kampanyalar")}</CardTitle>
+          <ButtonLink href="/admin/kampanyalar" variant="secondary" size="sm">{" "}{tt("Tümü")}</ButtonLink>
         </div>
         {activeList.length === 0 ? (
-          <EmptyState message="Açık kampanya yok." />
+          <EmptyState message={tt("Açık kampanya yok.")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {activeList.map((c) => {
@@ -380,7 +373,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
                     </Link>
                     <span className="flex items-center gap-2">
                       <StatusDot tone={c.status === "AKTIF" ? "active" : "muted"}>{campaignStatusLabels[c.status]}</StatusDot>
-                      <Tooltip label="Influencer ekle">
+                      <Tooltip label={tt("Influencer ekle")}>
                       <Link
                         href={`/admin/kampanyalar/${c.id}?sekme=influencerlar`}
                         aria-label={`${c.name}: influencer ekle`}
@@ -396,7 +389,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
                       <span className="block h-full bg-fg" style={{ width: `${Math.round(prog * 100)}%` }} />
                     </span>
                     <span>
-                      {c.brand.name} · {c._count.assignments} influencer · {sc == null ? "skor —" : `skor ${pct.format(sc)}`}
+                      {c.brand.name} · {c._count.assignments}{" "}{tt("influencer ·")}{" "}{sc == null ? tt("skor —") : `skor ${pct.format(sc)}`}
                     </span>
                   </div>
                 </li>
@@ -409,24 +402,22 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
     finance: (
       <Card interactive={false} className="flex h-full flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <CardTitle>Finans özeti</CardTitle>
-          <ButtonLink href="/admin/finans" variant="secondary" size="sm">
-            Finans
-          </ButtonLink>
+          <CardTitle>{tt("Finans özeti")}</CardTitle>
+          <ButtonLink href="/admin/finans" variant="secondary" size="sm">{" "}{tt("Finans")}</ButtonLink>
         </div>
         <dl className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <dt className="text-label text-fg-muted">Ödenecek (influencer)</dt>
+            <dt className="text-label text-fg-muted">{tt("Ödenecek (influencer)")}</dt>
             <dd className="text-[20px] font-semibold tabular-nums">{formatKurus(payable)}</dd>
           </div>
           <div className="flex flex-col gap-1">
-            <dt className="text-label text-fg-muted">Çekim talebi</dt>
+            <dt className="text-label text-fg-muted">{tt("Çekim talebi")}</dt>
             <dd className="text-[20px] font-semibold tabular-nums">
               {requested.length} · {formatKurus(requestedSum)}
             </dd>
           </div>
           <div className="col-span-2 flex flex-col gap-1">
-            <dt className="text-label text-fg-muted">Bekleyen marka tahsilatı (kapanmış kampanya)</dt>
+            <dt className="text-label text-fg-muted">{tt("Bekleyen marka tahsilatı (kapanmış kampanya)")}</dt>
             <dd className="text-[20px] font-semibold tabular-nums">{formatKurus(unpaidSum)}</dd>
           </div>
         </dl>
@@ -442,20 +433,18 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
             ))}
           </ul>
         ) : (
-          <p className="text-[13px] text-fg-passive">Geciken marka tahsilatı yok.</p>
+          <p className="text-[13px] text-fg-passive">{tt("Geciken marka tahsilatı yok.")}</p>
         )}
       </Card>
     ),
     brands: (
       <Card interactive={false} className="flex h-full flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <CardTitle>Markalar</CardTitle>
-          <ButtonLink href="/admin/markalar" variant="secondary" size="sm">
-            Tümü
-          </ButtonLink>
+          <CardTitle>{tt("Markalar")}</CardTitle>
+          <ButtonLink href="/admin/markalar" variant="secondary" size="sm">{" "}{tt("Tümü")}</ButtonLink>
         </div>
         {brandSummary.length === 0 ? (
-          <EmptyState message="Henüz kampanyası olan marka yok." />
+          <EmptyState message={tt("Henüz kampanyası olan marka yok.")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border text-sm">
             {brandSummary.map((b) => (
@@ -464,8 +453,8 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
                   {b.name}
                 </Link>
                 <span className="text-[12px] tabular-nums text-fg-muted">
-                  {b.active} aktif / {b.total} kampanya · {formatKurus(b.fee)}
-                  {b.due ? <span className="text-critical"> · {formatKurus(b.due)} tahsilat bekliyor</span> : null}
+                  {b.active}{" "}{tt("aktif /")}{" "}{b.total}{" "}{tt("kampanya ·")}{" "}{formatKurus(b.fee)}
+                  {b.due ? <span className="text-critical"> · {formatKurus(b.due)}{" "}{tt("tahsilat bekliyor")}</span> : null}
                 </span>
               </li>
             ))}
@@ -476,18 +465,15 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
     influencers: (
       <Card interactive={false} className="flex h-full flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <CardTitle>Influencerlar</CardTitle>
-          <ButtonLink href="/admin/influencerlar" variant="secondary" size="sm">
-            Tümü
-          </ButtonLink>
+          <CardTitle>{tt("Influencerlar")}</CardTitle>
+          <ButtonLink href="/admin/influencerlar" variant="secondary" size="sm">{" "}{tt("Tümü")}</ButtonLink>
         </div>
         {pendingApplications ? (
           <Link href="/admin/davetler" className="rounded-[8px] border border-border px-3 py-2 text-sm hover:bg-surface-hover">
-            {pendingApplications} üyelik başvurusu onayınızı bekliyor →
-          </Link>
+            {pendingApplications}{" "}{tt("üyelik başvurusu onayınızı bekliyor →")}</Link>
         ) : null}
         {topInfluencers.length === 0 ? (
-          <EmptyState message="Sosyal hesap bilgisi yok." />
+          <EmptyState message={tt("Sosyal hesap bilgisi yok.")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border text-sm">
             {topInfluencers.map((a) => (
@@ -501,7 +487,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
                 </span>
                 <span className="text-[12px] tabular-nums text-fg-muted">
                   {compact.format(a.followers)} · {pct.format(Number(a.engagementRate))}
-                  {a.syncSource !== "manual" ? " · otomatik" : ""}
+                  {a.syncSource !== "manual" ? tt(" · otomatik") : ""}
                 </span>
               </li>
             ))}
@@ -514,11 +500,9 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Pr
   return (
     <Stagger className="flex flex-col gap-6">
       {yetki === "yok" ? (
-        <p role="alert" className="rounded-2xl border border-neon-amber/50 bg-neon-amber/10 px-4 py-3 text-sm">
-          Bu bölüm yalnız platform yöneticisine açık.
-        </p>
+        <p role="alert" className="rounded-2xl border border-neon-amber/50 bg-neon-amber/10 px-4 py-3 text-sm">{" "}{tt("Bu bölüm yalnız platform yöneticisine açık.")}</p>
       ) : null}
-      <PageHeader title="Genel bakış" description="Panonuzu düzenleyebilirsiniz: alanları sıralayın, gizleyin veya geri ekleyin." />
+      <PageHeader title={tt("Genel bakış")} description={tt("Panonuzu düzenleyebilirsiniz: alanları sıralayın, gizleyin veya geri ekleyin.")} />
       <DashboardBoard widgets={widgets} initial={layout} defaults={normalizeLayout(null)} />
     </Stagger>
   );

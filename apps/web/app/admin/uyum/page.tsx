@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { iysPenaltyBands } from "@infulancer/core/compliance/iys";
@@ -14,6 +15,7 @@ import { fmtDateTime } from "@/lib/time";
 export const metadata: Metadata = { title: "Uyum" };
 
 export default async function AdminCompliancePage() {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const now = new Date();
   const [pending, consents, filings, settings, flags, brands, checks] = await Promise.all([
@@ -32,12 +34,12 @@ export default async function AdminCompliancePage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Uyum"
-        description="Dört kart yeşilse tüm markalar yasal olarak hazır."
+        title={tt("Uyum")}
+        description={tt("Dört kart yeşilse tüm markalar yasal olarak hazır.")}
         actions={
           <div className="flex gap-2">
-            <RunJobButton job="iys-register" label="İYS kuyruğunu şimdi gönder" />
-            <RunJobButton job="iys-sla" label="Süre kontrolü" />
+            <RunJobButton job="iys-register" label={tt("İYS kuyruğunu şimdi gönder")} />
+            <RunJobButton job="iys-sla" label={tt("Süre kontrolü")} />
           </div>
         }
       />
@@ -52,9 +54,9 @@ export default async function AdminCompliancePage() {
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="iys">
-          <CardTitle>İYS kuyruğu (3 iş günü SLA)</CardTitle>
+          <CardTitle>{tt("İYS kuyruğu (3 iş günü SLA)")}</CardTitle>
           {pending.length === 0 ? (
-            <p className="text-sm text-fg-passive">Bekleyen kayıt yok.</p>
+            <p className="text-sm text-fg-passive">{tt("Bekleyen kayıt yok.")}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-border text-sm">
               {pending.map((e) => (
@@ -62,7 +64,7 @@ export default async function AdminCompliancePage() {
                   <span>
                     {name.get(e.consent.tenantId)} · {e.consent.recipient} · {e.consent.state}
                   </span>
-                  <StatusDot tone={e.dueAt <= now ? "critical" : "muted"}>Son tarih {fmtDateTime(e.dueAt)}</StatusDot>
+                  <StatusDot tone={e.dueAt <= now ? "critical" : "muted"}>{tt("Son tarih")}{" "}{fmtDateTime(e.dueAt)}</StatusDot>
                   {e.lastError ? <span className="w-full text-[13px] text-critical">{e.lastError}</span> : null}
                 </li>
               ))}
@@ -70,7 +72,7 @@ export default async function AdminCompliancePage() {
           )}
         </Card>
         <Card interactive={false} className="flex flex-col gap-3">
-          <CardTitle>Onay durumu (marka bazında)</CardTitle>
+          <CardTitle>{tt("Onay durumu (marka bazında)")}</CardTitle>
           <ul className="flex flex-col divide-y divide-border text-sm">
             {consents.map((c) => (
               <li key={`${c.tenantId}-${c.state}`} className="flex justify-between py-2">
@@ -81,12 +83,12 @@ export default async function AdminCompliancePage() {
               </li>
             ))}
           </ul>
-          <p className="text-[13px] text-fg-muted">RET kayıtları terminaldir: panelden, CSV ile veya doğrudan veritabanında silinemez ya da üzerine yazılamaz. Delil kayıtları 10 yıl saklanır.</p>
+          <p className="text-[13px] text-fg-muted">{tt("RET kayıtları terminaldir: panelden, CSV ile veya doğrudan veritabanında silinemez ya da üzerine yazılamaz. Delil kayıtları 10 yıl saklanır.")}</p>
         </Card>
       </section>
 
       <Card interactive={false} className="flex flex-col gap-3">
-        <CardTitle>6563 md. 12 ceza bantları (2026, alıcı başına)</CardTitle>
+        <CardTitle>{tt("6563 md. 12 ceza bantları (2026, alıcı başına)")}</CardTitle>
         <ul className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
           {iysPenaltyBands.map((b) => (
             <li key={b.label} className="flex justify-between gap-3 border-b border-border py-2">
@@ -99,7 +101,7 @@ export default async function AdminCompliancePage() {
       </Card>
 
       <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="kvkk">
-        <CardTitle>KVKK standart sözleşme bildirimleri</CardTitle>
+        <CardTitle>{tt("KVKK standart sözleşme bildirimleri")}</CardTitle>
         <ul className="flex flex-col divide-y divide-border text-sm">
           {settings.map((s) => {
             const fs = filings.filter((f) => f.tenantId === s.tenantId);
@@ -107,13 +109,13 @@ export default async function AdminCompliancePage() {
               <li key={s.tenantId} className="flex flex-col gap-1 py-3">
                 <span className="flex justify-between">
                   <span>{name.get(s.tenantId)}</span>
-                  <StatusDot tone={s.mode === "production" ? "active" : "muted"}>{s.mode === "production" ? "Canlı" : "Sandbox"}</StatusDot>
+                  <StatusDot tone={s.mode === "production" ? "active" : "muted"}>{s.mode === "production" ? tt("Canlı") : tt("Sandbox")}</StatusDot>
                 </span>
                 {TRANSFER_TARGETS.map((t) => {
                   const f = fs.find((x) => x.transferTarget === t.key);
                   return (
                     <span key={t.key} className="text-[13px] text-fg-muted">
-                      {t.label}: {f?.receiptS3Key ? "makbuz yüklendi" : f ? `bekleniyor (son tarih ${fmtDateTime(f.dueAt)})` : "sözleşme imzalanmadı"}
+                      {t.label}: {f?.receiptS3Key ? tt("makbuz yüklendi") : f ? `bekleniyor (son tarih ${fmtDateTime(f.dueAt)})` : tt("sözleşme imzalanmadı")}
                     </span>
                   );
                 })}
@@ -125,15 +127,14 @@ export default async function AdminCompliancePage() {
       </Card>
 
       <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="md23a">
-        <CardTitle>md. 23/A — uyumsuz içerikler</CardTitle>
+        <CardTitle>{tt("md. 23/A — uyumsuz içerikler")}</CardTitle>
         {checks.length === 0 ? (
-          <p className="text-sm text-fg-passive">Uyumsuz içerik yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Uyumsuz içerik yok.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border text-sm">
             {checks.map((c) => (
               <li key={c.id} className="flex flex-col gap-1 py-2">
-                <a className="underline-offset-4 hover:underline" href={`/admin/teslimler/${c.deliverableId}`}>
-                  İçerik {c.deliverableId.slice(-6)} · kare {c.frameIndex + 1}
+                <a className="underline-offset-4 hover:underline" href={`/admin/teslimler/${c.deliverableId}`}>{" "}{tt("İçerik")}{" "}{c.deliverableId.slice(-6)}{" "}{tt("· kare")}{" "}{c.frameIndex + 1}
                 </a>
                 <span className="text-[13px] text-fg-muted">{c.issues.join(" · ")}</span>
               </li>
@@ -144,9 +145,9 @@ export default async function AdminCompliancePage() {
       </Card>
 
       <Card interactive={false} className="flex scroll-mt-24 flex-col gap-3" id="bayraklar">
-        <CardTitle>Politika bayrakları</CardTitle>
+        <CardTitle>{tt("Politika bayrakları")}</CardTitle>
         {flags.length === 0 ? (
-          <p className="text-sm text-fg-passive">Bayrak yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Bayrak yok.")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border text-sm">
             {flags.map((f) => (
@@ -154,7 +155,7 @@ export default async function AdminCompliancePage() {
                 <span>
                   {name.get(f.tenantId)} · {f.detail ?? f.flag}
                 </span>
-                <StatusDot tone={f.blocking ? "critical" : "muted"}>{f.blocking ? "Gönderim engelli" : "Kısıtlı dikey"}</StatusDot>
+                <StatusDot tone={f.blocking ? "critical" : "muted"}>{f.blocking ? tt("Gönderim engelli") : tt("Kısıtlı dikey")}</StatusDot>
               </li>
             ))}
           </ul>

@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma, type CampaignBrief } from "@infulancer/core/db";
@@ -30,6 +31,7 @@ function changedFields(prev: CampaignBrief | undefined, cur: CampaignBrief): str
 }
 
 export default async function BriefPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const campaign = await prisma.campaign.findUnique({
@@ -48,11 +50,9 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
     <Stagger className="flex flex-col gap-8">
       <PageHeader
         title={`Brief · ${campaign.name}`}
-        description="Brief yerinde düzenlenmez; her kayıt yeni sürüm açar. Influencer her zaman son sürümü görür."
+        description={tt("Brief yerinde düzenlenmez; her kayıt yeni sürüm açar. Influencer her zaman son sürümü görür.")}
         actions={
-          <ButtonLink href={`/admin/kampanyalar/${campaign.id}`} variant="secondary">
-            Kampanyaya dön
-          </ButtonLink>
+          <ButtonLink href={`/admin/kampanyalar/${campaign.id}`} variant="secondary">{" "}{tt("Kampanyaya dön")}</ButtonLink>
         }
       />
       <div className="grid-12">
@@ -60,9 +60,9 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
           <BriefForm campaignId={campaign.id} latest={latest} nextVersion={(latest?.version ?? 0) + 1} />
         </Card>
         <Card interactive={false} className="flex flex-col gap-4 md:col-span-4">
-          <CardTitle>Sürüm geçmişi</CardTitle>
+          <CardTitle>{tt("Sürüm geçmişi")}</CardTitle>
           {versions.length === 0 ? (
-            <p className="text-sm text-fg-passive">Henüz brief yok.</p>
+            <p className="text-sm text-fg-passive">{tt("Henüz brief yok.")}</p>
           ) : (
             <ol className="flex flex-col gap-4">
               {[...versions].reverse().map((v) => {
@@ -72,13 +72,13 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
                   <li key={v.id} className="flex flex-col gap-1 border-l border-border pl-4">
                     <span className="text-sm text-fg">
                       v{v.version}
-                      {v.id === latest?.id ? <span className="ml-2 text-[12px] text-fg-muted">güncel</span> : null}
+                      {v.id === latest?.id ? <span className="ml-2 text-[12px] text-fg-muted">{tt("güncel")}</span> : null}
                     </span>
                     <span className="text-[12px] text-fg-passive">
                       {fmtDateTime(v.createdAt)} · {v.createdBy.name}
                     </span>
                     <span className="text-[13px] text-fg-muted">
-                      {changes.length ? `Değişen: ${changes.join(", ")}` : "Değişiklik yok"}
+                      {changes.length ? `Değişen: ${changes.join(", ")}` : tt("Değişiklik yok")}
                     </span>
                   </li>
                 );

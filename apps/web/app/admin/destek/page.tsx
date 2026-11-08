@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { SUPPORT_EMAIL, supportCategoryLabel, supportStatusLabel, type SupportCategory, type SupportStatus } from "@infulancer/core/support/service";
@@ -23,6 +24,7 @@ const FILTER_STATUS: Record<string, SupportStatus | undefined> = { acik: "ACIK",
 
 /** Yönetici destek gelen kutusu: talepleri görüntüle, durum ve not güncelle. */
 export default async function AdminSupportPage({ searchParams }: { searchParams: Promise<{ filtre?: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { filtre } = await searchParams;
   const active = FILTERS.some((f) => f.id === filtre) ? filtre! : "acik";
@@ -39,7 +41,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Destek talepleri" description={`Kullanıcı hata bildirimi, soru ve istekleri. Doğrudan e-posta: ${SUPPORT_EMAIL}`} />
+      <PageHeader title={tt("Destek talepleri")} description={`Kullanıcı hata bildirimi, soru ve istekleri. Doğrudan e-posta: ${SUPPORT_EMAIL}`} />
       {tickets.length ? (
         <StatStrip
           stats={[
@@ -55,8 +57,8 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
       <FilterTabs active={active} items={FILTERS.map((f) => ({ id: f.id, label: f.label, href: `/admin/destek?filtre=${f.id}`, count: counts[f.id as keyof typeof counts] }))} />
       {list.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-3xl border border-dashed border-line px-6 py-14 text-center">
-          <p className="font-medium text-fg">{tickets.length ? "Bu görünümde talep yok" : "Henüz destek talebi yok"}</p>
-          <p className="max-w-sm text-[13px] text-fg-muted">Kullanıcıların /destek sayfasından gönderdiği talepler burada toplanır.</p>
+          <p className="font-medium text-fg">{tickets.length ? tt("Bu görünümde talep yok") : tt("Henüz destek talebi yok")}</p>
+          <p className="max-w-sm text-[13px] text-fg-muted">{tt("Kullanıcıların /destek sayfasından gönderdiği talepler burada toplanır.")}</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-4">
@@ -79,8 +81,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
               </div>
               <p className="whitespace-pre-line rounded-xl bg-bg/40 p-3 text-[14px] text-fg">{t.message}</p>
               {t.pageUrl ? (
-                <p className="truncate text-[12px] text-fg-passive">
-                  İlgili sayfa:{" "}
+                <p className="truncate text-[12px] text-fg-passive">{" "}{tt("İlgili sayfa:")}{" "}
                   <a href={t.pageUrl} className="underline-offset-4 hover:text-fg hover:underline" target="_blank" rel="noreferrer">
                     {t.pageUrl}
                   </a>

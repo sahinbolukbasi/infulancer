@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -26,6 +27,7 @@ const FILTERS = [
 ] as const;
 type StatusKey = keyof typeof statusRank;
 export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { durum } = await searchParams;
   const filter = durum && durum in statusRank ? (durum as StatusKey) : undefined;
@@ -53,11 +55,11 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
   return (
     <Stagger className="flex flex-col gap-8">
       <PageHeader
-        title="Kampanyalar"
-        description="Kampanyayı açın, satırdaki ikonlarla influencer ekleyin, brief yazın veya kurulumu tamamlayın."
-        actions={<ButtonLink href="/admin/kampanyalar/yeni">Yeni kampanya</ButtonLink>}
+        title={tt("Kampanyalar")}
+        description={tt("Kampanyayı açın, satırdaki ikonlarla influencer ekleyin, brief yazın veya kurulumu tamamlayın.")}
+        actions={<ButtonLink href="/admin/kampanyalar/yeni">{tt("Yeni kampanya")}</ButtonLink>}
       />
-      <nav aria-label="Durum filtresi" className="flex flex-wrap gap-2">
+      <nav aria-label={tt("Durum filtresi")} className="flex flex-wrap gap-2">
         {FILTERS.map((f) => {
           const active = (filter ?? "") === f.id;
           return (
@@ -73,8 +75,8 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
         })}
       </nav>
       <DataTable
-        caption="Kampanyalar"
-        emptyText={filter ? "Bu durumda kampanya yok." : "Henüz kampanya yok."}
+        caption={tt("Kampanyalar")}
+        emptyText={filter ? tt("Bu durumda kampanya yok.") : tt("Henüz kampanya yok.")}
         initialSort={{ key: "status", dir: "asc" }}
         columns={[
           { key: "name", header: "Kampanya", sortable: true },
@@ -108,7 +110,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
               status: {
                 display:
                   c.status === "TASLAK" && c.submittedAt ? (
-                    <StatusDot tone="active">Markadan geldi · kurulum</StatusDot>
+                    <StatusDot tone="active">{tt("Markadan geldi · kurulum")}</StatusDot>
                   ) : (
                     <StatusDot tone={campaignTone(c.status)}>{campaignStatusLabels[c.status]}</StatusDot>
                   ),
@@ -132,9 +134,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
               payment: {
                 display:
                   c.status === "IPTAL" ? "—" : c.brandPaymentReceivedAt ? (
-                    <StatusDot tone="active">Alındı</StatusDot>
+                    <StatusDot tone="active">{tt("Alındı")}</StatusDot>
                   ) : (
-                    <StatusDot tone={c.status === "KAPANDI" ? "critical" : "muted"}>{c.status === "KAPANDI" ? "Bekliyor" : "Açık"}</StatusDot>
+                    <StatusDot tone={c.status === "KAPANDI" ? "critical" : "muted"}>{c.status === "KAPANDI" ? tt("Bekliyor") : tt("Açık")}</StatusDot>
                   ),
                 sort: c.brandPaymentReceivedAt ? 2 : c.status === "KAPANDI" ? 0 : 1,
               },

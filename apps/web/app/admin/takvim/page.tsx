@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { CalendarScreen, parsePlatforms } from "@/components/calendar/calendar-screen";
@@ -7,6 +8,7 @@ import { buildCalendarRows, resolvePeriod, weekQueryRange } from "@/lib/calendar
 export const metadata: Metadata = { title: "Takvim" };
 type SP = { hafta?: string | string[]; tarih?: string | string[]; gorunum?: string | string[]; platform?: string | string[] };
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const sp = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -34,7 +36,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const total = rows.reduce((s, r) => s + r.cards.length, 0);
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Takvim" description={`${total} paylaşım planlı. Haftalık görünümde kartı sürükleyerek tarih değiştirin.`} />
+      <PageHeader title={tt("Takvim")} description={`${total} paylaşım planlı. Haftalık görünümde kartı sürükleyerek tarih değiştirin.`} />
       <CalendarScreen basePath="/admin/takvim" per={per} platforms={platforms} rows={rows} editable />
     </div>
   );

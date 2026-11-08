@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -45,6 +46,7 @@ function Cell({ a }: { a: Access }) {
   );
 }
 export default async function PermissionsPage() {
+  const tt = await getTT();
   await requireAdmin();
   const counts = await prisma.user.groupBy({ by: ["role", "status"], _count: true });
   const [perms, userRows] = await Promise.all([
@@ -62,46 +64,33 @@ export default async function PermissionsPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Rol ve yetkiler"
-        description="Her rolün hangi bölümlere erişebildiği. Kurallar sunucuda her istekte yeniden doğrulanır; marka ve influencer yalnız kendi kayıtlarını görür."
-        actions={<ButtonLink href="/admin/kullanicilar">Kullanıcıları yönet</ButtonLink>}
+        title={tt("Rol ve yetkiler")}
+        description={tt("Her rolün hangi bölümlere erişebildiği. Kurallar sunucuda her istekte yeniden doğrulanır; marka ve influencer yalnız kendi kayıtlarını görür.")}
+        actions={<ButtonLink href="/admin/kullanicilar">{tt("Kullanıcıları yönet")}</ButtonLink>}
       />
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Roller">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label={tt("Roller")}>
         {roles.map((r) => (
           <Card key={r.id} interactive={false} className="flex flex-col gap-2">
             <CardTitle>{r.title}</CardTitle>
             <p className="text-sm text-fg-muted">{r.text}</p>
             <p className="text-[13px] tabular-nums text-fg-passive">
-              {n(r.id, "ACTIVE")} aktif · {n(r.id, "PENDING")} onay bekliyor · {n(r.id, "SUSPENDED")} askıda
-            </p>
-            <Link href={`/admin/kullanicilar?rol=${r.id}`} className="text-[13px] text-fg-muted hover:text-fg">
-              Kullanıcıları gör →
-            </Link>
+              {n(r.id, "ACTIVE")}{" "}{tt("aktif ·")}{" "}{n(r.id, "PENDING")}{" "}{tt("onay bekliyor ·")}{" "}{n(r.id, "SUSPENDED")}{" "}{tt("askıda")}</p>
+            <Link href={`/admin/kullanicilar?rol=${r.id}`} className="text-[13px] text-fg-muted hover:text-fg">{" "}{tt("Kullanıcıları gör →")}</Link>
           </Card>
         ))}
       </section>
       <details className="rounded-[8px] border border-border">
-        <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Kod kuralları: rol başına erişim matrisi (sabit; görünürlük ayarları bunu yalnız daraltır)</summary>
+        <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">{tt("Kod kuralları: rol başına erişim matrisi (sabit; görünürlük ayarları bunu yalnız daraltır)")}</summary>
       <div className="overflow-auto border-t border-border">
         <table className="w-full border-collapse text-sm">
-          <caption className="sr-only">Rol başına erişim matrisi</caption>
+          <caption className="sr-only">{tt("Rol başına erişim matrisi")}</caption>
           <thead className="bg-surface">
             <tr className="border-b border-border text-left text-label text-fg-muted">
-              <th scope="col" className="px-4 py-3 font-medium">
-                Bölüm
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Admin
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Ajans
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Marka
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Influencer
-              </th>
+              <th scope="col" className="px-4 py-3 font-medium">{" "}{tt("Bölüm")}</th>
+              <th scope="col" className="px-4 py-3 font-medium">{" "}{tt("Admin")}</th>
+              <th scope="col" className="px-4 py-3 font-medium">{" "}{tt("Ajans")}</th>
+              <th scope="col" className="px-4 py-3 font-medium">{" "}{tt("Marka")}</th>
+              <th scope="col" className="px-4 py-3 font-medium">{" "}{tt("Influencer")}</th>
             </tr>
           </thead>
           <tbody>
@@ -121,17 +110,14 @@ export default async function PermissionsPage() {
         </table>
       </div>
       </details>
-      <p className="text-[13px] text-fg-passive">
-        Askıya alınan veya onay bekleyen kullanıcı hiçbir panel sayfasını açamaz; yalnız durum ekranını görür. Detaylar:{" "}
-        <Link href="/docs/baslangic/roller-ve-yetkiler" className="underline underline-offset-4">
-          Roller ve yetkiler dokümanı
-        </Link>
+      <p className="text-[13px] text-fg-passive">{" "}{tt("Askıya alınan veya onay bekleyen kullanıcı hiçbir panel sayfasını açamaz; yalnız durum ekranını görür. Detaylar:")}{" "}
+        <Link href="/docs/baslangic/roller-ve-yetkiler" className="underline underline-offset-4">{" "}{tt("Roller ve yetkiler dokümanı")}</Link>
         .
       </p>
-      <section className="flex flex-col gap-3 border-t border-border pt-6" aria-label="Görünürlük planlayıcısı">
+      <section className="flex flex-col gap-3 border-t border-border pt-6" aria-label={tt("Görünürlük planlayıcısı")}>
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-fg">Sayfa görünürlüğü ve kişiye özel istisnalar</h2>
-          <p className="text-sm text-fg-muted">Rolü seçin, sayfaları rol için açıp kapatın; ardından o rolden bir kişi seçip yalnız o kişiye açın veya gizleyin. Her satır seçili kişinin sonuçta ne gördüğünü yazar.</p>
+          <h2 className="text-lg font-semibold text-fg">{tt("Sayfa görünürlüğü ve kişiye özel istisnalar")}</h2>
+          <p className="text-sm text-fg-muted">{tt("Rolü seçin, sayfaları rol için açıp kapatın; ardından o rolden bir kişi seçip yalnız o kişiye açın veya gizleyin. Her satır seçili kişinin sonuçta ne gördüğünü yazar.")}</p>
         </div>
         <PermissionsPlanner perms={perms} users={users} />
       </section>

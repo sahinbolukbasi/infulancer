@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@infulancer/core/db";
@@ -12,6 +13,7 @@ import { AGENCY_TZ, localDay } from "@/lib/time";
 export const metadata: Metadata = { title: "Marka düzenle" };
 
 export default async function BrandDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { id } = await params;
   const brand = await prisma.brand.findUnique({
@@ -29,9 +31,7 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ id
         title={`${brand.name} · düzenle`}
         description={`VKN ${brand.taxNumber}`}
         actions={
-          <ButtonLink href={`/admin/markalar/${brand.id}`} variant="secondary">
-            Profile dön
-          </ButtonLink>
+          <ButtonLink href={`/admin/markalar/${brand.id}`} variant="secondary">{" "}{tt("Profile dön")}</ButtonLink>
         }
       />
       <Card interactive={false}>

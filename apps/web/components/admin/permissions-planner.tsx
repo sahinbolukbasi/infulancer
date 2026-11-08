@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { startTransition, useMemo, useState } from "react";
 import type { Role } from "@infulancer/core/enums";
 import { isPathHidden, type PagePermissionRow } from "@infulancer/core/access/page-visibility";
@@ -25,6 +26,7 @@ type UserMode = "role" | "open" | "hide";
  * Kurallar daraltıcıdır: koddaki rol yetkilerini genişletmez (ör. markaya finans açılamaz).
  */
 export function PermissionsPlanner({ perms: initial, users }: { perms: PagePermissionRow[]; users: PlannerUser[] }) {
+  const tt = useTT();
   const [perms, setPerms] = useState<PagePermissionRow[]>(initial);
   const [role, setRole] = useState<Role>("BRAND");
   const [userId, setUserId] = useState<string>("");
@@ -92,7 +94,7 @@ export function PermissionsPlanner({ perms: initial, users }: { perms: PagePermi
 
   return (
     <div className="flex flex-col gap-5">
-      <div role="tablist" aria-label="Rol" className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div role="tablist" aria-label={tt("Rol")} className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {ROLES.map((r) => {
           const hidden = (navByRole[r.id] ?? []).filter((p) => perms.some((x) => x.scopeType === "ROLE" && x.scopeId === r.id && x.pathPrefix === p.href && !x.allowed)).length;
           return (
@@ -110,29 +112,29 @@ export function PermissionsPlanner({ perms: initial, users }: { perms: PagePermi
             >
               <span className="text-[15px] font-semibold">{r.label}</span>
               <span className={cn("text-[12px]", role === r.id ? "text-bg/70" : "text-fg-muted")}>
-                {r.text} · {users.filter((u) => u.role === r.id).length} kişi{hidden ? ` · ${hidden} sayfa gizli` : ""}
+                {r.text} · {users.filter((u) => u.role === r.id).length}{" "}{tt("kişi")}{hidden ? ` · ${hidden} sayfa gizli` : ""}
               </span>
             </button>
           );
         })}
       </div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="flex flex-col gap-3" aria-label="Kişiler">
+        <aside className="flex flex-col gap-3" aria-label={tt("Kişiler")}>
           <button
             type="button"
             onClick={() => setUserId("")}
             aria-pressed={!user}
             className={cn("rounded-2xl border px-4 py-3 text-left", !user ? "border-fg bg-fg/[0.05]" : "border-line hover:border-fg/40")}
           >
-            <span className="block text-[14px] font-medium text-fg">Tüm {ROLES.find((r) => r.id === role)!.label.toLocaleLowerCase("tr")} rolü</span>
-            <span className="block text-[12px] text-fg-muted">Rol için sayfaları aç/kapat · {hiddenForRole} gizli</span>
+            <span className="block text-[14px] font-medium text-fg">{tt("Tüm")}{" "}{ROLES.find((r) => r.id === role)!.label.toLocaleLowerCase("tr")}{" "}{tt("rolü")}</span>
+            <span className="block text-[12px] text-fg-muted">{tt("Rol için sayfaları aç/kapat ·")}{" "}{hiddenForRole}{" "}{tt("gizli")}</span>
           </button>
           <label className="relative">
-            <span className="sr-only">Kişi ara</span>
+            <span className="sr-only">{tt("Kişi ara")}</span>
             <SearchIcon size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-passive" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Kişi ara (ad, e-posta)" className="h-10 w-full rounded-full border border-line bg-bg pr-3 pl-9 text-sm text-fg placeholder:text-fg-passive focus:border-fg focus:outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tt("Kişi ara (ad, e-posta)")} className="h-10 w-full rounded-full border border-line bg-bg pr-3 pl-9 text-sm text-fg placeholder:text-fg-passive focus:border-fg focus:outline-none" />
           </label>
-          <ul className="flex max-h-[480px] flex-col gap-1 overflow-y-auto" aria-label="Rolün kişileri">
+          <ul className="flex max-h-[480px] flex-col gap-1 overflow-y-auto" aria-label={tt("Rolün kişileri")}>
             {shownUsers.map((u) => {
               const n = exceptionCount(u.id);
               return (
@@ -142,22 +144,21 @@ export function PermissionsPlanner({ perms: initial, users }: { perms: PagePermi
                       <span className="truncate text-[13px] font-medium">{u.name}</span>
                       <span className={cn("truncate text-[11px]", userId === u.id ? "text-bg/70" : "text-fg-passive")}>{u.email}</span>
                     </span>
-                    {n ? <span className={cn("ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px]", userId === u.id ? "bg-bg/20" : "bg-fg/10")}>{n} istisna</span> : null}
+                    {n ? <span className={cn("ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px]", userId === u.id ? "bg-bg/20" : "bg-fg/10")}>{n}{" "}{tt("istisna")}</span> : null}
                   </button>
                 </li>
               );
             })}
-            {shownUsers.length === 0 ? <li className="px-3 py-2 text-[12px] text-fg-muted">Bu rolde kişi yok.</li> : null}
+            {shownUsers.length === 0 ? <li className="px-3 py-2 text-[12px] text-fg-muted">{tt("Bu rolde kişi yok.")}</li> : null}
           </ul>
         </aside>
-        <section className="flex min-w-0 flex-col gap-3" aria-label="Sayfalar">
+        <section className="flex min-w-0 flex-col gap-3" aria-label={tt("Sayfalar")}>
           <p className="text-[13px] text-fg-muted">
             {user ? (
               <>
-                <strong className="text-fg">{user.name}</strong> için: “Rol gibi” rol ayarını izler; “Aç” rolde gizli olsa da bu kişiye gösterir; “Gizle” yalnız bu kişiden saklar.
-              </>
+                <strong className="text-fg">{user.name}</strong>{" "}{tt("için: “Rol gibi” rol ayarını izler; “Aç” rolde gizli olsa da bu kişiye gösterir; “Gizle” yalnız bu kişiden saklar.")}</>
             ) : (
-              <>Rol ayarı bu roldeki herkese uygulanır. Gizlenen sayfa menüden kalkar ve adresle de açılamaz. Kişiye açmak için soldan kişiyi seçin.</>
+              <>{tt("Rol ayarı bu roldeki herkese uygulanır. Gizlenen sayfa menüden kalkar ve adresle de açılamaz. Kişiye açmak için soldan kişiyi seçin.")}</>
             )}
           </p>
           {sections.map((g) => (
@@ -178,12 +179,12 @@ export function PermissionsPlanner({ perms: initial, users }: { perms: PagePermi
                         <span className="flex min-w-0 flex-col">
                           <span className="truncate text-[14px] text-fg">{p.label}</span>
                           <span className="truncate text-[11px] text-fg-passive">
-                            <span className="font-mono">{p.href}</span> · Rolde {rh ? "gizli" : "açık"}
+                            <span className="font-mono">{p.href}</span>{" "}{tt("· Rolde")}{" "}{rh ? "gizli" : tt("açık")}
                             {ur ? ` · kişiye özel: ${ur.allowed ? "açık" : "gizli"}` : ""}
                           </span>
                         </span>
                         <span className={cn("ml-auto shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium", hidden ? "bg-critical/10 text-critical" : "bg-emerald-500/10 text-emerald-600")}>
-                          {hidden ? "Görünmüyor" : "Görünüyor"}
+                          {hidden ? tt("Görünmüyor") : tt("Görünüyor")}
                         </span>
                       </div>
                       {user ? (
@@ -198,7 +199,7 @@ export function PermissionsPlanner({ perms: initial, users }: { perms: PagePermi
                               onClick={() => mode !== m && setUserMode(p.href, m)}
                               className={cn("rounded-full px-3 py-1 text-[12px] transition-standard disabled:opacity-50", mode === m ? "bg-fg text-bg" : "text-fg-muted hover:text-fg")}
                             >
-                              {m === "role" ? "Rol gibi" : m === "open" ? "Aç" : "Gizle"}
+                              {m === "role" ? tt("Rol gibi") : m === "open" ? tt("Aç") : tt("Gizle")}
                             </button>
                           ))}
                         </div>
@@ -211,7 +212,7 @@ export function PermissionsPlanner({ perms: initial, users }: { perms: PagePermi
                           aria-label={`${p.label}: rolde ${rh ? "aç" : "gizle"}`}
                           className={cn("shrink-0 rounded-full border px-3 py-1 text-[12px] transition-standard disabled:opacity-50", rh ? "border-fg bg-fg text-bg" : "border-line text-fg hover:border-fg/40")}
                         >
-                          {rh ? "Rolde aç" : "Rolde gizle"}
+                          {rh ? tt("Rolde aç") : tt("Rolde gizle")}
                         </button>
                       )}
                     </li>

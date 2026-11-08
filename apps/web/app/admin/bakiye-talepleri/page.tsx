@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import { prisma } from "@infulancer/core/db";
 import { creditRequestStatusLabel, type CreditRequestStatus } from "@infulancer/core/creative/credit-requests";
@@ -22,6 +23,7 @@ const FILTER_STATUS: Record<string, CreditRequestStatus | undefined> = { bekleye
 
 /** Yönetici: Creative bakiye talepleri gelen kutusu. */
 export default async function CreditRequestsPage({ searchParams }: { searchParams: Promise<{ filtre?: string }> }) {
+  const tt = await getTT();
   await requireActor("ADMIN");
   const { filtre } = await searchParams;
   const active = FILTERS.some((f) => f.id === filtre) ? filtre! : "bekleyen";
@@ -44,7 +46,7 @@ export default async function CreditRequestsPage({ searchParams }: { searchParam
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Bakiye talepleri" description="Marka ve influencerların Creative bakiye (TL) talepleri. Onaylarsanız bakiye otomatik yüklenir." />
+      <PageHeader title={tt("Bakiye talepleri")} description={tt("Marka ve influencerların Creative bakiye (TL) talepleri. Onaylarsanız bakiye otomatik yüklenir.")} />
       {reqs.length ? (
         <StatStrip
           stats={[
@@ -60,8 +62,8 @@ export default async function CreditRequestsPage({ searchParams }: { searchParam
       <FilterTabs active={active} items={FILTERS.map((f) => ({ id: f.id, label: f.label, href: `/admin/bakiye-talepleri?filtre=${f.id}`, count: counts[f.id as keyof typeof counts] }))} />
       {list.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-3xl border border-dashed border-line px-6 py-14 text-center">
-          <p className="font-medium text-fg">{reqs.length ? "Bu görünümde talep yok" : "Henüz bakiye talebi yok"}</p>
-          <p className="max-w-sm text-[13px] text-fg-muted">Kullanıcılar Creative sayfasından bakiye talebi gönderdiğinde burada görünür.</p>
+          <p className="font-medium text-fg">{reqs.length ? tt("Bu görünümde talep yok") : tt("Henüz bakiye talebi yok")}</p>
+          <p className="max-w-sm text-[13px] text-fg-muted">{tt("Kullanıcılar Creative sayfasından bakiye talebi gönderdiğinde burada görünür.")}</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-3">

@@ -1,3 +1,5 @@
+"use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import type { ReactNode } from "react";
 import type { Severity } from "@infulancer/core/enums";
 import { cn } from "@/lib/cn";
@@ -54,11 +56,12 @@ export function ActionQueueItem({
   actions?: ReactNode;
   children?: ReactNode;
 }) {
+  const tt = useTT();
   return (
     <li className="relative flex flex-col gap-3 rounded-[8px] border border-border bg-surface py-4 pr-4 pl-6 transition-standard hover:border-border-strong sm:flex-row sm:items-center sm:justify-between">
       <span aria-hidden className={cn("absolute top-3 bottom-3 left-0 w-0.5 rounded-full", lineTone[severity])} />
       <div className="flex min-w-0 flex-col gap-1">
-        {severityLabel ? <span className="sr-only">Önem: {severityLabel}.</span> : null}
+        {severityLabel ? <span className="sr-only">{tt("Önem:")}{" "}{severityLabel}.</span> : null}
         <div className={cn("text-sm font-medium", severity === "KRITIK" ? "text-fg" : severity === "UYARI" ? "text-fg" : "text-fg-muted")}>
           {title}
         </div>

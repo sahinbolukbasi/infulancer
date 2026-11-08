@@ -1,4 +1,5 @@
 "use client";
+import { useTT } from "@/lib/i18n/tt-client";
 import { ActionForm } from "@/components/forms/action-form";
 import { Field, Input, Select } from "@/components/ui/form";
 import { updateSupportTicketAction } from "@/lib/actions/support";
@@ -12,10 +13,11 @@ const STATUSES = [
 
 /** Yönetici: destek talebinin durumunu ve iç notunu günceller. */
 export function SupportTicketUpdate({ id, status, adminNote }: { id: string; status: string; adminNote: string | null }) {
+  const tt = useTT();
   return (
-    <ActionForm action={updateSupportTicketAction} submitLabel="Kaydet" submitSize="sm" aria-label="Talebi güncelle" className="!flex-row flex-wrap items-end">
+    <ActionForm action={updateSupportTicketAction} submitLabel={tt("Kaydet")} submitSize="sm" aria-label={tt("Talebi güncelle")} className="!flex-row flex-wrap items-end">
       <input type="hidden" name="id" value={id} />
-      <Field label="Durum" className="w-40">
+      <Field label={tt("Durum")} className="w-40">
         {(p) => (
           <Select {...p} name="status" defaultValue={status}>
             {STATUSES.map((s) => (
@@ -26,8 +28,8 @@ export function SupportTicketUpdate({ id, status, adminNote }: { id: string; sta
           </Select>
         )}
       </Field>
-      <Field label="İç not" className="min-w-[200px] flex-1">
-        {(p) => <Input {...p} name="adminNote" defaultValue={adminNote ?? ""} placeholder="Ekip içi not (opsiyonel)" />}
+      <Field label={tt("İç not")} className="min-w-[200px] flex-1">
+        {(p) => <Input {...p} name="adminNote" defaultValue={adminNote ?? ""} placeholder={tt("Ekip içi not (opsiyonel)")} />}
       </Field>
     </ActionForm>
   );

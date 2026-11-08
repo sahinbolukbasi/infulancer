@@ -86,11 +86,11 @@ export function FormMessage({ state }: { state: ActionState }) {
   if (state.error) {
     return (
       <div role="alert" className="flex flex-col gap-2 rounded-[8px] border border-critical/40 px-3 py-2 text-[13px] text-critical">
-        <p>{state.conflicts?.length ? tt("Marka çakışması bulundu:") : state.error}</p>
+        <p>{state.conflicts?.length ? tt("Marka çakışması bulundu:") : tt(state.error ?? "")}</p>
         {state.conflicts?.length ? (
           <ul className="list-disc pl-4 text-fg-muted">
             {state.conflicts.map((c) => (
-              <li key={c}>{c}</li>
+              <li key={c}>{tt(c)}</li>
             ))}
           </ul>
         ) : null}
@@ -100,7 +100,7 @@ export function FormMessage({ state }: { state: ActionState }) {
   if (state.ok && state.message) {
     return (
       <p role="status" className="text-[13px] text-fg-muted">
-        {state.message}
+        {tt(state.message)}
       </p>
     );
   }

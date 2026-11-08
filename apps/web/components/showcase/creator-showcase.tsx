@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { prisma, type Platform } from "@infulancer/core/db";
@@ -25,6 +26,7 @@ export function profileLink(platform: Platform, handle: string, profileUrl?: str
  * Görünürlük tercihleri (fiyatlar, iş birlikleri) üreticinin "Vitrinim" ayarlarından gelir.
  */
 export async function CreatorShowcase({ influencerId, actions }: { influencerId: string; actions?: ReactNode }) {
+  const tt = await getTT();
   const inf = await prisma.influencer.findUnique({
     where: { id: influencerId },
     select: {
@@ -105,11 +107,9 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
 
       {/* Sosyal hesaplar */}
       <section aria-labelledby="sc-social" className="flex flex-col gap-3">
-        <h2 id="sc-social" className="text-section">
-          Sosyal medya
-        </h2>
+        <h2 id="sc-social" className="text-section">{" "}{tt("Sosyal medya")}</h2>
         {inf.socialAccounts.length === 0 ? (
-          <p className="text-sm text-fg-passive">Bağlı hesap yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Bağlı hesap yok.")}</p>
         ) : (
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {inf.socialAccounts.map((a) => (
@@ -118,20 +118,20 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
                   <BrandBadge name={LOGO[a.platform]} size={40} />
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate font-medium">@{a.handle.replace(/^@/, "")}</span>
-                    <span className="text-[12px] text-fg-muted">{platformLabels[a.platform]}{a.verified ? " · doğrulanmış" : ""}</span>
+                    <span className="text-[12px] text-fg-muted">{platformLabels[a.platform]}{a.verified ? tt(" · doğrulanmış") : ""}</span>
                   </div>
                 </div>
                 <dl className="grid grid-cols-3 gap-2 text-[12px]">
                   <div>
-                    <dt className="text-fg-passive">Takipçi</dt>
+                    <dt className="text-fg-passive">{tt("Takipçi")}</dt>
                     <dd className="text-base font-semibold tabular-nums">{compact.format(a.followers)}</dd>
                   </div>
                   <div>
-                    <dt className="text-fg-passive">Etkileşim</dt>
+                    <dt className="text-fg-passive">{tt("Etkileşim")}</dt>
                     <dd className="text-base font-semibold tabular-nums">{pct.format(Number(a.engagementRate))}</dd>
                   </div>
                   <div>
-                    <dt className="text-fg-passive">{a.avgViews ? "Ort. izlenme" : "Gönderi"}</dt>
+                    <dt className="text-fg-passive">{a.avgViews ? tt("Ort. izlenme") : tt("Gönderi")}</dt>
                     <dd className="text-base font-semibold tabular-nums">{a.avgViews ? compact.format(a.avgViews) : a.postsCount ? compact.format(a.postsCount) : "—"}</dd>
                   </div>
                 </dl>
@@ -141,10 +141,10 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
                   rel="noopener noreferrer"
                   className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-line-strong px-4 py-2 text-[13px] font-medium transition-standard hover:border-neon-pink hover:text-neon-pink"
                 >
-                  {platformLabels[a.platform]}&apos;da aç <ExternalIcon size={13} />
-                  <span className="sr-only">(yeni sekmede açılır)</span>
+                  {platformLabels[a.platform]}{tt("'da aç")}{" "}<ExternalIcon size={13} />
+                  <span className="sr-only">{tt("(yeni sekmede açılır)")}</span>
                 </a>
-                {a.lastSyncedAt ? <span className="text-[11px] text-fg-passive">Veriler {fmtDate(a.lastSyncedAt)} tarihinde resmî API&apos;den güncellendi</span> : null}
+                {a.lastSyncedAt ? <span className="text-[11px] text-fg-passive">{tt("Veriler")}{" "}{fmtDate(a.lastSyncedAt)}{" "}{tt("tarihinde resmî API'den güncellendi")}</span> : null}
               </li>
             ))}
           </ul>
@@ -154,11 +154,9 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
       {/* Fiyat listesi */}
       {inf.showPrices ? (
         <section aria-labelledby="sc-rates" className="flex flex-col gap-3">
-          <h2 id="sc-rates" className="text-section">
-            İçerik ücretleri
-          </h2>
+          <h2 id="sc-rates" className="text-section">{" "}{tt("İçerik ücretleri")}</h2>
           {rates.length === 0 ? (
-            <p className="text-sm text-fg-passive">Fiyat listesi henüz girilmedi; teklif gönderebilirsiniz.</p>
+            <p className="text-sm text-fg-passive">{tt("Fiyat listesi henüz girilmedi; teklif gönderebilirsiniz.")}</p>
           ) : (
             <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {rates.map((r) => (
@@ -177,11 +175,9 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
 
       {/* Öne çıkan işler */}
       <section aria-labelledby="sc-portfolio" className="flex flex-col gap-3">
-        <h2 id="sc-portfolio" className="text-section">
-          Öne çıkan işler
-        </h2>
+        <h2 id="sc-portfolio" className="text-section">{" "}{tt("Öne çıkan işler")}</h2>
         {portfolio.length === 0 ? (
-          <p className="text-sm text-fg-passive">Henüz öne çıkarılan iş yok.</p>
+          <p className="text-sm text-fg-passive">{tt("Henüz öne çıkarılan iş yok.")}</p>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {portfolio.map((p) => (
@@ -194,9 +190,8 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
                   </span>
                   <span className="font-medium group-hover:text-neon-pink">{p.title}</span>
                   {p.note ? <span className="text-[13px] text-fg-muted">{p.note}</span> : null}
-                  <span className="mt-auto inline-flex items-center gap-1 text-[12px] text-fg-muted">
-                    İçeriği aç <ExternalIcon size={12} />
-                    <span className="sr-only">(yeni sekmede açılır)</span>
+                  <span className="mt-auto inline-flex items-center gap-1 text-[12px] text-fg-muted">{" "}{tt("İçeriği aç")}{" "}<ExternalIcon size={12} />
+                    <span className="sr-only">{tt("(yeni sekmede açılır)")}</span>
                   </span>
                 </a>
               </li>
@@ -208,11 +203,9 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
       {/* İş birlikleri */}
       {inf.showCollaborations ? (
         <section aria-labelledby="sc-collabs" className="flex flex-col gap-3">
-          <h2 id="sc-collabs" className="text-section">
-            Yer aldığı iş birlikleri
-          </h2>
+          <h2 id="sc-collabs" className="text-section">{" "}{tt("Yer aldığı iş birlikleri")}</h2>
           {collabs.length === 0 ? (
-            <p className="text-sm text-fg-passive">Platformda tamamlanmış iş birliği yok.</p>
+            <p className="text-sm text-fg-passive">{tt("Platformda tamamlanmış iş birliği yok.")}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-line rounded-3xl border border-line">
               {collabs.map((c) => (
@@ -246,12 +239,10 @@ export async function CreatorShowcase({ influencerId, actions }: { influencerId:
         </section>
       ) : null}
       {!inf.showPrices || !inf.showCollaborations ? (
-        <p className="text-[12px] text-fg-passive">Bazı bölümler içerik üreticisinin tercihiyle gizli.</p>
+        <p className="text-[12px] text-fg-passive">{tt("Bazı bölümler içerik üreticisinin tercihiyle gizli.")}</p>
       ) : null}
       {/* Gezinme yardımı */}
-      <Link href="#sc-social" className="sr-only focus:not-sr-only">
-        Sosyal medya bölümüne git
-      </Link>
+      <Link href="#sc-social" className="sr-only focus:not-sr-only">{" "}{tt("Sosyal medya bölümüne git")}</Link>
     </div>
   );
 }

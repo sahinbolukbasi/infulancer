@@ -1,3 +1,4 @@
+import { getTT } from "@/lib/i18n/tt-server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@infulancer/core/db";
@@ -19,6 +20,7 @@ type Tax = { taxStatus: "FATURA" | "SERBEST_MESLEK_MAKBUZU" | "STOPAJLI"; canIss
 const needsTaxWarning = (i: Tax) => i.taxStatus !== "FATURA" || !i.canIssueInvoice;
 
 export default async function FinancePage() {
+  const tt = await getTT();
   await requireAdmin();
   const now = new Date();
   const monthStart = zonedToUtc(`${localDay(now, AGENCY_TZ).slice(0, 7)}-01`, "00:00", AGENCY_TZ);
@@ -72,8 +74,8 @@ export default async function FinancePage() {
 
   const requestsTab = (
     <DataTable
-      caption="Çekim talepleri"
-      emptyText="Bekleyen çekim talebi yok."
+      caption={tt("Çekim talepleri")}
+      emptyText={tt("Bekleyen çekim talebi yok.")}
       columns={[
         { key: "influencer", header: "Influencer", sortable: true },
         { key: "amount", header: "Tutar", align: "right", sortable: true },
@@ -115,18 +117,18 @@ export default async function FinancePage() {
   const listTab = (
     <div className="flex flex-col gap-6">
       <Card interactive={false} className="flex flex-col gap-4">
-        <CardTitle>Onaylanan talepler</CardTitle>
+        <CardTitle>{tt("Onaylanan talepler")}</CardTitle>
         <ApprovedPayouts rows={approved.map((p) => toRow(p, p.approvedAt ?? p.createdAt))} />
       </Card>
       {batches.size === 0 ? (
-        <p className="text-sm text-fg-passive">Açık ödeme listesi yok. Onaylanan talepleri seçip listeye ekleyin.</p>
+        <p className="text-sm text-fg-passive">{tt("Açık ödeme listesi yok. Onaylanan talepleri seçip listeye ekleyin.")}</p>
       ) : (
         [...batches.values()].map((b) => (
           <Card key={b.id} interactive={false} className="flex flex-col gap-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <CardTitle>Ödeme listesi · {fmtDateTime(b.createdAt)}</CardTitle>
+              <CardTitle>{tt("Ödeme listesi ·")}{" "}{fmtDateTime(b.createdAt)}</CardTitle>
               <span className="text-[13px] text-fg-passive tabular-nums">
-                {b.rows.length} talep · {formatKurus(b.rows.reduce((s, r) => s + r.amountKurus, 0))} · {b.by} · <span className="font-mono">{b.id}</span>
+                {b.rows.length}{" "}{tt("talep ·")}{" "}{formatKurus(b.rows.reduce((s, r) => s + r.amountKurus, 0))} · {b.by} · <span className="font-mono">{b.id}</span>
               </span>
             </div>
             <BatchPayouts batchId={b.id} rows={b.rows} />
@@ -138,8 +140,8 @@ export default async function FinancePage() {
 
   const historyTab = (
     <DataTable
-      caption="Ödeme geçmişi"
-      emptyText="Henüz gönderilmiş ödeme yok."
+      caption={tt("Ödeme geçmişi")}
+      emptyText={tt("Henüz gönderilmiş ödeme yok.")}
       initialSort={{ key: "date", dir: "desc" }}
       columns={[
         { key: "influencer", header: "Influencer", sortable: true },
@@ -166,12 +168,8 @@ export default async function FinancePage() {
             date: { display: fmtDateTime(at), sort: at.getTime() },
             file: p.batchId ? (
               <span className="flex gap-3 text-[13px]">
-                <a className="text-fg-muted hover:text-fg" href={`/api/finans/odeme-dosyasi?batch=${p.batchId}&format=csv`} download>
-                  CSV
-                </a>
-                <a className="text-fg-muted hover:text-fg" href={`/api/finans/odeme-dosyasi?batch=${p.batchId}&format=xml`} download>
-                  XML
-                </a>
+                <a className="text-fg-muted hover:text-fg" href={`/api/finans/odeme-dosyasi?batch=${p.batchId}&format=csv`} download>{" "}{tt("CSV")}</a>
+                <a className="text-fg-muted hover:text-fg" href={`/api/finans/odeme-dosyasi?batch=${p.batchId}&format=xml`} download>{" "}{tt("XML")}</a>
               </span>
             ) : (
               "—"
@@ -185,17 +183,17 @@ export default async function FinancePage() {
   return (
     <Stagger className="flex flex-col gap-8">
       <PageHeader
-        title="Finans"
+        title={tt("Finans")}
         description={`Platform ödeme talimatı üretir, transferi banka yapar. Hakediş kampanya bitince${holdDays() ? ` (${holdDays()} gün bekleme ile)` : ""} otomatik çekilebilir olur; influencerın çekim talepleri aşağıda onay bekler; minimum çekim ${formatKurus(minPayoutKurus())}.`}
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Toplam hakedilen" value={totals.hakedilen} format="currency-kurus" hint="Henüz çekilemeyen hakedişler" />
-        <MetricCard label="Çekilebilir" value={totals.cekilebilir} format="currency-kurus" hint="Talep edilebilir bakiye" />
-        <MetricCard label="İşlemde" value={totals.islemde} format="currency-kurus" hint="Açık çekim talepleri" />
-        <MetricCard label="Bu ay ödenen" value={paidThisMonth._sum.amountKurus ?? 0} format="currency-kurus" hint="Gönderildi olarak işaretlenen" />
+        <MetricCard label={tt("Toplam hakedilen")} value={totals.hakedilen} format="currency-kurus" hint={tt("Henüz çekilemeyen hakedişler")} />
+        <MetricCard label={tt("Çekilebilir")} value={totals.cekilebilir} format="currency-kurus" hint={tt("Talep edilebilir bakiye")} />
+        <MetricCard label={tt("İşlemde")} value={totals.islemde} format="currency-kurus" hint={tt("Açık çekim talepleri")} />
+        <MetricCard label={tt("Bu ay ödenen")} value={paidThisMonth._sum.amountKurus ?? 0} format="currency-kurus" hint={tt("Gönderildi olarak işaretlenen")} />
       </div>
       <Tabs
-        label="Finans bölümleri"
+        label={tt("Finans bölümleri")}
         tabs={[
           { id: "talepler", label: `Çekim talepleri (${requested.length})`, content: requestsTab },
           { id: "liste", label: `Ödeme listesi (${approved.length + listed.length})`, content: listTab },
