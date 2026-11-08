@@ -7,11 +7,9 @@ import { ButtonLink } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { requireAdmin } from "@/lib/auth-guard";
 import type { PagePermissionRow } from "@infulancer/core/access/page-visibility";
-import { PageVisibilityManager } from "@/components/admin/page-visibility-manager";
-import { UserPageExceptions, type PermUser } from "@/components/admin/user-page-exceptions";
+import { PermissionsPlanner, type PlannerUser } from "@/components/admin/permissions-planner";
 import type { Role } from "@infulancer/core/enums";
 export const metadata: Metadata = { title: "Rol ve yetkiler" };
-
 type Access = "full" | "own" | "read" | "none";
 /**
  * Rol başına erişim matrisi. Kaynak: proxy.ts rol önekleri (/admin, /marka, /influencer),
@@ -36,7 +34,6 @@ const MATRIX: { area: string; detail: string; ADMIN: Access; AGENCY: Access; BRA
   { area: "Dokümantasyon", detail: "Influencer yalnız /docs/influencer/*", ADMIN: "full", AGENCY: "full", BRAND: "read", INFLUENCER: "own" },
 ];
 const ACCESS_LABEL: Record<Access, string> = { full: "Tam yetki", own: "Yalnız kendi kaydı", read: "Görüntüleme", none: "Erişim yok" };
-
 function Cell({ a }: { a: Access }) {
   return (
     <td className="px-4 py-3">
@@ -47,7 +44,6 @@ function Cell({ a }: { a: Access }) {
     </td>
   );
 }
-
 export default async function PermissionsPage() {
   await requireAdmin();
   const counts = await prisma.user.groupBy({ by: ["role", "status"], _count: true });
@@ -55,8 +51,7 @@ export default async function PermissionsPage() {
     prisma.pagePermission.findMany({ select: { id: true, scopeType: true, scopeId: true, pathPrefix: true, allowed: true } }) as Promise<PagePermissionRow[]>,
     prisma.user.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true, role: true }, take: 500 }),
   ]);
-  const rolePerms = perms.filter((p) => p.scopeType === "ROLE");
-  const users: PermUser[] = userRows.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role as Role }));
+  const users: PlannerUser[] = userRows.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role as Role }));
   const n = (role: string, status?: string) => counts.filter((c) => c.role === role && (!status || c.status === status)).reduce((s, c) => s + c._count, 0);
   const roles = [
     { id: "ADMIN", title: "Admin", text: "Platform sahibi: tüm modüller, kullanıcılar, roller, finans, tanıtım sayfası." },
@@ -85,7 +80,9 @@ export default async function PermissionsPage() {
           </Card>
         ))}
       </section>
-      <div className="overflow-auto rounded-[8px] border border-border">
+      <details className="rounded-[8px] border border-border">
+        <summary className="cursor-pointer px-4 py-3 text-sm text-fg-muted hover:text-fg">Kod kuralları: rol başına erişim matrisi (sabit; görünürlük ayarları bunu yalnız daraltır)</summary>
+      <div className="overflow-auto border-t border-border">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Rol başına erişim matrisi</caption>
           <thead className="bg-surface">
@@ -123,6 +120,7 @@ export default async function PermissionsPage() {
           </tbody>
         </table>
       </div>
+      </details>
       <p className="text-[13px] text-fg-passive">
         Askıya alınan veya onay bekleyen kullanıcı hiçbir panel sayfasını açamaz; yalnız durum ekranını görür. Detaylar:{" "}
         <Link href="/docs/baslangic/roller-ve-yetkiler" className="underline underline-offset-4">
@@ -130,19 +128,12 @@ export default async function PermissionsPage() {
         </Link>
         .
       </p>
-      <section className="flex flex-col gap-3 border-t border-border pt-6" aria-label="Sayfa görünürlüğü">
+      <section className="flex flex-col gap-3 border-t border-border pt-6" aria-label="Görünürlük planlayıcısı">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-fg">Sayfa görünürlüğü</h2>
-          <p className="text-sm text-fg-muted">Rollere göre menü sayfalarını açıp kapatın. Kapatılan sayfa o rolde menüden kalkar ve erişim engellenir. Bu ayar koddaki rol kurallarını gevşetmez, yalnızca daraltır.</p>
+          <h2 className="text-lg font-semibold text-fg">Sayfa görünürlüğü ve kişiye özel istisnalar</h2>
+          <p className="text-sm text-fg-muted">Rolü seçin, sayfaları rol için açıp kapatın; ardından o rolden bir kişi seçip yalnız o kişiye açın veya gizleyin. Her satır seçili kişinin sonuçta ne gördüğünü yazar.</p>
         </div>
-        <PageVisibilityManager perms={rolePerms} />
-      </section>
-      <section className="flex flex-col gap-3 border-t border-border pt-6" aria-label="Kişiye özel sayfa istisnaları">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-fg">Kişiye özel istisnalar</h2>
-          <p className="text-sm text-fg-muted">Tek bir kullanıcı için bir sayfayı açın veya gizleyin. Kişiye özel ayar, rol görünürlüğünün önüne geçer; &quot;Aç&quot; rol gizlemesini bu kişi için geri alır.</p>
-        </div>
-        <UserPageExceptions users={users} perms={perms} />
+        <PermissionsPlanner perms={perms} users={users} />
       </section>
     </div>
   );

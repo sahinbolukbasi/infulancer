@@ -58,7 +58,8 @@ export async function requireActor(...roles: Role[]): Promise<Actor> {
 async function assertPageVisible(actor: Actor): Promise<void> {
   const pathname = (await headers()).get("x-pathname");
   if (!pathname) return;
-  if (await isPathHiddenFor(actor.role, actor.userId, pathname)) redirect(`${roleHome[actor.role]}?erisim=kapali`);
+  // Ajans çalışanının kuralları AGENCY rolüne göre (oturumda ADMIN olarak çalışsa da).
+  if (await isPathHiddenFor(actor.staffRole ?? actor.role, actor.userId, pathname)) redirect(`${roleHome[actor.role]}?erisim=kapali`);
 }
 
 /** Yalnız platform yöneticisi (ADMIN): kullanıcılar, yetkiler, finans, tanıtım içeriği. Ajans çalışanı panel ana sayfasına döner. */

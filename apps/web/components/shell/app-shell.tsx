@@ -22,8 +22,10 @@ export async function AppShell({ role, children }: { role: Role; children: React
   const user = await getSessionUser();
   const navRole: Role = actor.staffRole ?? role;
   // Yöneticinin gizlediği menü öğelerini client tarafta sakla (daraltıcı katman; kod kuralları değişmez).
-  const perms: PagePermissionRow[] = await loadPagePermissions(actor.role, actor.userId);
-  const permCtx = { perms, role: actor.role, userId: actor.userId };
+  // Ajans çalışanı ADMIN yetkisiyle çalışır ama görünürlük kuralları kendi rolüne (AGENCY) göre uygulanır.
+  const permRole: Role = actor.staffRole ?? actor.role;
+  const perms: PagePermissionRow[] = await loadPagePermissions(permRole, actor.userId);
+  const permCtx = { perms, role: permRole, userId: actor.userId };
 
   return (
     <div className="relative isolate flex min-h-dvh bg-bg text-fg">

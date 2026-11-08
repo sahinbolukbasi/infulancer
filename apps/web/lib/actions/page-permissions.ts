@@ -20,6 +20,8 @@ export async function toggleRolePageAction(_p: ActionState, fd: FormData): Promi
     const pathPrefix = str(fd, "pathPrefix");
     const visible = str(fd, "visible") === "1"; // formdan gelen: hedef görünürlük
     if (!ROLES.includes(role) || !pathPrefix.startsWith("/")) return { ok: false, error: "Geçersiz istek." };
+    // Kendini kilitlemeyi önle: yönetici rolünden yetki ekranı gizlenemez.
+    if (!visible && role === "ADMIN" && (pathPrefix === "/admin/yetkiler" || pathPrefix === "/admin")) return { ok: false, error: "Bu sayfa admin rolünden gizlenemez (yetkileri geri açamazsınız)." };
     if (visible) {
       // Görünür = kısıtlamayı kaldır.
       await clearPagePermission("ROLE", role, pathPrefix);
