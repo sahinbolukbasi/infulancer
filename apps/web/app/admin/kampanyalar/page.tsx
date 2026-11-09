@@ -44,6 +44,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       brandPaymentReceivedAt: true,
       brandTotalFeeKurus: true,
       submittedAt: true,
+      executionMode: true,
       currency: true,
       _count: { select: { assignments: { where: { contractStatus: { not: "RED" } } } } },
     },
@@ -109,7 +110,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
               brand: { display: c.brand.name, sort: c.brand.name },
               status: {
                 display:
-                  c.status === "TASLAK" && c.submittedAt ? (
+                  c.executionMode === "SELF" ? (
+                    <StatusDot tone="passive">{tt("Marka kendi yürütüyor")}</StatusDot>
+                  ) : c.status === "TASLAK" && c.submittedAt ? (
                     <StatusDot tone="active">{tt("Markadan geldi · kurulum")}</StatusDot>
                   ) : (
                     <StatusDot tone={campaignTone(c.status)}>{campaignStatusLabels[c.status]}</StatusDot>

@@ -14,6 +14,7 @@ import { publish } from "@infulancer/core/events";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, bool, optStr, parseInput, revalidateAll, str, tags } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
+import { assertCanManageByAssignment, assertCanManageByDeliverable } from "@infulancer/core/domain/campaign-manage-guard";
 import { notifyAdmins, notifyInfluencer } from "@/lib/notify";
 import { fmtDateTime, isDay, isTime, parseLocalInput, zonedToUtc } from "@/lib/time";
 
@@ -45,9 +46,10 @@ const deliverableSchema = z.object({
 
 /** Deliverable oluşturur/günceller. Saatler influencer kitlesinin saat diliminde girilir, UTC saklanır. */
 export async function saveDeliverable(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireActor("ADMIN", "BRAND");
   const id = optStr(fd, "id");
   return attempt(async () => {
+    await assertCanManageByAssignment(actor, str(fd, "assignmentId"));
     const input = parseInput(
       deliverableSchema,
       {
@@ -244,10 +246,11 @@ const rescheduleSchema = z.object({
  * saat diliminde yorumlanır; onay son tarihi aynı farkla kaydırılır.
  */
 export async function rescheduleDeliverable(raw: { deliverableId: string; day: string; time: string }): Promise<ActionState> {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireActor("ADMIN", "BRAND");
   return attempt(async () => {
     const parsed = rescheduleSchema.safeParse(raw);
     if (!parsed.success) throw new DomainError("DOGRULAMA", "Geçersiz tarih/saat.");
+    await assertCanManageByDeliverable(actor, parsed.data.deliverableId);
     const input = parsed.data;
     const formatted = await prisma.$transaction(async (tx) => {
       const d = await tx.deliverable.findUnique({

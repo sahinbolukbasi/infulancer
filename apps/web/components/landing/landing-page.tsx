@@ -295,7 +295,7 @@ export async function LandingPage({ stats, data }: { stats: LandingStats; data: 
               </div>
               <FloatChip className="top-6 -left-2" dot="bg-fuchsia-400">{tt("+12,4B beğeni")}</FloatChip>
               <FloatChip className="top-[46%] -right-4" dot="bg-emerald-400" delay={900}>{tt("Teklif kabul edildi")}</FloatChip>
-              <FloatChip className="bottom-10 left-6" dot="bg-sky-400" delay={1800}>{tt("Ödeme gönderildi · 45.000 TL")}</FloatChip>
+              <FloatChip className="bottom-10 left-6" dot="bg-sky-400" delay={1800}>{tt("Ödeme gönderildi")}</FloatChip>
             </Reveal>
           </div>
         </Spotlight>

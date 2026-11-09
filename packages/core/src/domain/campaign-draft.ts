@@ -50,14 +50,19 @@ async function uniqueSlug(base: string): Promise<string> {
 
 /** Düzenleme yetkisi: admin (kapanmamış), marka (kendi + TASLAK). */
 export async function assertCanEditDraft(actor: Actor, campaignId: string) {
-  const c = await prisma.campaign.findUnique({ where: { id: campaignId }, select: { id: true, brandId: true, status: true, submittedAt: true, name: true } });
+  const c = await prisma.campaign.findUnique({ where: { id: campaignId }, select: { id: true, brandId: true, status: true, submittedAt: true, name: true, executionMode: true } });
   if (!c) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
   if (actor.role === "ADMIN") {
     if (c.status === "KAPANDI" || c.status === "IPTAL") throw new DomainError("KURAL_IHLALI", "Kapanmış/iptal kampanya düzenlenemez.");
     return c;
   }
   if (actor.role !== "BRAND" || c.brandId !== actor.brandId) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
-  if (c.status !== "TASLAK") throw new DomainError("KURAL_IHLALI", "Yayına alınmış kampanyayı yalnız ajans değiştirebilir. Değişiklik için ajansa yazın.");
+  if (c.executionMode === "SELF") {
+    // Kendi yürüten marka AKTIF kampanyayı da düzenler; yalnız kapanmış/iptal engellidir.
+    if (c.status === "KAPANDI" || c.status === "IPTAL") throw new DomainError("KURAL_IHLALI", "Kapanmış/iptal kampanya düzenlenemez.");
+  } else if (c.status !== "TASLAK") {
+    throw new DomainError("KURAL_IHLALI", "Ajansa devredilmiş ve yayına alınmış kampanyayı yalnız ajans değiştirebilir. Değişiklik için ajansa yazın.");
+  }
   return c;
 }
 
@@ -65,7 +70,7 @@ export async function createDraft(actor: Actor, input: { brandId?: string | null
   if (actor.role !== "ADMIN" && actor.role !== "BRAND") throw new DomainError("YETKISIZ", "Kampanya oluşturma yetkiniz yok.");
   const brandId = actor.role === "BRAND" ? actor.brandId : input.brandId;
   if (!brandId) throw new DomainError("DOGRULAMA", "Marka seçin.");
-  const brand = await prisma.brand.findUnique({ where: { id: brandId }, select: { id: true, country: true } });
+  const brand = await prisma.brand.findUnique({ where: { id: brandId }, select: { id: true, country: true, defaultExecutionMode: true } });
   if (!brand) throw new DomainError("DOGRULAMA", "Marka bulunamadı.");
   const name = input.name.trim();
   if (name.length < 3 || name.length > 140) throw new DomainError("DOGRULAMA", "Kampanya adı 3–140 karakter olmalı.");
@@ -85,6 +90,7 @@ export async function createDraft(actor: Actor, input: { brandId?: string | null
       endsAt: new Date(start.getTime() + 30 * DAY - 60_000),
       targets: OBJECTIVE_TARGETS[objective],
       status: "TASLAK",
+      executionMode: actor.role === "BRAND" ? brand.defaultExecutionMode : "AJANS",
       createdById: actor.userId,
       // Varsayılan bölge markanın ülkesi; hedef kitle adımında değişir.
       targetCountries: [brand.country],
@@ -227,9 +233,10 @@ export async function submitDraft(actor: Actor, id: string) {
   }
   const first = !c.submittedAt;
   await prisma.campaign.update({ where: { id }, data: { submittedAt: new Date() } });
-  await audit.append({ actor: toAuditActor(actor), action: "CAMPAIGN_SUBMITTED", entityType: "Campaign", entityId: id, data: { by: actor.role, first } });
-  if (actor.role === "BRAND") {
+  await audit.append({ actor: toAuditActor(actor), action: "CAMPAIGN_SUBMITTED", entityType: "Campaign", entityId: id, data: { by: actor.role, first, mode: c.executionMode } });
+  // Yalnız AJANS moduna devredilmiş kampanyada ajansa kurulum bildirimi düşer; SELF'te marka kendi kurar.
+  if (actor.role === "BRAND" && c.executionMode === "AJANS") {
     await notifyAdmins(first ? "Markadan yeni kampanya" : "Marka kampanyayı güncelledi", `"${c.name}" kampanyası kuruluma hazır: influencer ataması, bedeller ve yayın kontrolü.`, `/admin/kampanyalar/${id}/kurulum?adim=influencerlar`);
   }
-  return { first };
+  return { first, mode: c.executionMode };
 }

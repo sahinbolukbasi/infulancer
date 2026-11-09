@@ -10,6 +10,7 @@ import { checkBrandConflict, enforceBrandConflict } from "@infulancer/core/domai
 import { transitionDeliverable } from "@infulancer/core/domain/deliverable-status";
 import { DomainError } from "@infulancer/core/domain/errors";
 import { assertInfluencerFitsCampaign } from "@infulancer/core/domain/campaign-region";
+import { assertCanManageCampaign } from "@infulancer/core/domain/campaign-manage-guard";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, intOrNull, optStr, parseInput, revalidateAll, str, tlToKurus } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
@@ -104,8 +105,9 @@ async function insertAssignment(actor: Actor, input: AssignmentInput, opts: { ac
 }
 /** Kampanyaya influencer atar; marka çakışması varsa yalnız yazılı gerekçeyle ezilebilir. */
 export async function createAssignment(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireActor("ADMIN", "BRAND");
   return attempt(async () => {
+    await assertCanManageCampaign(actor, str(fd, "campaignId"));
     const input = parseInput(
       assignmentSchema,
       {
@@ -231,7 +233,12 @@ export async function createAssignmentsBulk(input: {
   commissionPct: number;
   items: { influencerId: string; feeKurus: number }[];
 }): Promise<BulkAssignResult> {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireActor("ADMIN", "BRAND");
+  try {
+    await assertCanManageCampaign(actor, input.campaignId);
+  } catch (e) {
+    return { ok: false, error: e instanceof DomainError ? e.message : "Yetki yok.", created: [], failed: [] };
+  }
   const parsed = bulkSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz giriş.", created: [], failed: [] };
   const { campaignId, commissionPct, items } = parsed.data;

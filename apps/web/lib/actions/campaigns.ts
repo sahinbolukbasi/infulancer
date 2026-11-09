@@ -7,6 +7,7 @@ import { toAuditActor } from "@infulancer/core/access/actor";
 import { prisma } from "@infulancer/core/db";
 import { targetsSchema } from "@infulancer/core/domain/campaign-score";
 import { assertCampaignCanGoLive, CampaignGateError } from "@infulancer/core/compliance/disclosure";
+import { assertCanManageCampaign } from "@infulancer/core/domain/campaign-manage-guard";
 import { DomainError } from "@infulancer/core/domain/errors";
 import { utmSafe } from "@infulancer/core/domain/utm";
 import { publish } from "@infulancer/core/events";
@@ -145,9 +146,10 @@ export async function saveCampaign(_prev: ActionState, fd: FormData): Promise<Ac
 
 /** AKTIF → KAPANDI: closedAt yazılır, audit + CAMPAIGN_CLOSED olayı. */
 export async function closeCampaign(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireActor("ADMIN", "BRAND");
   const id = str(fd, "id");
   return attempt(async () => {
+    await assertCanManageCampaign(actor, id);
     await prisma.$transaction(async (tx) => {
       const c = await tx.campaign.findUnique({ where: { id }, select: { status: true } });
       if (!c) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
@@ -197,9 +199,10 @@ export async function markBrandPaymentReceived(_prev: ActionState, fd: FormData)
 
 /** Sihirbazın son adımı: md. 23/A + kullanım hakkı kapısından geçerse kampanyayı AKTIF yapar. */
 export async function activateCampaign(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireActor("ADMIN", "BRAND");
   return attempt(async () => {
     const id = str(fd, "id");
+    await assertCanManageCampaign(actor, id);
     const c = await prisma.campaign.findUnique({ where: { id }, select: { status: true } });
     if (!c) throw new DomainError("BULUNAMADI", "Kampanya bulunamadı.");
     if (c.status !== "TASLAK") throw new DomainError("GECERSIZ_GECIS", "Yalnız taslak kampanya aktif yapılabilir.");

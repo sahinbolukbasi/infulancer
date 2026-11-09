@@ -68,6 +68,13 @@ enum CampaignStatus {
   IPTAL
 }
 
+/// Kampanyanın yürütme modeli: SELF = marka kendi yürütür (influencer'ı doğrudan atar, kendi yayınlar);
+/// AJANS = marka işi ajansa devreder, ajans yürütür, marka izler.
+enum ExecutionMode {
+  SELF
+  AJANS
+}
+
 enum ContractStatus {
   TEKLIF
   KABUL
@@ -238,6 +245,8 @@ model Brand {
   /// Kayıtlı ülke (ISO2): marka para birimi ve varsayılan kampanya bölgesi.
   country            String    @default("TR")
   competitorBrandIds String[]
+  /// Markanın varsayılan çalışma modu: yeni kampanyalar bu modla açılır (marka değiştirebilir).
+  defaultExecutionMode ExecutionMode @default(AJANS)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -340,6 +349,8 @@ model Campaign {
   /// [{kpi, target, weight, windowDays}] — zod ile doğrulanır (domain/campaign-score.ts)
   targets                Json
   status                 CampaignStatus @default(TASLAK)
+  /// Yürütme modeli: SELF (marka kendi yürütür) veya AJANS (ajansa devredilmiş).
+  executionMode          ExecutionMode  @default(AJANS)
   closedAt               DateTime?
   brandPaymentReceivedAt DateTime?
   reportSummary          String?

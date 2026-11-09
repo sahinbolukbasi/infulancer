@@ -10,6 +10,7 @@ import { ruleFor } from "@infulancer/core/compliance/country-rules";
 import type { ActionState } from "@/lib/action-state";
 import { attempt, bool, optStr, revalidateAll, str, tags } from "@/lib/action-utils";
 import { requireActor } from "@/lib/auth-guard";
+import { assertCanManageCampaign } from "@infulancer/core/domain/campaign-manage-guard";
 import { isDay, isTime, zonedToUtc } from "@/lib/time";
 
 /**
@@ -22,9 +23,10 @@ const label = (country: string) => {
   return w.length <= 3 ? `#${w}` : w[0]!.toUpperCase() + w.slice(1);
 };
 export async function applyContentPlanBulk(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await requireActor("ADMIN");
+  const actor = await requireActor("ADMIN", "BRAND");
   return attempt(async () => {
     const campaignId = str(fd, "campaignId");
+    await assertCanManageCampaign(actor, campaignId);
     const assignmentIds = [...new Set(fd.getAll("assignmentIds").map(String).filter(Boolean))];
     if (assignmentIds.length === 0) throw new DomainError("DOGRULAMA", "En az bir influencer seçin.");
     let planRaw: unknown;

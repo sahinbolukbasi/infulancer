@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { buttonClass } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/layout";
 import { CampaignLifecycle } from "@/components/campaign/campaign-lifecycle";
+import { ExecutionModeCard } from "@/components/campaign/execution-mode-card";
 import { StatusDot } from "@/components/ui/status";
 import { requireActor } from "@/lib/auth-guard";
 import { prisma } from "@infulancer/core/db";
@@ -74,7 +75,8 @@ export default async function BrandCampaignPage({
     include: { uploadedBy: { select: { name: true } } },
   });
   const draft = campaign.status === "TASLAK";
-  const currency = (await prisma.campaign.findUniqueOrThrow({ where: { id: campaign.id }, select: { currency: true } })).currency;
+  const meta = await prisma.campaign.findUniqueOrThrow({ where: { id: campaign.id }, select: { currency: true, executionMode: true } });
+  const currency = meta.currency;
   const mediaCard = (
     <Card interactive={false} className="flex flex-col gap-4" id="medya">
       <CardTitle>{tt("Kampanya fotoğraf ve videoları")}</CardTitle>
@@ -349,6 +351,7 @@ export default async function BrandCampaignPage({
         <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-[14px] text-emerald-700 dark:text-emerald-400">{tt("Kampanya kaydedildi ve ajansa gönderildi. Ajans influencer atamalarını ve bedelleri onayladığında bildirim alacaksınız.")}</p>
       ) : null}
       <CampaignLifecycle campaignId={campaign.id} />
+      <ExecutionModeCard campaignId={campaign.id} mode={meta.executionMode} status={campaign.status} />
       {summary}
       {mediaCard}
       {drafts}
