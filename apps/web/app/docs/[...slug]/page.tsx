@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { mdxComponents, VerificationBadge } from "@/components/docs/doc-components";
 import { requireActor } from "@/lib/auth-guard";
 import { canRead, findDoc, SECTION_LABELS } from "@/lib/docs";
+import { getPreferences } from "@/lib/i18n/server";
 
 type Props = { params: Promise<{ slug: string[] }> };
 
@@ -17,8 +18,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DocPage({ params }: Props) {
   const actor = await requireActor();
+  const { locale } = await getPreferences();
   const { slug } = await params;
-  const doc = findDoc(slug.join("/"));
+  const doc = findDoc(slug.join("/"), locale);
   if (!doc || !canRead(actor.role, doc)) notFound();
 
   return (

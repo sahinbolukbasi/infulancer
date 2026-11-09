@@ -1,0 +1,31 @@
+---
+title: 'Score de campagne'
+slug: kampanya-skoru
+order: 2
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Score = Σ (taux de réalisation des KPI × poids) ; la projection s''affiche toujours à côté du score quand la fenêtre est ouverte.'
+sources: []
+---
+
+## Calcul
+
+**Score = Σ (taux de réalisation des KPI × poids)**, la somme des poids égale 1,0.
+
+- KPI : portée, impressions, taux d'engagement (TE), clics, ventes, vues.
+- Taux de réalisation = dernière mesure dans la fenêtre / objectif.
+- Statut : taux ≥ 100 % « Atteint », ≥ 85 % « Partiellement », inférieur « Non atteint ». « En cours de mesure » quand la fenêtre est ouverte.
+
+## Fenêtre
+
+La fenêtre commence à la première publication et dure autant de jours que la période de mesure du KPI (ex. 7 jours). Quand la fenêtre se ferme, la valeur **se fige** ; les métriques entrées ultérieurement ne modifient pas ce KPI. Si une publication n'a pas encore stabilisé ses métriques (YouTube 72 heures), aucune décision n'est prise.
+
+## Projection
+
+Quand la fenêtre est ouverte, on calcule la valeur attendue à la fin de la fenêtre selon la trajectoire actuelle : `réalisé × jours de fenêtre / jours écoulés`. Pour les KPI de taux comme le TE, la valeur actuelle est considérée comme la projection. La projection s'affiche **toujours** à côté du score ; l'agent génère une alerte chaque jour pour les projections inférieures à 100 % de l'objectif.
+
+## Pourquoi le score instantané seul est trompeur
+
+Exemple : une campagne avec un objectif de portée sur 7 jours atteint 8 % de l'objectif **6 heures** après la première publication. Le score instantané est **8 %** et semble « très en retard ». Or, au même rythme, la projection à la fin de la fenêtre est `8 × 7 / 0,25 ≈ 224 %` — bien au-delà de l'objectif. À l'inverse, un contenu qui explose puis s'arrête affiche une projection exagérée aux premières heures.
+
+C'est pourquoi les décisions se prennent en lisant **score + projection + fin de fenêtre** ensemble ; on ne dit pas « Non atteint » avant la fermeture de la fenêtre.

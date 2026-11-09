@@ -1,0 +1,24 @@
+---
+title: 'Credits and costs'
+slug: kredi-ve-maliyet
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Credits are blocked on submission, only charged on successful output; prepaid balance also serves as concurrency limit.'
+sources: []
+---
+
+## How it works
+
+1. When production is submitted, an estimated amount is **blocked** from the brand's credit balance (not yet charged).
+2. When output arrives successfully, the blocked amount is **charged** and the asset is recorded with C2PA credentials.
+3. If production fails, the block is **released**; no fee is charged (fal also does not bill server errors).
+4. If the same result comes again (webhook retry), no second charge is made.
+
+## Credit unit
+
+1 credit ≈ $0.05 raw cost assumed; customer price is set at 3–5x markup. Example "ad set package": 6 visuals (Nano Banana Pro) + 8 sec video + ~300 character voiceover ≈ $1.05 raw cost <Unverified />.
+
+## Balance and concurrency
+
+fal prepaid balance also serves as the concurrency limit; in batch production, jobs wait if balance is low. When a brand's balance falls below the low credit threshold, a notification is sent to admin. Account balance, model records, and credit loading are in the "Credits and models" tab on the `/creative` screen. Brands and influencers receive a one-time welcome credit on first login (`CREATIVE_STARTER_CREDITS`, default 30); thereafter credits are loaded by the agency.

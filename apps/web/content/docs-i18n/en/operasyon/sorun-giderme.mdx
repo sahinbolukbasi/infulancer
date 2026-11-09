@@ -1,0 +1,40 @@
+---
+title: 'Troubleshooting'
+slug: sorun-giderme
+order: 3
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'What to do when a template is paused, a broadcast link is inaccessible, the metrics API returns empty, or a withdrawal request is not approved.'
+sources: []
+---
+
+## Template paused
+
+1. Go to `/admin/kanallar` → check template quality (Medium/Low).
+2. Complaints/blocks may have increased in the last campaign: narrow your target audience, reduce frequency, simplify the text.
+3. 1st pause lasts 3 hours, 2nd lasts 6 hours; **on the 3rd pause the template is permanently disabled** — you need to create a new template. Do not send bulk messages with that template after the second pause.
+
+## Broadcast link inaccessible
+
+When the deletion check agent finds the link dead, it opens a Critical finding. Distinguish between:
+
+| Status | How to recognize | What to do |
+|---|---|---|
+| Deleted | Link returns 404, not visible on influencer profile | Contract violation; contact influencer, payment may be suspended |
+| Private | Account set to private, profile won't open | Ask influencer to make account public |
+| Platform error | Other links also won't open, resolves quickly | Close the finding with "Ez", it will be checked again the next day |
+
+## Metrics API returns empty
+
+Account connection may be broken or content not yet processed. Check "Last sync" and error message on the profile. Don't wait — **switch to manual flow with screenshot**: influencer uploads statistics screenshot from business page, system reads and compares values.
+
+## Withdrawal request not approved
+
+For withdrawable balance, **all four gates** must be open:
+
+1. Campaign must be **closed**.
+2. Brand payment must be marked as **received**.
+3. **14 days** must have passed since closure and brand payment.
+4. Request amount must be **at least 500 TL**.
+
+Additionally, the tax profile gate: md. 23/A exempt influencers receive payment only to a designated IBAN; influencers in "cannot issue invoice" status have their payment locked until an accountant's opinion is uploaded and admin approves. If IBAN information is missing, a request cannot be created.

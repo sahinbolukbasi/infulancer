@@ -1,0 +1,57 @@
+---
+title: 'Meta Marketing API'
+slug: meta-marketing-api
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Aufgrund von Schreiblimits für Anzeigen (4 Budgetänderungen pro Stunde, 30 Sekunden pro Objekt) läuft die Budget-Engine stündlich.'
+sources:
+  - label: Meta Marketing API — Rate Limiting
+    url: https://developers.facebook.com/docs/marketing-api/overview/rate-limiting
+    checkedAt: 2026-11-02
+---
+
+## Schreiblimits
+
+- **Mutation:** 100 Anfragen/Sek (basierend auf App + Ad Account).
+- **Gleiches Objekt:** Bearbeitung alle 30 Sekunden (Fehlersubcode `4841018`).
+- **Ad Set Budget:** 4 Änderungen pro Stunde; danach 1 Stunde Blockade.
+- **Kontoausgabenlimit:** 10 Änderungen pro Tag.
+
+## Unsere Entsprechung
+
+Die Budget-Engine läuft als **stündlicher Batch**; es gibt keine automatische Intervention pro Minute. Eine Anfrage, die das Limit überschreitet, wird nicht abgelehnt, sondern zur nächsten geeigneten Stunde verschoben und erscheint in der Budget-Warteschlange auf dem Bildschirm `/admin/reklam`. Für denselben Ad Set wird nur die letzte Änderung aus den angesammelten Änderungen angewendet.
+
+## Zugriffsstufe
+
+- **Full Access:** weniger als 15 % Fehlerquote in den letzten 500 Aufrufen und 500 Aufrufe in den letzten 15 Tagen. Bildschirmaufzeichnung ist nicht erforderlich.
+- **Development:** 300 + 40 × aktive Anzeigen pro Stunde; nur für Pilotprojekte. Vor zahlenden Kunden muss Full Access erworben werden.
+
+## Kontingent und Score
+
+Lesen 1 Punkt, Schreiben 3 Punkte; Punkte verfallen nach 300 Sekunden. In Development beträgt die Obergrenze 60 (bei Vollständigkeit 300 Sekunden Blockade), in Full Access 9.000 (bei Vollständigkeit 60 Sekunden Blockade). Alle Zahlen werden in der Konfiguration, nicht im Code gespeichert.
+
+## Rate Limit Header
+
+Werden bei jeder Antwort gelesen und protokolliert:
+
+| Header | Felder |
+|---|---|
+| `X-Ad-Account-Usage` | `acc_id_util_pct`, `reset_time_duration`, `ads_api_access_tier` |
+| `X-Business-Use-Case` | `call_count`, `total_cputime`, `total_time`, `estimated_time_to_regain_access` |
+| `X-FB-Ads-Insights-Throttle` | Insights-Nutzungsprozentsätze |
+
+## 429 und Rückzug
+
+Bei Ratenlimit-Fehlern (HTTP 429, Code 4/17/32/613) wird **exponentielles Backoff + Jitter** angewendet: Die Wartezeit beginnt bei 0,5 Sekunden und verdoppelt sich bei jedem Fehler (maximal 60 Sekunden); wenn `estimated_time_to_regain_access` vorhanden ist, wird dies befolgt. Warteschlangenprioritäten: Budget stoppen > Budget reduzieren > Budget erhöhen > Insights lesen.
+
+## Fehlercode → Aktion
+
+| Code | Bedeutung | Systemmaßnahme |
+|---|---|---|
+| `4841018` | Gleiches Objekt wurde innerhalb von 30 Sekunden bearbeitet | In Warteschlange für 30 Sekunden später |
+| 17 / 613 | Konto-/Anwendungs-Ratenlimit | Backoff, Warteschlange wartet |
+| 190 | Zugriffstoken widerrufen | Verbindung unterbrochen, Marke benachrichtigt |
+| 200 | Berechtigung fehlt | Warnung „Berechtigung fehlt", Umleitung zum Setup-Schritt |
+
+<Callout type="uyari">Bis zur Einrichtung der Marketing API-Verbindung befindet sich `/admin/reklam` im Demo-Modus: Anfragen und Limitverhalten werden protokolliert, aber nicht an Meta gesendet.</Callout>

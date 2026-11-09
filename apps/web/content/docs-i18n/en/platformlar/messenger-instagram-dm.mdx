@@ -1,0 +1,31 @@
+---
+title: 'Messenger and Instagram DM'
+slug: messenger-instagram-dm
+order: 5
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'After 24 hours, only agent response (HUMAN_AGENT, 7 days); promotions, drip, or cart reminders cannot be sent.'
+sources:
+  - label: Messenger Platform — Message tags
+    url: https://developers.facebook.com/docs/messenger-platform/send-messages/message-tags
+    checkedAt: 2026-11-02
+---
+
+## Rules
+
+- The business cannot initiate the conversation; the person must write first.
+- Standard window is 24 hours. After that, only **agent response** is possible (`HUMAN_AGENT`, 7 days from the last user message), and cannot contain promotions.
+- `ACCOUNT_UPDATE`, `CONFIRMED_EVENT_UPDATE`, `POST_PURCHASE_UPDATE` tags were removed on February 10, 2026 → **re-engagement outside 24 hours, drip campaigns, and cart reminders cannot be sent**.
+- Group messaging does not exist.
+
+## Inbox notes
+
+- Conversations inactive for 30 days in the Requests folder do not return from the API.
+- Folder information does not come with the message.
+- Messages received via webhook are not marked as read on Instagram until we respond; our response moves the conversation to the General folder.
+- For shared posts/media, only the URL is received.
+- If the user unsends a message, the message, media, and call history are permanently deleted.
+
+## Rate limits
+
+Numerical limits <Unverified />. The "200 × interactive users/hour" formula is not used; adaptive limiting is applied.

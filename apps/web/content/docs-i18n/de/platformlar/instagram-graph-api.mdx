@@ -1,0 +1,41 @@
+---
+title: 'Instagram Graph API'
+slug: instagram-graph-api
+order: 3
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Story-Metriken verschwinden nach 24 Stunden; 20 Stunden nach der Veröffentlichung wird eine Erinnerung gesendet und die Story kann ohne Screenshot-Metrik nicht abgeschlossen werden.'
+sources:
+  - label: Instagram Platform — Insights
+    url: https://developers.facebook.com/docs/instagram-platform/insights
+    checkedAt: 2026-11-02
+  - label: Business Discovery
+    url: https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/business_discovery
+    checkedAt: 2026-11-02
+---
+
+## Kontoverbindung
+
+Facebook Login → Instagram Business/Creator-Konto → Berechtigungen: `instagram_basic`, `instagram_manage_insights`, `pages_show_list`. Persönliche (nicht professionelle) Konten können nicht verbunden werden.
+
+## Automatisches Abrufen von Follower-Daten
+
+Die Agentur führt eine **Business Discovery**-Abfrage mit ihrem eigenen Instagram Business-Konto durch: Follower-Anzahl, Beitragszahl und durchschnittliche Likes/Kommentare der letzten Beiträge von öffentlichen Business/Creator-Konten. Der Influencer muss sich nicht anmelden. Das System führt dies alle 6 Stunden durch (für Konten älter als 12 Stunden); im Profil kann es mit "Jetzt synchronisieren" manuell ausgelöst werden. Es wird kein Scraping durchgeführt.
+
+## Abrufbare Metriken
+
+Für verbundene (eigene) Konten: Reichweite, Impressionen, Speicherungen, Shares, Profilaufrufe, Follower-Demografie.
+
+## Wichtiger Hinweis zu Stories
+
+<Callout type="uyari">Story-Metriken verschwinden nach 24 Stunden → **Screenshot ist erforderlich**. Das System sendet dem Influencer **+20 Stunden** nach der Veröffentlichung eine Erinnerung. Auf Instagram Story kann ein Job ohne Screenshot-Metrik nicht als "Abgeschlossen" markiert werden.</Callout>
+
+## Nicht abrufbar
+
+- Detaillierte Demografie anderer Konten (Business Discovery liefert nur öffentliche Zahlen).
+- Registrierte/versteckte Metriken.
+- Massenankündigungen können nicht von Instagram gesendet werden (siehe [Messenger und Instagram DM](/docs/platformlar/messenger-instagram-dm)).
+
+## Geschwindigkeitslimits
+
+Numerische Limits wurden aus offiziellen Quellen nicht bestätigt <Unverified />; adaptive Drosselung wird angewendet (bei 429 verlangsamen, bei Erfolg schrittweise beschleunigen).

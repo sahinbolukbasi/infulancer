@@ -1,0 +1,41 @@
+---
+title: 'İYS und kommerzielle elektronische Mitteilungen'
+slug: iys-ticari-elektronik-ileti
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Zustimmungs-/Ablehnungsdatensätze werden innerhalb von 3 Arbeitstagen an das İYS übermittelt; ABLEHNUNG ist endgültig und Kampagnennachrichten werden nicht an Personen ohne Zustimmung versendet.'
+sources:
+  - label: İleti Yönetim Sistemi
+    url: https://iys.org.tr
+    checkedAt: 2026-11-02
+  - label: 6563 sayılı Kanun
+    url: https://www.mevzuat.gov.tr/mevzuatmetin/1.5.6563.pdf
+    checkedAt: 2026-11-02
+---
+
+## Von dem System angewendete Regeln
+
+- **Live-Kontrolle zum Zeitpunkt des Versands:** Das İYS wird vor der Marketingnachricht abgefragt; der lokale Datensatz ist nur ein Vorfilter. Ohne Zustimmung wird der Versand **blockiert** und der Grund angezeigt.
+- **Gemischte Inhalte sind kommerziell:** Jede Utility-Nachricht, die ein Promotionselement enthält (Rabatt, Gutschein usw.), erfordert Zustimmung.
+- **Separate İYS-Verbindung pro Marke:** Die Zustimmung einer Marke kann nicht bei einer anderen Marke verwendet werden.
+- **3-Arbeitstage-SLA:** Jeder Zustimmungs-/Ablehnungsdatensatz wird innerhalb von 3 Arbeitstagen gemäß dem türkischen Geschäftskalender (ohne offizielle Feiertage und halbe Tage vor Feiertagen) an das İYS übermittelt. Für Datensätze, die länger als 1 Arbeitstag in der Warteschlange warten, wird ein Alarm erzeugt.
+- **Masseneintrag:** Die İYS-Anfrage ist atomar; ein fehlerhafter Datensatz lehnt die gesamte Anfrage ab (HTTP 422). Das System versendet Pakete zu 1.000er-Blöcken, bei Fehlern teilt es das Paket auf und trennt den fehlerhaften Datensatz.
+
+## ABLEHNUNG ist endgültig
+
+ABLEHNUNG-Datensätze können vom Dashboard, per CSV oder direkt in der Datenbank **nicht gelöscht oder überschrieben werden**. Nur eine neuere und belegte (Formular, Anrufprotokoll usw.) ZUSTIMMUNG kann sie aufheben. SMS STOP/CANCEL, WhatsApp „Promotionen stoppen", Instagram DM und E-Mail-Abmeldungsanfragen werden im gleichen Workflow als ABLEHNUNG erfasst. Belegdatensätze werden 10 Jahre lang aufbewahrt.
+
+## 6563 md. 12 Bußgeldspannen (2026, pro Empfänger)
+
+| Verstoß | Spanne |
+|---|---|
+| Unerlaubte Mitteilung | 2.859 – 14.309 TL |
+| Fehlende Absender-/Inhaltsinformationen | 2.859 – 28.620 TL |
+| Ablehnungsverletzung | 5.723 – 42.930 TL |
+| Vermittlungsdienstanbieter | 28.620 – 286.206 TL |
+| Keine Registrierung / ETBİS | 143.102 – 715.516 TL |
+
+<Callout type="uyari">Bußgelder werden **pro Empfänger** verhängt: Eine ungenehmigte Kampagne mit 50.000 Empfängern ist für ein kleines Unternehmen ein existenzielles Risiko. Die Behauptung eines 10×-Multiplikators bei Massenversen wurde nicht bestätigt.</Callout>
+
+Ob das İYS WhatsApp abdeckt oder nicht, wurde von keiner Behörde geklärt <Unverified />; das System verhält sich konservativ und leitet auch WhatsApp-Marketingnachrichten durch das İYS-Gateway.

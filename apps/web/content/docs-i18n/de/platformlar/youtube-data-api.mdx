@@ -1,0 +1,28 @@
+---
+title: 'YouTube Data API'
+slug: youtube-data-api
+order: 8
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Öffentliche Kanalstatistiken werden mit API-Schlüssel abgerufen; tägliches Kontingent von 10.000 Einheiten, für Demografie ist die Verbindung des Kanalbetreibers erforderlich.'
+sources:
+  - label: YouTube Data API — Quota
+    url: https://developers.google.com/youtube/v3/determine_quota_cost
+    checkedAt: 2026-11-02
+---
+
+## Was wird abgerufen
+
+Mit dem `channels`-Endpunkt (`forHandle=@kanal`) werden Abonnentenzahl, Videozahl und Gesamtaufrufe abgerufen. Das System berechnet die durchschnittlichen Aufrufe pro Video und zeigt diese im Profil an.
+
+## Kontingent
+
+Das Standard-Projektkontingent beträgt täglich **10.000 Einheiten**; ein `channels.list`-Aufruf kostet 1 Einheit, `search.list` kostet 100 Einheiten. Da die synchrone Verarbeitung nur `channels` verwendet, passen hunderte Kanäle problemlos in das tägliche Kontingent. Wenn das Kontingent überschritten wird, wird der Fehler protokolliert und am nächsten Tag erneut versucht.
+
+## Was nicht abgerufen werden kann
+
+Zuschauer-Demografie, Aufrufdauer und Einnahmedaten können nur über die **YouTube Analytics API** und nur mit OAuth-Genehmigung des Kanalbetreibers abgerufen werden; diese Verbindung existiert noch nicht. Diese Daten werden aus einem vom Influencer hochgeladenen Screenshot eingegeben.
+
+## Werbekennzeichnung
+
+Der YouTube-spezifische Kennzeichnungsmechanismus wurde nicht überprüft <Unverified />; die allgemeine Regel [md. 23/A](/docs/uyum/reklam-aciklamasi-23a) wird angewendet.

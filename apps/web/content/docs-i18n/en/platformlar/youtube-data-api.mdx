@@ -1,0 +1,28 @@
+---
+title: 'YouTube Data API'
+slug: youtube-data-api
+order: 8
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Public channel statistics are pulled via API key; there is a daily quota of 10,000 units, channel owner connection is required for demographics.'
+sources:
+  - label: YouTube Data API — Quota
+    url: https://developers.google.com/youtube/v3/determine_quota_cost
+    checkedAt: 2026-11-02
+---
+
+## What is pulled
+
+With the `channels` endpoint (`forHandle=@channel`), subscriber count, video count, and total views. The system calculates average views per video and displays it on the profile.
+
+## Quota
+
+Default project quota is **10,000 units per day**; a `channels.list` call costs 1 unit, `search.list` costs 100 units. Since sync only uses `channels`, hundreds of channels fit comfortably within the daily quota. If quota is exceeded, the error is logged to the account and retried the next day.
+
+## What cannot be pulled
+
+Audience demographics, watch time, and revenue data can only be obtained via **YouTube Analytics API** and only with the channel owner's OAuth approval; this connection does not yet exist. These data are entered from screenshots uploaded by the influencer.
+
+## Ad disclosure
+
+YouTube-specific tagging mechanism has not been verified <Unverified />; the general [md. 23/A](/docs/uyum/reklam-aciklamasi-23a) rule applies.

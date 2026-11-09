@@ -1,0 +1,41 @@
+---
+title: 'IYS and commercial electronic messages'
+slug: iys-ticari-elektronik-ileti
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Approval/rejection records are transmitted to IYS within 3 business days; REJECTION is permanent and campaign messages do not go to persons without approval.'
+sources:
+  - label: İleti Yönetim Sistemi
+    url: https://iys.org.tr
+    checkedAt: 2026-11-02
+  - label: 6563 sayılı Kanun
+    url: https://www.mevzuat.gov.tr/mevzuatmetin/1.5.6563.pdf
+    checkedAt: 2026-11-02
+---
+
+## Rules applied by the system
+
+- **Live check at send time:** IYS is queried before the marketing message; local record is only a pre-filter. If no approval exists, sending is **blocked** and the reason is shown.
+- **Mixed content is commercial:** any utility message containing a promotional element (discount, coupon, etc.) also requires approval.
+- **Separate IYS connection per brand:** one brand's approval cannot be used for another brand.
+- **3 business day SLA:** each approval/rejection record is transmitted to IYS within 3 business days according to the Turkish business day calendar (excluding official holidays and half-day eves). An alarm is generated for any record waiting longer than 1 business day in the queue.
+- **Bulk registration:** IYS request is atomic; a single faulty record rejects the entire request (HTTP 422). The system sends 1,000-record batches; if an error occurs, it splits the batch to isolate the faulty record.
+
+## REJECTION is terminal
+
+REJECTION records cannot be deleted or overwritten from the panel, via CSV, or directly in the database. Only a newer-dated and evidenced APPROVAL (form, call record, etc.) can override it. SMS STOP/CANCEL, WhatsApp "stop promotions", Instagram DM, and email unsubscribe requests are recorded as REJECTION through the same workflow. Evidence records are retained for 10 years.
+
+## 6563 md. 12 penalty bands (2026, per recipient)
+
+| Violation | Band |
+|---|---|
+| Unauthorized message | 2,859 – 14,309 TL |
+| Missing sender/content information | 2,859 – 28,620 TL |
+| Rejection violation | 5,723 – 42,930 TL |
+| Intermediary service provider | 28,620 – 286,206 TL |
+| Non-registration / ETBİS | 143,102 – 715,516 TL |
+
+<Callout type="uyari">Penalties are applied **per recipient**: an unapproved campaign to 50,000 recipients is an existential risk for a small company. The 10× multiplier claim in bulk sending has not been verified.</Callout>
+
+Whether IYS covers WhatsApp has never been clarified by any authority <Unverified />; the system behaves conservatively and routes WhatsApp marketing messages through the IYS gateway as well.

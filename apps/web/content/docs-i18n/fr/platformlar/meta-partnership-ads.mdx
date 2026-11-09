@@ -1,0 +1,35 @@
+---
+title: 'Annonces de partenariat Meta'
+slug: meta-partnership-ads
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Le code est généré avec la propre session Instagram du créateur, le créateur peut l''annuler à tout moment ; il est revalidé juste avant le lancement.'
+sources:
+  - label: Meta — Partnership Ads
+    url: https://developers.facebook.com/docs/instagram-platform/partnership-ads
+    checkedAt: 2026-11-02
+---
+
+## Comment le code est généré
+
+- Le code est généré avec la **propre** session Instagram du créateur (`instagram_branded_content_creator` permission, liée au compte créateur) ; **il ne peut pas être généré avec le jeton d'accès de la marque**.
+- Le contenu archivé et les posts Collab privés sont également éligibles.
+- Le code est transmis à la marque ; la marque configure l'annonce depuis Ads Manager ou l'API. « Booster le post existant » est un flux distinct.
+
+## Le code est un état variable
+
+Le créateur peut annuler le code à tout moment. C'est pourquoi le code est **revalidé juste avant le lancement**. La documentation ne précise pas si le code a expiré <Unverified /> ; on ne l'assume pas, on le vérifie à chaque fois.
+
+Si le code est annulé, le système : place le code en statut « annulé », ouvre une constatation **Critique** et envoie une notification d'instruction à l'admin pour arrêter l'annonce associée.
+
+## Règles de boost
+
+- Le contenu déjà boosté **ne peut pas être modifié** ; il peut être re-boosté. L'itération se fait en créant une nouvelle annonce.
+- Si le contenu est du branded content, le partenaire est étiqueté comme partenaire payant et **remplace** le partenaire payant existant.
+- L'annonce n'apparaît pas sur le profil du créateur mais peut sembler partagée depuis le compte du créateur.
+- Les annonces de branded content actives sont **listées publiquement dans la Meta Ad Library** — dites-le à la marque.
+
+## Avertissement contractuel
+
+<Callout type="uyari">Le contrat d'influenceur doit spécifier la **durée** et le **plafond budgétaire** du whitelisting/boost. Le droit d'utilisation est également défini dans le plan de contenu et le contenu ne doit pas être utilisé dans l'annonce si « paid inclus » n'a pas été sélectionné.</Callout>

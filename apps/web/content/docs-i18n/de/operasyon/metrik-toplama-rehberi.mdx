@@ -1,0 +1,50 @@
+---
+title: 'Metrik-Erfassungsleitfaden'
+slug: metrik-toplama-rehberi
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Welche Metrik aus welcher Quelle stammt, in welcher Phase erforderlich ist und wie der Screenshot aussehen sollte.'
+sources: []
+---
+
+## Quellen und Vertrauensstufe
+
+| Quelle | Wer trägt ein | Vertrauen |
+|---|---|---|
+| API | System (verbundene Konten) | Hoch |
+| Markendaten | Marke/Agentur (Gutschein, Verkauf, Umsatz) | Hoch |
+| Screenshot | Influencer (Statistikbildschirm + Formular) | Mittel — System liest vom Screenshot und vergleicht mit Formular |
+| Manuell | Nur Admin, ohne Screenshot | Niedrig |
+
+## Metrik → Quelle
+
+| Metrik | Instagram | TikTok | YouTube |
+|---|---|---|---|
+| Reichweite, Impressionen | API / Screenshot | Screenshot | Screenshot |
+| Likes, Kommentare, Speicherungen, Shares | API / Screenshot | Screenshot | Screenshot |
+| Wiedergabedauer, Abschlussrate | — | Nur Screenshot | Nur Screenshot |
+| Zielgruppendaten | API (eigenes Konto) / Screenshot | Nur Screenshot | Nur Screenshot |
+| Klicks, Verkäufe, Umsatz | UTM + Gutschein (Markendaten) | UTM + Gutschein | UTM + Gutschein |
+
+## Phasen
+
+24 Stunden, 7 Tage, 30 Tage und Zwischenmessung. Damit ein Inhalt "Abgeschlossen" ist, ist **mindestens eine** Metrikaufzeichnung erforderlich; **für Instagram Story ist ein Screenshot-Metrik erforderlich**. Metrikphasen fließen basierend auf dem Messfenster in den Kampagnenzielzielen (z. B. 7 Tage) in die Bewertung ein.
+
+## Screenshot-Regeln
+
+- Vollbild; Datum und Kontoname sichtbar.
+- Kein Zuschneiden, Bearbeiten oder Zusammenführen.
+- Separates Bild für jede Phase.
+
+## Konsistenzprüfung
+
+Wenn die Differenz zwischen dem Wert im Formular und dem vom Screenshot abgelesenen Wert **5 % übersteigt**, wird ein Metrik-Konsistenzfund eröffnet. Ein Fund wird auch generiert, wenn die Engagement-Rate außerhalb des angemessenen Bereichs für die Plattform liegt.
+
+## 24-Stunden-Regel für Story
+
+Story-Statistiken verschwinden nach 24 Stunden. Wenn es **20 Stunden** nach der Veröffentlichung keinen Screenshot gibt, erhält der Influencer eine Erinnerung.
+
+## Gutschein- und UTM-Abgleich
+
+Jedem Inhaltslink wird automatisch UTM hinzugefügt (Quelle, Kampagne, Influencer, Inhalt). Die Gutscheincodeverteilung erfolgt auf Influencer-Ebene; Klicks/Verkäufe/Umsatz, die mit dem Gutschein kommen, werden **gleichmäßig auf die nicht stornierten Inhalte dieser Zuweisung verteilt**. Um Doppelzählungen zu vermeiden, sollten Markendaten als einzelner Datensatz eingegeben werden, wenn derselbe Verkauf sowohl über UTM als auch über Gutschein kam.

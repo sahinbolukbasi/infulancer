@@ -1,0 +1,31 @@
+---
+title: 'Messenger und Instagram DM'
+slug: messenger-instagram-dm
+order: 5
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Nach 24 Stunden nur Vertreterantwort (HUMAN_AGENT, 7 Tage); Promotion, Drip oder Warenkorbbenachrichtigung nicht möglich.'
+sources:
+  - label: Messenger Platform — Message tags
+    url: https://developers.facebook.com/docs/messenger-platform/send-messages/message-tags
+    checkedAt: 2026-11-02
+---
+
+## Regeln
+
+- Das Unternehmen kann die Konversation nicht starten; die Person muss schreiben.
+- Standardfenster 24 Stunden. Danach nur **Vertreterantwort** möglich (`HUMAN_AGENT`, 7 Tage nach der letzten Benutzernachricht), darf keine Promotion enthalten.
+- Die Tags `ACCOUNT_UPDATE`, `CONFIRMED_EVENT_UPDATE`, `POST_PURCHASE_UPDATE` wurden am 10. Februar 2026 entfernt → **Wiederengagement außerhalb von 24 Stunden, Drip-Kampagnen und Warenkorbbenachrichtigungen nicht möglich**.
+- Gruppenmessaging existiert nicht.
+
+## Notizen zum Posteingang
+
+- Konversationen im Requests-Ordner, die 30 Tage inaktiv sind, werden von der API nicht zurückgegeben.
+- Ordnerinformationen werden nicht mit der Nachricht übermittelt.
+- Nachrichten, die über Webhook eingehen, werden auf Instagram nicht als gelesen markiert, bis wir antworten; unsere Antwort verschiebt die Konversation in den Ordner „Allgemein".
+- Für geteilte Posts/Medien wird nur die URL übermittelt.
+- Wenn der Benutzer eine Nachricht zurückzieht (unsend), werden die Nachricht, die Medien und der Anrufverlauf dauerhaft gelöscht.
+
+## Geschwindigkeitslimits
+
+Numerische Limits <Unverified />. Die Formel „200 × interaktive Benutzer/Stunde" wird nicht verwendet; adaptive Drosselung wird angewendet.

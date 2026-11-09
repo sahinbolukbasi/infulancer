@@ -1,0 +1,40 @@
+---
+title: 'Fehlerbehebung'
+slug: sorun-giderme
+order: 3
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Was zu tun ist bei Template-Pausierung, unerreichbarem Veröffentlichungslink, leerem Metrik-API und nicht genehmigter Auszahlungsanfrage.'
+sources: []
+---
+
+## Template pausiert
+
+1. `/admin/kanallar` → Überprüfen Sie die Template-Qualität (Mittel/Niedrig).
+2. In der letzten Kampagne könnten Beschwerden/Blockierungen gestiegen sein: Zielgruppe eingrenzen, Häufigkeit reduzieren, Text vereinfachen.
+3. 1. Pausierung 3 Stunden, 2. 6 Stunden; **bei der 3. Pausierung wird das Template dauerhaft deaktiviert** — Sie müssen ein neues Template erstellen. Führen Sie nach der zweiten Pausierung keine Massenversände mit diesem Template durch.
+
+## Veröffentlichungslink unerreichbar
+
+Wenn der Löschkontroll-Agent den Link als tot findet, wird ein kritischer Befund geöffnet. Unterscheiden Sie:
+
+| Status | Erkennungszeichen | Maßnahme |
+|---|---|---|
+| Gelöscht | Link 404, nicht im Influencer-Profil vorhanden | Vertragsverletzung; Kontakt mit Influencer, Zahlung kann gestoppt werden |
+| Datenschutz | Konto privat, Profil nicht zugänglich | Influencer auffordern, Konto zu öffnen |
+| Plattformfehler | Andere Links funktionieren auch nicht, behebt sich kurzfristig | Befund mit "Ez" schließen, wird nächsten Tag erneut überprüft |
+
+## Metrik-API gibt leer zurück
+
+Die Kontoverbindung könnte unterbrochen sein oder der Inhalt wurde noch nicht verarbeitet. Überprüfen Sie im Profil "Letzte Synchronisierung" und die Fehlermeldung. Wechseln Sie ohne zu warten **zum manuellen Workflow mit Screenshot**: Der Influencer lädt einen Screenshot der Statistiken von der Business-Seite hoch, das System liest die Werte aus und vergleicht sie.
+
+## Auszahlungsanfrage wird nicht genehmigt
+
+Für einen auszahlbaren Saldo müssen **alle vier Türen** offen sein:
+
+1. Kampagne muss **abgeschlossen** sein.
+2. Zahlung der Marke muss als **erhalten** markiert sein.
+3. **14 Tage** Wartezeit nach Kampagnenabschluss und Markenzahlung müssen vergangen sein.
+4. Anfragebetrag muss **mindestens 500 TL** sein.
+
+Zusätzlich die Steuerprofil-Tür: Influencer mit md. 23/A-Ausnahme erhalten Zahlungen nur auf das festgelegte IBAN; Zahlungen für Influencer, die "keine Rechnung ausstellen können", sind gesperrt, bis ein Steuerberater-Gutachten hochgeladen und vom Admin genehmigt wird. Wenn IBAN-Informationen fehlen, kann keine Anfrage erstellt werden.

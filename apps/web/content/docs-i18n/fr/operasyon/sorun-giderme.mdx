@@ -1,0 +1,40 @@
+---
+title: 'Dépannage'
+slug: sorun-giderme
+order: 3
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Que faire en cas de suspension de template, de lien de publication inaccessible, d''API de métriques vide et de demande de retrait non approuvée.'
+sources: []
+---
+
+## Template suspendu
+
+1. `/admin/kanallar` → vérifiez la qualité du template (Moyen/Faible).
+2. Les plaintes/blocages ont peut-être augmenté dans la dernière campagne : réduisez l'audience cible, diminuez la fréquence, simplifiez le texte.
+3. 1ère suspension 3 heures, 2e 6 heures ; **à la 3e suspension, le template est désactivé de façon permanente** — vous devez créer un nouveau template. Après la deuxième suspension, n'effectuez pas d'envoi en masse avec ce template.
+
+## Lien de publication inaccessible
+
+Lorsque l'agent de vérification de suppression trouve le lien mort, il ouvre une constatation critique. Distinguez :
+
+| Statut | Comment le reconnaître | Que faire |
+|---|---|---|
+| Supprimé | Lien 404, absent du profil de l'influenceur | Violation de contrat ; contactez l'influenceur, le paiement peut être suspendu |
+| Confidentialité | Compte privé, profil inaccessible | Demandez à l'influenceur de rendre son compte public |
+| Erreur de plateforme | Les autres liens ne s'ouvrent pas non plus, cela se résout rapidement | Fermez la constatation avec "Ez", elle sera revérifiée le lendemain |
+
+## API de métriques vide
+
+La connexion du compte a peut-être été perdue ou le contenu n'a pas encore été traité. Vérifiez « Dernière synchronisation » et le message d'erreur sur le profil. Sans attendre, **passez au flux manuel avec capture d'écran** : l'influenceur télécharge une capture d'écran des statistiques depuis sa page professionnelle, le système lit et compare les valeurs.
+
+## Demande de retrait non approuvée
+
+Pour un solde retirable, **les quatre portes** doivent toutes être ouvertes :
+
+1. La campagne doit être **fermée**.
+2. Le paiement de la marque doit être marqué comme **reçu**.
+3. **14 jours** doivent s'être écoulés après la fermeture et le paiement de la marque.
+4. Le montant de la demande doit être **au minimum 500 TL**.
+
+De plus, la porte du profil fiscal : un influenceur exempté en vertu de md. 23/A ne reçoit un paiement que sur l'IBAN désigné ; le paiement d'un influenceur en situation « ne peut pas émettre de facture » est verrouillé jusqu'à ce qu'un avis d'expert-comptable soit téléchargé et approuvé par l'administrateur. Si les informations IBAN manquent, la demande ne peut pas être créée.

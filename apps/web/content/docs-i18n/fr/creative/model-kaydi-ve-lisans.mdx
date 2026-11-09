@@ -1,0 +1,35 @@
+---
+title: 'Enregistrement du modèle et licence'
+slug: model-kaydi-ve-lisans
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulanmadi
+summary: 'Les ID de modèle sont stockés dans l''enregistrement du modèle, pas dans le code ; un modèle sans licence approuvée ne fonctionne pas dans les tâches client. Les prix n''ont pas encore été vérifiés.'
+sources:
+  - label: fal.ai — Pricing
+    url: https://fal.ai/pricing
+    checkedAt: 2026-11-02
+  - label: Black Forest Labs — Licensing
+    url: https://bfl.ai/licensing
+    checkedAt: 2026-11-02
+---
+
+## Enregistrement du modèle
+
+- Les ID de modèle sont stockés **non pas dans le code** mais dans l'enregistrement du modèle (`/creative` → Crédits et modèles) ; la durée de vie des modèles est supposée être d'environ 12 mois.
+- Les tâches destinées à un modèle obsolète sont automatiquement redirigées vers le modèle de remplacement et l'administrateur est alerté (exemple : Kling 2.1 Pro → Kling v2.5 Turbo Pro).
+- Pour les modèles non déterministes (par ex. Seedance, basés sur des jetons), une **limite** de durée/résolution est appliquée.
+
+## Portail de licence
+
+Un modèle dont le statut de licence n'est pas `cleared` **ne fonctionne pas dans les tâches client**.
+
+<Callout type="uyari">La famille FLUX et les modèles d'origine de recherche sont fermés **jusqu'à ce que soit confirmé par écrit** que la licence commerciale BFL de l'API hébergée de fal la couvre. La licence « Builder » de BFL ne couvre pas l'utilisation au service des clients.</Callout>
+
+## Prix
+
+Tous les prix dans l'enregistrement du modèle ne sont actuellement pas vérifiés <Unverified /> (observation du 2 novembre 2026). Le prix de chaque modèle doit être confirmé à partir de sa page propre et marqué comme « vérifié » dans l'enregistrement avant d'être affiché à l'écran sans étiquette. L'unité de prix de GPT Image 2 est indéfinie ; une seule image n'est pas supposée.
+
+## Le rôle de Bedrock
+
+Amazon Nova Canvas a été retiré le 30 septembre 2026 ; l'architecture n'a pas été construite autour des propres modèles visuels d'Amazon. Bedrock est utilisé uniquement pour les outils Stability (agrandissement, suppression d'arrière-plan, extension) et le filtre de contenu.

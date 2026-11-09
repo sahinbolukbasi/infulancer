@@ -1,0 +1,24 @@
+---
+title: 'Crédit et coût'
+slug: kredi-ve-maliyet
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Le crédit est bloqué lors de l''envoi de production, prélevé uniquement en cas de sortie réussie ; le solde prépayé fal est également la limite de concurrence.'
+sources: []
+---
+
+## Comment ça marche
+
+1. Lors de l'envoi de production, un montant estimé est **bloqué** à partir du solde de crédit de la marque (pas encore prélevé).
+2. Lorsque la sortie arrive avec succès, le montant bloqué est **prélevé** et l'actif est enregistré avec les identifiants C2PA.
+3. Si la production échoue, le montant bloqué est **libéré** ; aucun frais n'est facturé (fal ne facture pas non plus l'erreur serveur).
+4. Si le même résultat arrive à nouveau (répétition webhook), aucun deuxième prélèvement n'est effectué.
+
+## Unité de crédit
+
+1 crédit ≈ 0,05 $ de coût brut supposé ; le prix client est établi à 3–5 fois. Exemple « paquet d'ensemble publicitaire » : 6 visuels (Nano Banana Pro) + 8 s de vidéo + ~300 caractères de synthèse vocale ≈ 1,05 $ de coût brut <Unverified />.
+
+## Solde et concurrence
+
+Le solde prépayé fal est également la limite de concurrence ; en production en masse, si le solde est faible, les travaux attendent. Lorsque le solde de la marque tombe en dessous du seuil de crédit faible, une notification est envoyée à l'administrateur. Le solde par compte, l'enregistrement du modèle et le chargement de crédit se trouvent dans l'onglet « Crédit et modèles » de l'écran `/creative`. Les marques et les influenceurs reçoivent un crédit de bienvenue unique à la première connexion (`CREATIVE_STARTER_CREDITS`, par défaut 30) ; après cela, il est chargé par l'agence.

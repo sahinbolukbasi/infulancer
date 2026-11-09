@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireActor } from "@/lib/auth-guard";
 import { docTree, docsFor } from "@/lib/docs";
+import { getPreferences } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Dokümantasyon" };
 
 export default async function DocsIndexPage() {
   const actor = await requireActor();
-  const tree = docTree(actor.role);
-  const docs = docsFor(actor.role);
+  const { locale } = await getPreferences();
+  const tree = docTree(actor.role, locale);
+  const docs = docsFor(actor.role, locale);
   return (
     <div className="flex flex-col gap-8">
       <p className="max-w-3xl text-sm text-fg-muted">

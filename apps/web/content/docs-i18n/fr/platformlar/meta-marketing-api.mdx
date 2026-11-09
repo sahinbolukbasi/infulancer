@@ -1,0 +1,57 @@
+---
+title: 'API Marketing Meta'
+slug: meta-marketing-api
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'En raison des limites d''écriture des annonces (4 modifications de budget par heure, 30 s par objet), le moteur de budget fonctionne sur une base horaire.'
+sources:
+  - label: Meta Marketing API — Rate Limiting
+    url: https://developers.facebook.com/docs/marketing-api/overview/rate-limiting
+    checkedAt: 2026-11-02
+---
+
+## Limites d'écriture
+
+- **Mutation :** 100 requêtes/s (par app + compte publicitaire).
+- **Même objet :** une modification tous les 30 secondes (code d'erreur `4841018`).
+- **Budget de l'ensemble d'annonces :** 4 modifications par heure ; blocage d'1 heure après.
+- **Limite de dépenses du compte :** 10 modifications par jour.
+
+## Notre implémentation
+
+Le moteur de budget fonctionne en **batch horaire** ; aucune intervention automatique à la minute. Une requête dépassant la limite n'est pas rejetée, elle est reportée à l'heure appropriée suivante et apparaît dans la file d'attente du budget sur l'écran `/admin/reklam`. Pour un même ensemble d'annonces, seule la dernière modification parmi celles accumulées est appliquée.
+
+## Niveau d'accès
+
+- **Full Access :** moins de 15 % d'erreurs sur les 500 derniers appels et les 500 derniers appels des 15 derniers jours. Aucune obligation d'enregistrement d'écran.
+- **Development :** 300 + 40 × annonces actives par heure ; réservé aux pilotes uniquement. Full Access doit être obtenu avant le client payant.
+
+## Quota et score
+
+Lecture 1 point, écriture 3 points ; les points s'érodent en 300 secondes. En Development, le plafond est 60 (blocage de 300 s une fois atteint), en Full Access 9 000 (blocage de 60 s une fois atteint). Tous les chiffres sont stockés dans la configuration, pas dans le code.
+
+## En-têtes de limite de débit
+
+Lus et enregistrés dans chaque réponse :
+
+| En-tête | Champs |
+|---|---|
+| `X-Ad-Account-Usage` | `acc_id_util_pct`, `reset_time_duration`, `ads_api_access_tier` |
+| `X-Business-Use-Case` | `call_count`, `total_cputime`, `total_time`, `estimated_time_to_regain_access` |
+| `X-FB-Ads-Insights-Throttle` | pourcentages d'utilisation des insights |
+
+## 429 et retrait exponentiel
+
+En cas d'erreur de limite de débit (HTTP 429, codes 4/17/32/613), un **backoff exponentiel + jitter** est appliqué : l'attente commence à 0,5 s et double à chaque erreur (maximum 60 s) ; si `estimated_time_to_regain_access` est présent, il est respecté. Priorité de la file d'attente : arrêt du budget > réduction du budget > augmentation du budget > lecture des insights.
+
+## Code d'erreur → action
+
+| Code | Signification | Action du système |
+|---|---|---|
+| `4841018` | Objet modifié dans les 30 s | Mise en file d'attente après 30 s |
+| 17 / 613 | Limite de débit du compte/app | Backoff, la file d'attente attend |
+| 190 | Jeton d'accès révoqué | Arrête la connexion, avertit la marque |
+| 200 | Permission manquante | Alerte « Permission manquante », redirige vers l'étape de configuration |
+
+<Callout type="uyari">Jusqu'à la configuration de la connexion API Marketing, `/admin/reklam` est en mode démo : les requêtes et le comportement des limites sont enregistrés, mais non envoyés à Meta.</Callout>

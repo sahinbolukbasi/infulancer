@@ -1,0 +1,50 @@
+---
+title: 'Metric Collection Guide'
+slug: metrik-toplama-rehberi
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Which metric comes from which source, at which stage it is mandatory, and how the screenshot should look.'
+sources: []
+---
+
+## Sources and trust level
+
+| Source | Who enters | Trust |
+|---|---|---|
+| API | System (linked accounts) | High |
+| Brand data | Brand/agency (coupon, sales, revenue) | High |
+| Screenshot | Influencer (statistics screen + form) | Medium — system reads from screenshot and compares with form |
+| Manual | Admin only, no screenshot | Low |
+
+## Metric → source
+
+| Metric | Instagram | TikTok | YouTube |
+|---|---|---|---|
+| Reach, impressions | API / screenshot | Screenshot | Screenshot |
+| Likes, comments, saves, shares | API / screenshot | Screenshot | Screenshot |
+| Watch time, completion | — | Screenshot only | Screenshot only |
+| Audience demographics | API (own account) / screenshot | Screenshot only | Screenshot only |
+| Clicks, sales, revenue | UTM + coupon (brand data) | UTM + coupon | UTM + coupon |
+
+## Stages
+
+24 hours, 7 days, 30 days and interim measurement. For content to be "Completed", **at least one** metric record is required; **for Instagram Story, a screenshot metric is mandatory**. Metric stages enter the score according to the measurement window in campaign objectives (e.g. 7 days).
+
+## Screenshot rules
+
+- Full screen; date and account name visible.
+- No cropping, editing or merging.
+- Separate image for each stage.
+
+## Consistency check
+
+If the difference between the value in the form and the value read from the screenshot exceeds **5%**, a metric consistency finding is opened. A finding is also generated if the engagement rate is outside the reasonable range for the platform.
+
+## 24-hour rule for Story
+
+Story statistics disappear in 24 hours. If there is no screenshot **20 hours** after posting, a reminder is sent to the influencer.
+
+## Coupon and UTM matching
+
+Each content link automatically gets UTM added (source, campaign, influencer, content). Coupon code assignment is at the influencer level; clicks/sales/revenue from the coupon are **equally divided** among that assignment's non-cancelled content. To prevent double counting, if the same sale came through both UTM and coupon, brand data should be entered as a single record.

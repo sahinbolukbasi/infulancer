@@ -1,0 +1,47 @@
+---
+title: 'WhatsApp Cloud API'
+slug: whatsapp-cloud-api
+order: 4
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'A separate number is connected for each brand (1,000 free service messages per number); only approved templates are sent outside the 24-hour window.'
+sources:
+  - label: WhatsApp Business Platform — Pricing
+    url: https://developers.facebook.com/docs/whatsapp/pricing
+    checkedAt: 2026-11-02
+  - label: Messaging limits
+    url: https://developers.facebook.com/docs/whatsapp/messaging-limits
+    checkedAt: 2026-11-02
+---
+
+## Setup
+
+A separate number is connected per brand with Embedded Signup **v4** (v2/v3 was deprecated on October 15, 2026). Setup steps: signup → access token → webhook subscription → number registration (2-step PIN) → **brand adds payment method in WhatsApp Manager**. Messages cannot be sent without the final step; this is where most get stuck.
+
+## Message limit and free quota
+
+- **Message limit is at portfolio level** and is shared across all numbers in the portfolio; adding a number does not increase capacity. Tiers: 250 → 2,000 → 10,000 → 100,000 → unlimited (per **unique recipient** in 24 hours).
+- **Free 1,000 service messages per number** and are not shared between numbers — this is why each brand gets a separate number.
+- Campaigns exceeding the tier are not rejected; the scheduler splits them into days and shows estimated duration.
+
+## 24-hour window
+
+Free messages can be sent within 24 hours after the customer writes. Outside this window, the only compatible outgoing channel is **approved templates**. Conversations from Click-to-WhatsApp ads get 7 days of free messaging. Each conversation in the inbox has a countdown; the agent is notified 15 minutes before closure.
+
+## Template quality
+
+| Quality | System action |
+|---|---|
+| High | Normal sending |
+| Medium | Sending speed reduced to 50%, brand is warned |
+| Low | Sending automatically stops, escalated to admin |
+
+1st pause is 3 hours, 2nd pause is 6 hours; on 3rd pause the template is disabled. Categories: marketing / utility / authentication. Review time is not guaranteed <Unverified />.
+
+## Price calendar
+
+Meta price changes only take effect on January 1, April 1, July 1, and October 1 (rate card 1 month, pricing model 3 months, model change 6 months advance notice). Turkey rates have not been verified from Meta's own rate card <Unverified />.
+
+## Our rule
+
+<Callout type="yasak">Campaign (marketing) messages **are not sent without İYS approval**. Adding a discount coupon to a utility template also makes the message commercial and falls under the same restriction. See [İYS](/docs/uyum/iys-ticari-elektronik-ileti).</Callout>

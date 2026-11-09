@@ -1,0 +1,28 @@
+---
+title: 'TikTok Marketing API'
+slug: tiktok-marketing-api
+order: 7
+updatedAt: 2026-11-04
+verification: dogrulanmadi
+summary: 'Die Ratenlimits der Anzeigenseite und die App Review-Dauer konnten nicht aus offiziellen Quellen verifiziert werden; adaptive Drosselung wird angewendet.'
+sources:
+  - label: TikTok API for Business
+    url: https://business-api.tiktok.com/portal/docs
+    checkedAt: 2026-11-02
+---
+
+## Status
+
+- Kampagnenerstellung/-verwaltung und Split Test API sind verfügbar.
+- Ratenlimits (QPS) konnten nicht aus offiziellen Quellen verifiziert werden <Unverified />. Es wird keine feste Zahl verwendet; adaptive Drosselung + Backoff bei 429 wird angewendet.
+- Die App Review-Dauer ist nicht garantiert <Unverified />.
+
+## Spark Ads
+
+Im Business Center-Kontoverbindungsmodell kann **jeder**, der Zugriff auf das verbundene Konto hat, es als Anzeigen-ID verwenden; daher wird eine Autorisierungscode pro Post angestrebt. Domains und die Gültigkeitsdauer des Codes konnten nicht aus offiziellen Quellen verifiziert werden <Unverified />; die Funktion befindet sich hinter einem Feature Flag.
+
+**Spark Ads Recommendation API** ist darauf ausgerichtet, organische Inhalte zu finden, die es wert sind, gepusht zu werden (Skelett).
+
+## App Review-Vorbereitung
+
+Live-Website; Datenschutzrichtlinie und Nutzungsbedingungen (`/datenschutz`, `/nutzungsbedingungen`), die sichtbar und funktionsfähig sind, ohne das Menü zu öffnen; Verwendungserklärung für jede Berechtigung; maximal 5 Demo-Videos (jeweils ≤ 50 MB, End-to-End-Streaming); Sandbox bei der ersten Einreichung; ungenutzte Berechtigungen entfernt. Web statt mobiler App.

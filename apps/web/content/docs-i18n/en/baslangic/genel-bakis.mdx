@@ -1,0 +1,27 @@
+---
+title: 'Overview'
+slug: genel-bakis
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Campaign lifecycle from creation to payment and what the system does at each step.'
+sources: []
+---
+
+Nordvow manages an influencer campaign in a single flow from brief to influencer payment. This page summarizes the flow; details of each step are on the relevant page.
+
+## Campaign lifecycle
+
+1. **Setup wizard** (`/admin/kampanyalar/yeni`): information → goals (KPI) → influencers → content plan → brief → publication control. The steps at the top of the campaign page show the same data.
+2. **Content plan**: content for each influencer (post, reels, story, video). For Story, the number of frames and text for each frame are entered; usage rights (duration, channel, country) are mandatory.
+3. **Publication control**: if content is missing "Advertisement/Promotion" disclosure ([md. 23/A](/docs/uyum/reklam-aciklamasi-23a)) or usage rights, the campaign **cannot be published**.
+4. **Delivery**: influencer uploads draft → brand/agency approves or requests revision → publication link is entered.
+5. **Metrics**: metrics are entered at 24 hours, 7 days, 30 days stages ([metric collection guide](/docs/operasyon/metrik-toplama-rehberi)).
+6. **Closure and report**: when campaign closes, report summary draft is created, and when admin approves it enters the PDF report.
+7. **Payment**: if campaign is closed, brand payment is received, and 14-day waiting period has passed, influencer can create a withdrawal request.
+
+## Background workers
+
+Audit agents continuously check content, metrics, and legal timelines; findings are approved or overridden in the Agent center. No agent changes job status on its own.
+
+<Callout type="bilgi">Rules that are "hard blocks" in the system are not warnings; they block the operation: campaign message without İYS approval, campaign publication without md. 23/A tag, live mode without KVKK receipt, production with unlicensed model.</Callout>

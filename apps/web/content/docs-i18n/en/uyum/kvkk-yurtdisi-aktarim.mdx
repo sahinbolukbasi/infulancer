@@ -1,0 +1,41 @@
+---
+title: 'KVKK international data transfer'
+slug: kvkk-yurtdisi-aktarim
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Standard contract for two separate transfers (AWS and Meta); brand cannot go live without uploading Board notification receipt.'
+sources:
+  - label: KVKK — Standard Contract
+    url: https://www.kvkk.gov.tr
+    checkedAt: 2026-11-02
+---
+
+## Roles
+
+For campaign, recipient and message data, the **brand is the data controller** and the platform is the **data processor**. For the platform's own user accounts, billing and telemetry, the platform is the data controller.
+
+## Two separate transfers
+
+| Sub-processor | Purpose |
+|---|---|
+| AWS eu-central-1 (Frankfurt) | Hosting |
+| Meta WhatsApp Cloud API | Message processing |
+
+Turkey is not on Meta's local storage list; message content may be processed in international data centers. Meta is explicitly named as a sub-processor in the privacy notice and brand contract.
+
+## Flow (brand's Compliance page)
+
+1. Data controller → data processor standard contract is signed.
+2. System starts a **5 business day** counter and sends a reminder.
+3. Brand notifies the Board's Standard Contract Notification Module.
+4. Notification receipt for **both transfers** is uploaded.
+
+<Callout type="yasak">Brand cannot go live without uploading the receipt — this is a hard gate in the system. Penalty for non-notification is **90.308 – 1.806.377 TL**.</Callout>
+
+## Other rules
+
+- Continuous transfer does not rely on explicit consent; standard contract is used.
+- Marketing message approval (İYS) and explicit consent for artificial intelligence processing of messages are obtained **separately**.
+- Brand message content is **never** used in the platform's model training; there is no sharing between brands.
+- Special category data (health, biometric, religion, political opinion) is prohibited by contract.

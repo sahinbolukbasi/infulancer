@@ -1,0 +1,41 @@
+---
+title: 'İYS et message commercial électronique'
+slug: iys-ticari-elektronik-ileti
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Les enregistrements d''approbation/rejet sont transmis à İYS dans les 3 jours ouvrables ; le REJET est permanent et aucun message de campagne n''est envoyé à une personne sans approbation.'
+sources:
+  - label: İleti Yönetim Sistemi
+    url: https://iys.org.tr
+    checkedAt: 2026-11-02
+  - label: 6563 sayılı Kanun
+    url: https://www.mevzuat.gov.tr/mevzuatmetin/1.5.6563.pdf
+    checkedAt: 2026-11-02
+---
+
+## Règles appliquées par le système
+
+- **Contrôle en direct au moment de l'envoi :** İYS est interrogé avant le message marketing ; l'enregistrement local n'est qu'un pré-filtre. Sans approbation, l'envoi est **bloqué** et la raison est affichée.
+- **Le contenu mixte est commercial :** tout message utilitaire contenant un élément promotionnel (réduction, coupon…) nécessite également une approbation.
+- **Connexion İYS distincte par marque :** l'approbation d'une marque ne peut pas être utilisée pour une autre marque.
+- **SLA de 3 jours ouvrables :** chaque enregistrement d'approbation/rejet est transmis à İYS dans les 3 jours ouvrables selon le calendrier des jours ouvrables turcs (jours fériés officiels et demi-journées de veille exclus). Une alarme est générée pour tout enregistrement en attente depuis plus d'un jour ouvrable dans la file d'attente.
+- **Enregistrement en masse :** la demande İYS est atomique ; un seul enregistrement erroné rejette toute la demande (HTTP 422). Le système envoie des paquets de 1 000 ; en cas d'erreur, il divise le paquet pour isoler l'enregistrement erroné.
+
+## Le REJET est terminal
+
+Les enregistrements de REJET ne peuvent pas être **supprimés ou écrasés** depuis le tableau de bord, via CSV ou directement dans la base de données. Seule une APPROBATION plus récente et justifiée (formulaire, enregistrement d'appel, etc.) peut l'annuler. Les SMS STOP/ANNULATION, WhatsApp « arrêter les promotions », les messages directs Instagram et les demandes de désinscription par e-mail sont enregistrés comme REJET selon le même flux. Les enregistrements de preuve sont conservés pendant 10 ans.
+
+## Bandes de pénalité 6563 md. 12 (2026, par destinataire)
+
+| Violation | Bande |
+|---|---|
+| Message non autorisé | 2.859 – 14.309 TL |
+| Informations d'expéditeur/contenu manquantes | 2.859 – 28.620 TL |
+| Violation de rejet | 5.723 – 42.930 TL |
+| Fournisseur de service intermédiaire | 28.620 – 286.206 TL |
+| Non-transmission d'enregistrement / ETBİS | 143.102 – 715.516 TL |
+
+<Callout type="uyari">Les pénalités s'appliquent **par destinataire** : une campagne non autorisée auprès de 50 000 destinataires représente un risque existentiel pour une petite entreprise. Le multiplicateur 10× en envoi en masse n'a pas été validé.</Callout>
+
+Aucune autorité n'a clarifié si İYS couvre WhatsApp <Unverified /> ; le système adopte une approche prudente et fait passer les messages marketing WhatsApp par la porte İYS.

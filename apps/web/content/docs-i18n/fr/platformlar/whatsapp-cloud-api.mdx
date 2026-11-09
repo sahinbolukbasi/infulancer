@@ -1,0 +1,47 @@
+---
+title: 'WhatsApp Cloud API'
+slug: whatsapp-cloud-api
+order: 4
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Un numéro distinct est connecté pour chaque marque (1 000 messages de service gratuits par numéro) ; seuls les modèles approuvés sont envoyés en dehors de la fenêtre de 24 heures.'
+sources:
+  - label: WhatsApp Business Platform — Pricing
+    url: https://developers.facebook.com/docs/whatsapp/pricing
+    checkedAt: 2026-11-02
+  - label: Messaging limits
+    url: https://developers.facebook.com/docs/whatsapp/messaging-limits
+    checkedAt: 2026-11-02
+---
+
+## Configuration
+
+Un numéro distinct est connecté par marque avec Embedded Signup **v4** (v2/v3 a été déprécié le 15 octobre 2026). Étapes de configuration : inscription → jeton d'accès → abonnement webhook → enregistrement du numéro (PIN à 2 étapes) → **ajout de la méthode de paiement par la marque dans WhatsApp Manager**. Sans cette dernière étape, aucun message ne peut être envoyé ; c'est généralement là que les problèmes surviennent.
+
+## Limite de messages et quota gratuit
+
+- **La limite de messages est au niveau du portefeuille** et est partagée entre tous les numéros du portefeuille ; ajouter un numéro n'augmente pas la capacité. Niveaux : 250 → 2 000 → 10 000 → 100 000 → illimité (par **destinataire unique** en 24 heures).
+- **1 000 messages de service gratuits par numéro** et ne sont pas partagés entre les numéros — c'est pourquoi chaque marque a un numéro distinct.
+- Les campagnes dépassant le niveau ne sont pas rejetées ; le planificateur les divise par jours et affiche la durée estimée.
+
+## Fenêtre de 24 heures
+
+Les messages gratuits peuvent être envoyés dans les 24 heures suivant le message du client. En dehors de cette fenêtre, le seul canal compatible sortant est le **modèle approuvé**. Les conversations provenant d'annonces Click-to-WhatsApp bénéficient de 7 jours de conversation gratuite. Chaque conversation dans la boîte de réception a un compte à rebours ; une notification est envoyée au représentant 15 minutes avant la fermeture.
+
+## Qualité du modèle
+
+| Qualité | Action du système |
+|---|---|
+| Élevée | Envoi normal |
+| Moyenne | La vitesse d'envoi est réduite de 50 %, la marque est avertie |
+| Faible | L'envoi s'arrête automatiquement, escalade vers l'administrateur |
+
+1ère pause 3 heures, 2e pause 6 heures ; à la 3e pause, le modèle est désactivé. Catégories : marketing / utility / authentication. Le délai d'examen n'est pas garanti <Unverified />.
+
+## Calendrier tarifaire
+
+Les changements de prix de Meta ne prennent effet que le 1er janvier, 1er avril, 1er juillet et 1er octobre (la fiche tarifaire 1 mois, le modèle de prix 3 mois, le changement de modèle 6 mois à l'avance). Les tarifs turcs n'ont pas été vérifiés à partir de la fiche tarifaire propre de Meta <Unverified />.
+
+## Notre règle
+
+<Callout type="yasak">Un message de campagne (marketing) **ne doit pas être envoyé sans approbation İYS**. Ajouter un coupon de réduction à un modèle utility rend également le message commercial et tombe sous la même restriction. Voir [İYS](/docs/uyum/iys-ticari-elektronik-ileti).</Callout>

@@ -1,4 +1,5 @@
 import { BRAND_NAME, SUPPORT_EMAIL } from "../brand";
+import type { Locale } from "../i18n/regions";
 
 /**
  * Markalı (Nordvow) responsive e-posta HTML'i. Bildirim şablonlarındaki düz metin gövde
@@ -15,6 +16,8 @@ export type EmailContent = {
   ctaLabel?: string;
   /** Alıcıya hitap (opsiyonel; gövdede zaten olabilir). */
   preheader?: string;
+  /** E-posta dili (CTA etiketi ve altbilgi bu dilde). */
+  locale?: Locale;
 };
 
 function escapeHtml(s: string): string {
@@ -40,9 +43,16 @@ function bodyToHtml(body: string): string {
 }
 
 /** Markalı HTML e-posta üretir (tablo tabanlı, satır içi stil). */
+const COPY: Record<string, { cta: string; footer: (b: string, e: string) => string }> = {
+  tr: { cta: "Görüntüle", footer: (b, e) => `Bu e-posta ${b} tarafından gönderildi. Sorularınız için ${e}.` },
+  en: { cta: "View", footer: (b, e) => `This email was sent by ${b}. Questions? ${e}.` },
+  de: { cta: "Ansehen", footer: (b, e) => `Diese E-Mail wurde von ${b} gesendet. Fragen? ${e}.` },
+  fr: { cta: "Voir", footer: (b, e) => `Cet e-mail a été envoyé par ${b}. Des questions ? ${e}.` },
+};
 export function renderBrandedEmail(content: EmailContent): string {
+  const copy = COPY[content.locale ?? "tr"] ?? COPY.tr!;
   const cta = content.ctaUrl ?? firstUrl(content.body);
-  const ctaLabel = content.ctaLabel ?? "Görüntüle";
+  const ctaLabel = content.ctaLabel ?? copy.cta;
   const preheader = content.preheader ?? content.subject;
   const year = new Date().getFullYear();
   const ctaBlock = cta
@@ -51,7 +61,7 @@ export function renderBrandedEmail(content: EmailContent): string {
        </td></tr>`
     : "";
   return `<!doctype html>
-<html lang="tr">
+<html lang="${content.locale ?? "tr"}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -80,8 +90,8 @@ export function renderBrandedEmail(content: EmailContent): string {
       <tr>
         <td style="padding:20px 32px 28px;border-top:1px solid #f0f0f2;">
           <p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:#8a8a8f;">
-            Bu e-posta ${escapeHtml(BRAND_NAME)} tarafından gönderildi. Sorularınız için
-            <a href="mailto:${SUPPORT_EMAIL}" style="color:#6b6b70;text-decoration:underline;">${SUPPORT_EMAIL}</a>.
+            ${escapeHtml(copy.footer(BRAND_NAME, "")).replace(new RegExp("\\s+\\.$"), "")}
+            <a href="mailto:${SUPPORT_EMAIL}" style="color:#6b6b70;text-decoration:underline;">${SUPPORT_EMAIL}</a>
           </p>
           <p style="margin:0;font-size:12px;color:#b4b4b8;">© ${year} ${escapeHtml(BRAND_NAME)}</p>
         </td>

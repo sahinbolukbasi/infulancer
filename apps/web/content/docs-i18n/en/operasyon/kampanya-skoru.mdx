@@ -1,0 +1,31 @@
+---
+title: 'Campaign Score'
+slug: kampanya-skoru
+order: 2
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Score = Σ (KPI achievement rate × weight); when the window is open, projection is always displayed next to the score.'
+sources: []
+---
+
+## Calculation
+
+**Score = Σ (KPI achievement rate × weight)**, where the sum of weights equals 1.0.
+
+- KPIs: reach, impressions, engagement rate (ER), clicks, sales, views.
+- Achievement rate = last measurement within the window / target.
+- Status: rate ≥ 100% "Achieved", ≥ 85% "Partial", below "Not Achieved". When the window is open "Measuring".
+
+## Window
+
+The window starts from the first publication and lasts for the number of measurement days of the KPI (e.g., 7 days). When the window closes, the value **freezes**; metrics entered later do not change that KPI. If there are publications where metrics have not yet settled (YouTube 72 hours), no decision is made.
+
+## Projection
+
+When the window is open, the expected value at the end of the window is calculated based on current progress: `achieved × window days / elapsed days`. For ratio KPIs like ER, the current value is accepted as the projection. Projection is **always** displayed next to the score; the agent generates alerts daily for projections below 100% of the target trajectory.
+
+## Why instant score alone is misleading
+
+Example: A campaign with a 7-day reach target reaches 8% of the target **6 hours** after the first publication. The instant score is **8%** and appears "far behind". However, if it continues at the same rate, the projection at the end of the window is `8 × 7 / 0.25 ≈ 224%` — well above target. Conversely, content that spikes early and then stalls shows an exaggerated projection in the early hours.
+
+This is why decisions are made by reading **score + projection + window end** together; "Not Achieved" should not be said before the window closes.

@@ -72,10 +72,10 @@ export function NotificationMenu({ unread, items }: { unread: number; items: Not
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       {n.href ? (
                         <Link href={n.href} onClick={close} className="text-sm text-fg hover:underline">
-                          {n.title}
+                          {tt(n.title)}
                         </Link>
                       ) : (
-                        <span className="text-sm text-fg">{n.title}</span>
+                        <span className="text-sm text-fg">{tt(n.title)}</span>
                       )}
                       <span className="text-[13px] text-fg-muted">{n.body}</span>
                       <span className="text-[12px] text-fg-passive">

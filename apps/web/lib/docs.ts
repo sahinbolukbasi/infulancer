@@ -1,6 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { cache } from "react";
 import GithubSlugger from "github-slugger";
 import { getFrontmatter } from "next-mdx-remote-client/utils";
 import type { Role } from "@infulancer/core/enums";
@@ -36,7 +35,12 @@ export const SECTION_LABELS: Record<string, string> = {
 };
 const SECTION_ORDER = ["baslangic", "platformlar", "uyum", "creative", "operasyon", "influencer"];
 
-function root() {
+function root(locale: string = "tr") {
+  // Çeviri klasörü yoksa Türkçe kaynağa düş.
+  if (locale !== "tr") {
+    const dir = path.join(process.cwd(), "content", "docs-i18n", locale);
+    try { statSync(dir); return dir; } catch { /* yok */ }
+  }
   return path.join(process.cwd(), "content", "docs");
 }
 
@@ -73,9 +77,12 @@ function plainOf(body: string) {
     .slice(0, 4000);
 }
 
-export const allDocs = cache((): DocEntry[] => {
-  const base = root();
-  return walk(base)
+const _cache = new Map<string, DocEntry[]>();
+export function allDocs(locale: string = "tr"): DocEntry[] {
+  const hit = _cache.get(locale);
+  if (hit) return hit;
+  const base = root(locale);
+  const docs = walk(base)
     .map((file) => {
       const rel = path.relative(base, file).replace(/\\/g, "/").replace(/\.mdx$/, "");
       const raw = readFileSync(file, "utf8");
@@ -98,24 +105,26 @@ export const allDocs = cache((): DocEntry[] => {
       };
     })
     .sort((a, b) => SECTION_ORDER.indexOf(a.section) - SECTION_ORDER.indexOf(b.section) || a.order - b.order || a.title.localeCompare(b.title, "tr"));
-});
+  _cache.set(locale, docs);
+  return docs;
+}
 
 export function canRead(role: Role, doc: Pick<DocMeta, "slug">): boolean {
   if (role === "ADMIN" || role === "BRAND") return true;
   return doc.slug.startsWith("influencer-");
 }
 
-export function docsFor(role: Role): DocEntry[] {
-  return allDocs().filter((d) => canRead(role, d));
+export function docsFor(role: Role, locale: string = "tr"): DocEntry[] {
+  return allDocs(locale).filter((d) => canRead(role, d));
 }
 
-export function findDoc(pathOrSlug: string): DocEntry | undefined {
-  const all = allDocs();
+export function findDoc(pathOrSlug: string, locale: string = "tr"): DocEntry | undefined {
+  const all = allDocs(locale);
   return all.find((d) => d.path === pathOrSlug) ?? all.find((d) => d.slug === pathOrSlug);
 }
 
-export function docTree(role: Role) {
-  const docs = docsFor(role);
+export function docTree(role: Role, locale: string = "tr") {
+  const docs = docsFor(role, locale);
   return SECTION_ORDER.filter((s) => docs.some((d) => d.section === s)).map((s) => ({
     section: s,
     label: SECTION_LABELS[s] ?? s,

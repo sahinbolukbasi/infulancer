@@ -1,0 +1,50 @@
+---
+title: 'Guide de collecte des métriques'
+slug: metrik-toplama-rehberi
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'D''où provient chaque métrique, à quel stade elle est obligatoire et à quoi doit ressembler la capture d''écran.'
+sources: []
+---
+
+## Sources et niveau de confiance
+
+| Source | Qui entre | Confiance |
+|---|---|---|
+| API | Système (comptes liés) | Élevée |
+| Données de marque | Marque/agence (coupon, ventes, chiffre d'affaires) | Élevée |
+| Capture d'écran | Influenceur (écran de statistiques + formulaire) | Moyenne — le système lit la capture et la compare au formulaire |
+| Manuel | Admin uniquement, sans capture | Faible |
+
+## Métrique → source
+
+| Métrique | Instagram | TikTok | YouTube |
+|---|---|---|---|
+| Portée, impressions | API / capture d'écran | Capture d'écran | Capture d'écran |
+| J'aime, commentaires, enregistrements, partages | API / capture d'écran | Capture d'écran | Capture d'écran |
+| Durée de visionnage, taux de complétion | — | Capture d'écran uniquement | Capture d'écran uniquement |
+| Démographie de l'audience | API (propre compte) / capture d'écran | Capture d'écran uniquement | Capture d'écran uniquement |
+| Clics, ventes, chiffre d'affaires | UTM + coupon (données de marque) | UTM + coupon | UTM + coupon |
+
+## Étapes
+
+24 heures, 7 jours, 30 jours et mesure intermédiaire. Pour qu'un contenu soit « Terminé », **au moins une** métrique doit être enregistrée ; **pour Instagram Story, une métrique avec capture d'écran est obligatoire**. Les étapes de métrique sont notées selon la fenêtre de mesure dans les objectifs de la campagne (par ex. 7 jours).
+
+## Règles de capture d'écran
+
+- Plein écran ; la date et le nom du compte doivent être visibles.
+- Pas de recadrage, d'édition ou de fusion.
+- Image séparée pour chaque étape.
+
+## Contrôle de cohérence
+
+Si la différence entre la valeur du formulaire et la valeur lue à partir de la capture d'écran dépasse **5 %**, un constat de cohérence des métriques est ouvert. Un constat est également généré si le taux d'engagement est en dehors de la plage raisonnable pour la plateforme.
+
+## Règle des 24 heures pour Story
+
+Les statistiques de Story disparaissent en 24 heures. Si aucune capture d'écran n'est prise **20 heures** après la publication, un rappel est envoyé à l'influenceur.
+
+## Correspondance des coupons et UTM
+
+Un UTM est automatiquement ajouté à chaque lien de contenu (source, campagne, influenceur, contenu). L'attribution du code coupon se fait au niveau de l'influenceur ; les clics/ventes/chiffre d'affaires provenant du coupon sont **répartis équitablement** entre les contenus de cette attribution qui ne sont pas annulés. Pour éviter le double comptage, si une même vente provient à la fois d'UTM et de coupon, les données de marque doivent être entrées comme un seul enregistrement.

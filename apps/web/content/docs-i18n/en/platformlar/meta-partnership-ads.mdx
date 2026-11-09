@@ -1,0 +1,35 @@
+---
+title: 'Meta Partnership Ads'
+slug: meta-partnership-ads
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Code is generated with the creator''s own Instagram account; the creator can cancel it at any time; it is re-verified immediately before launch.'
+sources:
+  - label: Meta — Partnership Ads
+    url: https://developers.facebook.com/docs/instagram-platform/partnership-ads
+    checkedAt: 2026-11-02
+---
+
+## How the code is generated
+
+- The code is generated with the creator's **own** Instagram account (`instagram_branded_content_creator` permission, linked to the creator account); **it cannot be generated with the brand's access token**.
+- Archived content and private Collab posts are also eligible.
+- The code is transferred to the brand; the brand sets up the ad from Ads Manager or API. "Boost existing post" is a separate flow.
+
+## Code is a variable state
+
+The creator can cancel the code at any time. For this reason, the code is **re-verified immediately before launch**. Whether the code has expired is not documented <Unverified />; it is not assumed, it is checked every time.
+
+If the code is cancelled, the system: places the code in "cancelled" status, opens a **Critical** finding and sends an admin instruction notification to stop the related ad.
+
+## Boost rules
+
+- Already boosted content **cannot be edited**; it can be re-boosted. Iteration is done by creating a new ad.
+- If the content is branded content, the partner is tagged as a paid partner and **replaces** the existing paid partner.
+- The ad does not appear on the creator's profile but may appear as if shared from the creator account.
+- Active branded content ads are **publicly listed in Meta Ad Library** — tell the brand about this.
+
+## Contract warning
+
+<Callout type="uyari">The influencer contract must specify the whitelisting/boost **duration** and **budget cap**. Usage rights are also defined in the content plan and if "paid included" is not selected, the content should not be used in ads.</Callout>

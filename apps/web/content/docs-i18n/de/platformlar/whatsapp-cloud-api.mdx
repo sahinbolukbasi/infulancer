@@ -1,0 +1,47 @@
+---
+title: 'WhatsApp Cloud API'
+slug: whatsapp-cloud-api
+order: 4
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Jede Marke wird mit einer separaten Nummer verbunden (1.000 kostenlose Service-Nachrichten pro Nummer); außerhalb von 24 Stunden werden nur genehmigte Templates gesendet.'
+sources:
+  - label: WhatsApp Business Platform — Pricing
+    url: https://developers.facebook.com/docs/whatsapp/pricing
+    checkedAt: 2026-11-02
+  - label: Messaging limits
+    url: https://developers.facebook.com/docs/whatsapp/messaging-limits
+    checkedAt: 2026-11-02
+---
+
+## Einrichtung
+
+Mit Embedded Signup **v4** wird eine separate Nummer pro Marke verbunden (v2/v3 wurde am 15. Oktober 2026 eingestellt). Einrichtungsschritte: Anmeldung → Zugriffstoken → Webhook-Abonnement → Nummernregistrierung (2-Faktor-PIN) → **Zahlungsmethode der Marke im WhatsApp Manager hinzufügen**. Ohne den letzten Schritt können keine Nachrichten gesendet werden; hier bleiben die meisten stecken.
+
+## Nachrichtenlimit und kostenlose Quote
+
+- **Das Nachrichtenlimit liegt auf Portfolio-Ebene** und wird von allen Nummern im Portfolio gemeinsam genutzt; das Hinzufügen einer Nummer erhöht nicht die Kapazität. Stufen: 250 → 2.000 → 10.000 → 100.000 → unbegrenzt (in 24 Stunden **eindeutige Empfänger**).
+- **Kostenlos 1.000 Service-Nachrichten pro Nummer** und werden nicht zwischen Nummern geteilt — deshalb wird jede Marke mit einer separaten Nummer verbunden.
+- Kampagnen, die das Limit überschreiten, werden nicht abgelehnt; der Planer teilt sie auf Tage auf und zeigt die geschätzte Dauer an.
+
+## 24-Stunden-Fenster
+
+Innerhalb von 24 Stunden nach einer Kundennachricht können kostenlose Nachrichten gesendet werden. Außerhalb des Fensters ist der einzige kompatible ausgehende Kanal **genehmigtes Template**. Besucher von Click-to-WhatsApp-Anzeigen können 7 Tage lang kostenlos kontaktiert werden. In jedem Gespräch im Posteingang gibt es einen Countdown; 15 Minuten vor dem Schließen wird der Agent benachrichtigt.
+
+## Template-Qualität
+
+| Qualität | Systemverhalten |
+|---|---|
+| Hoch | Normaler Versand |
+| Mittel | Versandgeschwindigkeit auf 50 % reduziert, Marke wird benachrichtigt |
+| Niedrig | Versand wird automatisch gestoppt, Eskalation an Admin |
+
+1. Pause 3 Stunden, 2. Pause 6 Stunden; bei der 3. Pause wird das Template deaktiviert. Kategorien: marketing / utility / authentication. Die Überprüfungsdauer ist nicht garantiert <Unverified />.
+
+## Preiskalender
+
+Meta-Preisänderungen treten nur am 1. Januar, 1. April, 1. Juli und 1. Oktober in Kraft (Tarifkarte 1 Monat, Preismodell 3 Monate, Modelländerung 6 Monate im Voraus angekündigt). Türkische Gebühren wurden nicht von Metas eigenem Tarifblatt bestätigt <Unverified />.
+
+## Unsere Regel
+
+<Callout type="yasak">Marketing-Nachrichten werden **ohne İYS-Genehmigung nicht gesendet**. Das Hinzufügen eines Rabattcoupons zu einem Utility-Template macht die Nachricht auch kommerziell und fällt unter die gleiche Kategorie. Siehe [İYS](/docs/uyum/iys-ticari-elektronik-ileti).</Callout>

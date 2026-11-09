@@ -1,0 +1,31 @@
+---
+title: 'Messenger et Instagram DM'
+slug: messenger-instagram-dm
+order: 5
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Après 24 heures, réponse d''agent uniquement (HUMAN_AGENT, 7 jours) ; promotion, drip ou rappel de panier impossible.'
+sources:
+  - label: Messenger Platform — Message tags
+    url: https://developers.facebook.com/docs/messenger-platform/send-messages/message-tags
+    checkedAt: 2026-11-02
+---
+
+## Règles
+
+- L'entreprise ne peut pas initier la conversation ; la personne doit écrire en premier.
+- Fenêtre standard 24 heures. Après, seule la **réponse d'agent** est possible (`HUMAN_AGENT`, 7 jours après le dernier message de l'utilisateur), sans contenu promotionnel.
+- Les étiquettes `ACCOUNT_UPDATE`, `CONFIRMED_EVENT_UPDATE`, `POST_PURCHASE_UPDATE` ont été supprimées le 10 février 2026 → **réengagement hors 24 heures, campagnes drip et rappels de panier impossibles**.
+- Pas de messagerie de groupe.
+
+## Notes sur la boîte de réception
+
+- Les conversations inactives depuis 30 jours dans le dossier Requests ne sont pas renvoyées par l'API.
+- Les informations de dossier ne sont pas incluses dans le message.
+- Les messages reçus via webhook ne sont pas marqués comme lus sur Instagram jusqu'à ce que nous répondions ; notre réponse déplace la conversation vers le dossier General.
+- Pour les posts/médias partagés, seule l'URL est reçue.
+- Si l'utilisateur annule son message (unsend), le message, les médias et l'historique d'appels sont supprimés de manière permanente.
+
+## Limites de débit
+
+Les limites numériques <Unverified />. La formule « 200 × utilisateurs engagés/heure » n'est pas utilisée ; une limitation adaptative s'applique.

@@ -1,0 +1,35 @@
+---
+title: 'Meta Partnership Ads'
+slug: meta-partnership-ads
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Code wird mit dem eigenen Instagram-Konto des Creators generiert, der Creator kann es jederzeit stornieren; wird unmittelbar vor dem Start erneut validiert.'
+sources:
+  - label: Meta — Partnership Ads
+    url: https://developers.facebook.com/docs/instagram-platform/partnership-ads
+    checkedAt: 2026-11-02
+---
+
+## Wie wird der Code generiert
+
+- Der Code wird mit dem **eigenen** Instagram-Konto des Creators generiert (`instagram_branded_content_creator` Berechtigung, an das Creator-Konto gebunden); **er kann nicht mit dem Zugriffstoken der Marke generiert werden**.
+- Archivierte Inhalte und private Collab-Posts sind ebenfalls geeignet.
+- Der Code wird an die Marke übertragen; die Marke erstellt die Anzeige über den Ads Manager oder die API. "Bestehenden Post bewerben" ist ein separater Workflow.
+
+## Der Code ist ein variabler Zustand
+
+Der Creator kann den Code jederzeit stornieren. Deshalb wird der Code **unmittelbar vor dem Start erneut validiert**. Ob der Code abgelaufen ist, steht nicht in der Dokumentation <Unverified />; es wird nicht angenommen, sondern jedes Mal überprüft.
+
+Wenn der Code storniert wird, führt das System: den Code in den Status "storniert" über, öffnet einen **kritischen** Befund und sendet eine Benachrichtigung an den Admin mit der Anweisung, die zugehörige Anzeige zu stoppen.
+
+## Bewerbungsregeln
+
+- Bereits beworbene Inhalte **können nicht bearbeitet werden**; sie können erneut beworben werden. Iterationen werden durch Erstellung einer neuen Anzeige durchgeführt.
+- Wenn der Inhalt Branded Content ist, wird der Partner als bezahlter Mitarbeiter gekennzeichnet und **ersetzt den bestehenden bezahlten Partner**.
+- Die Anzeige wird nicht im Profil des Creators angezeigt, kann aber so aussehen, als würde sie vom Creator-Konto geteilt.
+- Aktive Branded-Content-Anzeigen werden **in der Meta Ad Library öffentlich** aufgelistet — teilen Sie dies der Marke mit.
+
+## Vertragswarnung
+
+<Callout type="uyari">Der Influencer-Vertrag muss die **Dauer** und das **Budget-Limit** für Whitelisting/Bewerbung enthalten. Das Nutzungsrecht wird auch im Content-Plan definiert und der Inhalt sollte nicht in Anzeigen verwendet werden, wenn "Paid enthalten" nicht ausgewählt wurde.</Callout>

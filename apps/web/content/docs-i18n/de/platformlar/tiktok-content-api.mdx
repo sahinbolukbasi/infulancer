@@ -1,0 +1,34 @@
+---
+title: 'TikTok Content Posting und Display API'
+slug: tiktok-content-api
+order: 6
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Vor der Prüfung können mit der API nur SELF_ONLY-Beiträge erstellt werden; TikTok-Veröffentlichungen werden manuell durchgeführt, der Link wird ins System eingegeben.'
+sources:
+  - label: TikTok — Content Posting API
+    url: https://developers.tiktok.com/doc/content-posting-api-get-started
+    checkedAt: 2026-11-02
+---
+
+## Audit-Beschränkung
+
+Bis die Anwendung die TikTok-Prüfung besteht, können mit der API nur Beiträge mit der Sichtbarkeit `SELF_ONLY` erstellt werden; bezahlte Partnerschaftsinhalte können in diesem Modus **nicht veröffentlicht werden**. Vor der Prüfung können maximal 5 Benutzer innerhalb von 24 Stunden Beiträge erstellen.
+
+→ In der Praxis werden TikTok-Veröffentlichungen **manuell** durchgeführt, der Veröffentlichungslink wird ins System eingegeben.
+
+Nach der Prüfung werden vor jeder Veröffentlichung die Creator-Informationen abgefragt; die Antwort „kann derzeit nicht posten" ist kein Fehler (das 24-Stunden-Posting-Limit des Creators wird über alle von ihm verwendeten Anwendungen hinweg geteilt), dem Benutzer wird empfohlen, es später zu versuchen. Da es keinen Parameter für geplante Veröffentlichungen gibt, wird die Planung serverseitig durchgeführt.
+
+## Messaging
+
+Es gibt keine API, die es Unternehmen ermöglicht, Nachrichten an Benutzer zu initiieren. Business Messaging muss vom Benutzer initiiert werden, erfolgt über einen Drittanbieter und wird auf US/AEA/Schweiz/UK-Konten nicht unterstützt. Die Creator-Kommunikation erfolgt per E-Mail, manueller Nachricht oder über TikTok One, falls Zugriff vorhanden ist. Aus diesem Grund gibt es im Dashboard keine TikTok DM-Schaltfläche.
+
+## Kontoverbindung und Follower-Daten
+
+Der Influencer klickt in seinem Dashboard auf „Mit TikTok verbinden" (Login Kit). Nach der Verbindung werden Follower-, Video- und Like-Zahlen automatisch aktualisiert. Profilbilder werden nicht gespeichert, da ihre Links zeitlich begrenzt sind.
+
+## Fehlende Metriken
+
+Wiedergabedauer, Abschlussquote und Follower-Demografie sind in der öffentlichen API **nicht verfügbar**; diese werden über Screenshots oder Media Kits des Creators erfasst.
+
+Funktionen, die von TikTok One / Creator Marketplace API abhängen, sind **absichtlich** nicht vorhanden (Zugriff nur auf Einladung).

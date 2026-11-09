@@ -1,0 +1,28 @@
+---
+title: 'YouTube Data API'
+slug: youtube-data-api
+order: 8
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Les statistiques publiques des chaînes sont extraites via la clé API ; quota quotidien de 10 000 unités, la connexion du propriétaire de la chaîne est requise pour les données démographiques.'
+sources:
+  - label: YouTube Data API — Quota
+    url: https://developers.google.com/youtube/v3/determine_quota_cost
+    checkedAt: 2026-11-02
+---
+
+## Ce qui est extrait
+
+Avec le point de terminaison `channels` (`forHandle=@kanal`), le nombre d'abonnés, le nombre de vidéos et les vues totales. Le système calcule la moyenne des vues par vidéo et l'affiche dans le profil.
+
+## Quota
+
+Le quota du projet par défaut est de **10 000 unités par jour** ; un appel `channels.list` coûte 1 unité, `search.list` coûte 100 unités. Comme la synchronisation utilise uniquement `channels`, des centaines de chaînes s'adaptent facilement au quota quotidien. Si le quota est dépassé, une erreur est enregistrée et une nouvelle tentative est effectuée le jour suivant.
+
+## Ce qui ne peut pas être extrait
+
+Les données démographiques des spectateurs, la durée de visionnage et les données de revenus ne peuvent être obtenues que via **YouTube Analytics API** et uniquement avec l'approbation OAuth du propriétaire de la chaîne ; cette connexion n'existe pas encore. Ces données sont saisies à partir d'une capture d'écran téléchargée par l'influenceur.
+
+## Divulgation publicitaire
+
+Le mécanisme d'étiquetage spécifique à YouTube n'a pas été vérifié <Unverified /> ; la règle générale [md. 23/A](/docs/uyum/reklam-aciklamasi-23a) s'applique.

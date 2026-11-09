@@ -1,0 +1,35 @@
+---
+title: 'Model registration and licensing'
+slug: model-kaydi-ve-lisans
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulanmadi
+summary: 'Model IDs are stored in model registration, not in code; models without approved licenses won''t work in customer jobs. Prices are not yet verified.'
+sources:
+  - label: fal.ai — Pricing
+    url: https://fal.ai/pricing
+    checkedAt: 2026-11-02
+  - label: Black Forest Labs — Licensing
+    url: https://bfl.ai/licensing
+    checkedAt: 2026-11-02
+---
+
+## Model registration
+
+- Model IDs are stored **not in code** but in model registration (`/creative` → Credits and models); models are assumed to have a lifespan of approximately 12 months.
+- Jobs sent to deprecated models are automatically redirected to the replacement model and the admin is alerted (example: Kling 2.1 Pro → Kling v2.5 Turbo Pro).
+- For non-deterministic models (e.g. Seedance, token-based) a duration/resolution **ceiling** is applied.
+
+## Licensing gate
+
+Models with licensing status other than `cleared` **will not work in customer jobs**.
+
+<Callout type="uyari">FLUX family and research-origin models remain closed **until written confirmation** that fal's hosted API covers BFL's commercial license. BFL's "Builder" license does not cover customer-facing service use.</Callout>
+
+## Prices
+
+All prices in the model registry are currently unverified <Unverified /> (observation from November 2, 2026). Each model's price must be verified from its own page and marked as "verified" in the registry before it is displayed on screen without a label. GPT Image 2's price unit is undefined; a single image is not assumed.
+
+## Bedrock's role
+
+Amazon Nova Canvas was deprecated on September 30, 2026; architecture was not built around Amazon's own image models. Bedrock is used only for Stability tools (upscaling, background removal, expansion) and content filtering.

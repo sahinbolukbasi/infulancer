@@ -1,0 +1,24 @@
+---
+title: 'Guthaben und Kosten'
+slug: kredi-ve-maliyet
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Guthaben wird bei der Produktion blockiert und nur bei erfolgreichem Output eingezogen; das Prepaid-Guthaben von fal ist gleichzeitig das Parallelitätslimit.'
+sources: []
+---
+
+## Wie es funktioniert
+
+1. Bei der Produktionssendung wird der geschätzte Betrag vom Markenguthaben **blockiert** (noch nicht eingezogen).
+2. Wenn die Ausgabe erfolgreich ankommt, wird der blockierte Betrag **eingezogen** und das Asset mit C2PA-Anmeldedaten registriert.
+3. Wenn die Produktion fehlschlägt, wird die Blockierung **freigegeben**; es wird keine Gebühr erhoben (fal berechnet auch Serverfehler nicht).
+4. Wenn das gleiche Ergebnis erneut ankommt (Webhook-Wiederholung), erfolgt keine zweite Einziehung.
+
+## Krediteinheit
+
+1 Guthaben ≈ 0,05 $ Rohkosten angenommen; der Kundenpreis wird mit dem 3–5-fachen festgelegt. Beispiel "Ad-Set-Paket": 6 Bilder (Nano Banana Pro) + 8 Sekunden Video + ~300 Zeichen Sprachausgabe ≈ 1,05 $ Rohkosten <Unverified />.
+
+## Guthaben und Parallelität
+
+Das Prepaid-Guthaben von fal ist gleichzeitig das Parallelitätslimit; bei Massenproduktion warten Aufträge, wenn das Guthaben niedrig ist. Wenn das Markenguthaben unter die niedrige Kreditgrenze fällt, erhält der Admin eine Benachrichtigung. Das Guthaben pro Konto, die Modellregistrierung und das Guthaben-Aufladen befinden sich auf der Registerkarte "Guthaben und Modelle" im `/creative`-Bildschirm. Marken und Influencer erhalten bei der ersten Anmeldung ein einmaliges Willkommensguthaben (`CREATIVE_STARTER_CREDITS`, Standard 30); danach wird es von der Agentur aufgeladen.

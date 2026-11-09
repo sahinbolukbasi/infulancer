@@ -1,0 +1,41 @@
+---
+title: 'Instagram Graph API'
+slug: instagram-graph-api
+order: 3
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Story metrics disappear in 24 hours; reminder goes away 20 hours after posting and story cannot be completed without screenshot metric.'
+sources:
+  - label: Instagram Platform — Insights
+    url: https://developers.facebook.com/docs/instagram-platform/insights
+    checkedAt: 2026-11-02
+  - label: Business Discovery
+    url: https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/business_discovery
+    checkedAt: 2026-11-02
+---
+
+## Account linking
+
+Facebook Login → Instagram Business/Creator account → permissions: `instagram_basic`, `instagram_manage_insights`, `pages_show_list`. Personal (non-Professional) accounts cannot be linked.
+
+## Automatic follower data retrieval
+
+The agency performs a **Business Discovery** query with its own Instagram Business account: follower count, post count, and average likes/comments of recent posts for public Business/Creator accounts. The influencer does not need to log in. The system does this every 6 hours (every 12 hours for older accounts); it can be triggered manually on the profile with "Sync now". No scraping is performed.
+
+## Available metrics
+
+For linked (own) account: reach, impressions, saves, shares, profile views, follower demographics.
+
+## Story critical note
+
+<Callout type="uyari">Story metrics disappear after 24 hours → **screenshot is mandatory**. The system sends a reminder to the influencer **+20 hours** after posting. On Instagram Story, a job cannot be marked "Completed" without a screenshot metric.</Callout>
+
+## Unavailable
+
+- Detailed demographics of someone else's account (Business Discovery only provides public numbers).
+- Archived/hidden metrics.
+- Bulk announcements cannot be sent from Instagram (see [Messenger and Instagram DM](/docs/platformlar/messenger-instagram-dm)).
+
+## Rate limits
+
+Numerical limits not verified from official source <Unverified />; adaptive throttling is applied (slow down on 429, gradually speed up on success).

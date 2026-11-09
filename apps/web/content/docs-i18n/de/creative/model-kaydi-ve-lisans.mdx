@@ -1,0 +1,35 @@
+---
+title: 'Modellregistrierung und Lizenzierung'
+slug: model-kaydi-ve-lisans
+order: 1
+updatedAt: 2026-11-04
+verification: dogrulanmadi
+summary: 'Modell-IDs werden in der Modellregistrierung gespeichert, nicht im Code; Modelle ohne genehmigte Lizenz funktionieren nicht in Kundenaufträgen. Preise sind noch nicht verifiziert.'
+sources:
+  - label: fal.ai — Pricing
+    url: https://fal.ai/pricing
+    checkedAt: 2026-11-02
+  - label: Black Forest Labs — Licensing
+    url: https://bfl.ai/licensing
+    checkedAt: 2026-11-02
+---
+
+## Modellregistrierung
+
+- Modell-IDs werden **nicht im Code**, sondern in der Modellregistrierung (`/creative` → Guthaben und Modelle) gespeichert; die Lebensdauer von Modellen wird auf etwa 12 Monate geschätzt.
+- Aufträge für veraltete Modelle werden automatisch an das Ersatzmodell weitergeleitet und der Admin wird benachrichtigt (Beispiel: Kling 2.1 Pro → Kling v2.5 Turbo Pro).
+- Bei nicht-deterministischen Modellen (z. B. Seedance, token-basiert) wird eine **Obergrenze** für Dauer/Auflösung angewendet.
+
+## Lizenzierungstor
+
+Modelle mit Lizenzstatus `cleared` funktionieren **nicht in Kundenaufträgen**.
+
+<Callout type="uyari">FLUX-Familie und Modelle mit Forschungshintergrund sind **bis zur schriftlichen Bestätigung** gesperrt, dass die gehostete API von fal die kommerzielle Lizenz von BFL abdeckt. Die "Builder"-Lizenz von BFL deckt keine kundenorientierte Nutzung ab.</Callout>
+
+## Preise
+
+Alle Preise in der Modellregistrierung sind derzeit nicht verifiziert <Unverified /> (Beobachtung vom 2. November 2026). Jeder Modellpreis wird von seiner eigenen Seite verifiziert und in der Registrierung als "verifiziert" gekennzeichnet, bis er auf dem Bildschirm mit einem Label angezeigt wird. Die Preiseinheit von GPT Image 2 ist nicht definiert; ein einzelnes Bild wird nicht angenommen.
+
+## Die Rolle von Bedrock
+
+Amazon Nova Canvas wurde am 30. September 2026 eingestellt; die Architektur wurde nicht um Amazons eigene Bildmodelle herum aufgebaut. Bedrock wird nur für Stability-Tools (Upscaling, Hintergrundentfernung, Erweiterung) und Inhaltsfilterung verwendet.

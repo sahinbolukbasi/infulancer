@@ -1,0 +1,34 @@
+---
+title: 'TikTok Content Posting et Display API'
+slug: tiktok-content-api
+order: 6
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Avant l''audit, seules les publications SELF_ONLY peuvent être effectuées via l''API ; les publications TikTok sont faites manuellement, le lien est saisi dans le système.'
+sources:
+  - label: TikTok — Content Posting API
+    url: https://developers.tiktok.com/doc/content-posting-api-get-started
+    checkedAt: 2026-11-02
+---
+
+## Restriction d'audit
+
+Jusqu'à ce que l'application passe l'audit TikTok, seules les publications avec la visibilité `SELF_ONLY` peuvent être effectuées via l'API ; le contenu de partenariat payant ne peut **pas être publié** dans ce mode. Avant l'audit, un maximum de 5 utilisateurs peuvent publier en 24 heures.
+
+→ En pratique, les publications TikTok sont effectuées **manuellement**, le lien de publication est saisi dans le système.
+
+Après l'audit, les informations du créateur sont vérifiées avant chaque publication ; la réponse « impossible de publier maintenant » n'est pas une erreur (le plafond de publication de 24 heures est partagé entre toutes les applications utilisées par le créateur), l'utilisateur est invité à réessayer plus tard. Comme il n'y a pas de paramètre de publication programmée, la programmation est effectuée côté serveur.
+
+## Messagerie
+
+Il n'existe pas d'API permettant aux entreprises d'initier des messages aux utilisateurs. Business Messaging doit être initié uniquement par l'utilisateur, il passe par un fournisseur tiers et n'est pas pris en charge sur les comptes US/AEA/Suisse/RU. La communication avec les créateurs se fait par e-mail, message manuel ou via TikTok One si l'accès est disponible. Le bouton TikTok DM n'existe donc pas dans le tableau de bord.
+
+## Liaison de compte et données de followers
+
+L'influenceur clique sur « Se connecter avec TikTok » depuis son tableau de bord (Login Kit). Après la liaison, le nombre de followers, de vidéos et de likes est automatiquement mis à jour. Les images de couverture ne sont pas conservées car leurs liens sont temporaires.
+
+## Métriques manquantes
+
+La durée de visionnage, le taux de complétion et la démographie des followers **n'existent pas** dans l'API publique ; elles sont collectées via une capture d'écran téléchargée par le créateur ou un media kit.
+
+Les fonctionnalités dépendantes de TikTok One / Creator Marketplace API **n'existent intentionnellement pas** (accès sur invitation).

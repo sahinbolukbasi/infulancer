@@ -1,0 +1,41 @@
+---
+title: 'KVKK Datenübermittlung ins Ausland'
+slug: kvkk-yurtdisi-aktarim
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Standardvertrag für zwei separate Übermittlungen (AWS und Meta); Die Marke kann ohne hochgeladene Benachrichtigungsbestätigung der Behörde nicht live gehen.'
+sources:
+  - label: KVKK — Standardvertrag
+    url: https://www.kvkk.gov.tr
+    checkedAt: 2026-11-02
+---
+
+## Rollen
+
+Bei Kampagnen-, Empfänger- und Nachrichtendaten ist die **Marke der Verantwortliche**, die Plattform der **Auftragsverarbeiter**. Für die eigenen Benutzerkonten, Abrechnung und Telemetrie der Plattform ist die Plattform der Verantwortliche.
+
+## Zwei separate Übermittlungen
+
+| Unterauftragsverarbeiter | Zweck |
+|---|---|
+| AWS eu-central-1 (Frankfurt) | Hosting |
+| Meta WhatsApp Cloud API | Nachrichtenverarbeitung |
+
+Die Türkei steht nicht auf Metas Liste für lokale Speicherung; Nachrichteninhalte können in internationalen Rechenzentren verarbeitet werden. Meta wird in der Datenschutzerklärung und im Markenvertrag ausdrücklich als Unterauftragsverarbeiter benannt.
+
+## Ablauf (Seite „Compliance" der Marke)
+
+1. Standardvertrag zwischen Verantwortlichem und Auftragsverarbeiter wird unterzeichnet.
+2. System startet einen **5-Arbeitstage**-Zähler und sendet eine Erinnerung.
+3. Marke meldet die Übermittlung dem Benachrichtigungsmodul der Behörde für Standardverträge.
+4. Benachrichtigungsbestätigung für **beide Übermittlungen** wird hochgeladen.
+
+<Callout type="yasak">Die Marke kann ohne hochgeladene Bestätigung nicht live gehen — dies ist eine harte Grenze im System. Strafe für Nichtmeldung: **90.308 – 1.806.377 TL**.</Callout>
+
+## Weitere Regeln
+
+- Für kontinuierliche Übermittlungen wird keine explizite Zustimmung benötigt; es wird ein Standardvertrag verwendet.
+- Zustimmung für Marketingnachrichten (İYS) und Zustimmung zur KI-gestützten Verarbeitung von Nachrichten werden **separat** eingeholt.
+- Nachrichteninhalte der Marke werden **niemals** für das Training von Modellen der Plattform verwendet; es gibt keine Weitergabe zwischen Marken.
+- Besondere Kategorien personenbezogener Daten (Gesundheit, Biometrie, Religion, politische Überzeugung) sind vertraglich verboten.

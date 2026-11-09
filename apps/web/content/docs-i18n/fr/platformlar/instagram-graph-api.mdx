@@ -1,0 +1,41 @@
+---
+title: 'Instagram Graph API'
+slug: instagram-graph-api
+order: 3
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Les métriques Story disparaissent en 24 heures ; le rappel est envoyé 20 heures après la publication et la Story ne peut pas être complétée sans métrique avec capture d''écran.'
+sources:
+  - label: Instagram Platform — Insights
+    url: https://developers.facebook.com/docs/instagram-platform/insights
+    checkedAt: 2026-11-02
+  - label: Business Discovery
+    url: https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/business_discovery
+    checkedAt: 2026-11-02
+---
+
+## Connexion du compte
+
+Facebook Login → compte Instagram Business/Creator → permissions : `instagram_basic`, `instagram_manage_insights`, `pages_show_list`. Les comptes personnels (non-professionnels) ne peuvent pas être connectés.
+
+## Extraction automatique des données de followers
+
+L'agence effectue une requête **Business Discovery** avec son propre compte Instagram Business : nombre de followers, nombre de publications et moyenne des likes/commentaires des dernières publications des comptes Business/Creator publics. L'influenceur n'a pas besoin de se connecter. Le système le fait toutes les 6 heures (12 heures pour les comptes plus anciens) ; il peut être déclenché manuellement via "Synchroniser maintenant" sur le profil. Aucun scraping n'est effectué.
+
+## Métriques disponibles
+
+Pour le compte connecté (propre) : reach, impressions, saves, shares, vues de profil, démographie des followers.
+
+## Note critique sur Story
+
+<Callout type="uyari">Les métriques Story disparaissent après 24 heures → **capture d'écran obligatoire**. Le système envoie un rappel à l'influenceur **+20 heures** après la publication. Sur Instagram Story, la tâche ne peut pas être marquée comme "Complétée" sans métrique avec capture d'écran.</Callout>
+
+## Non disponibles
+
+- Démographie détaillée du compte d'autrui (Business Discovery fournit uniquement les chiffres publics).
+- Métriques archivées/masquées.
+- Impossible d'envoyer des annonces en masse depuis Instagram (voir [Messenger et Instagram DM](/docs/platformlar/messenger-instagram-dm)).
+
+## Limites de débit
+
+Les limites numériques n'ont pas été confirmées par une source officielle <Unverified /> ; une limitation adaptative est appliquée (ralentir à 429, accélérer progressivement en cas de succès).

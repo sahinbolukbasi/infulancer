@@ -1,0 +1,57 @@
+---
+title: 'Meta Marketing API'
+slug: meta-marketing-api
+order: 1
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Due to ad writing limits (4 budget changes per hour, 30 seconds per same object), the budget engine runs hourly.'
+sources:
+  - label: Meta Marketing API — Rate Limiting
+    url: https://developers.facebook.com/docs/marketing-api/overview/rate-limiting
+    checkedAt: 2026-11-02
+---
+
+## Write limits
+
+- **Mutation:** 100 requests/sec (app + ad account basis).
+- **Same object:** one edit per 30 seconds (error subcode `4841018`).
+- **Ad set budget:** 4 changes per hour; then 1 hour block.
+- **Account spending limit:** 10 changes per day.
+
+## Our implementation
+
+The budget engine runs on an **hourly batch**; no minute-level automatic intervention. A request exceeding the limit is not rejected, but deferred to the next eligible hour and appears in the budget queue on the `/admin/reklam` screen. For the same ad set, only the last change from accumulated changes in between is applied.
+
+## Access level
+
+- **Full Access:** 500 calls in the last 15 days and error rate below 15% in the last 500 calls. Screen recording not required.
+- **Development:** 300 + 40 × active ads per hour; for pilot only. Full Access must be obtained before paying customer.
+
+## Quota and score
+
+Read 1, write 3 points; points decay in 300 seconds. Development cap 60 (300 sec block when full), Full Access 9,000 (60 sec block when full). All numbers are kept in configuration, not in code.
+
+## Rate limit headers
+
+Read and logged in every response:
+
+| Header | Fields |
+|---|---|
+| `X-Ad-Account-Usage` | `acc_id_util_pct`, `reset_time_duration`, `ads_api_access_tier` |
+| `X-Business-Use-Case` | `call_count`, `total_cputime`, `total_time`, `estimated_time_to_regain_access` |
+| `X-FB-Ads-Insights-Throttle` | insights usage percentages |
+
+## 429 and backoff
+
+On rate limit errors (HTTP 429, codes 4/17/32/613), **exponential backoff + jitter** is applied: wait starts at 0.5 sec and doubles on each error (max 60 sec); if `estimated_time_to_regain_access` is present, it is followed. Queue priority: budget pause > budget decrease > budget increase > insights read.
+
+## Error code → action
+
+| Code | Meaning | System action |
+|---|---|---|
+| `4841018` | Same object edited within 30 sec | Queues for 30 sec later |
+| 17 / 613 | Account/app rate limit | Backoff, queue waits |
+| 190 | Access token revoked | Stops connection, alerts brand |
+| 200 | Permission missing | "Permission missing" warning, directs to setup step |
+
+<Callout type="uyari">Until Marketing API connection is established, `/admin/reklam` is in demo mode: requests and limit behavior are recorded but not sent to Meta.</Callout>

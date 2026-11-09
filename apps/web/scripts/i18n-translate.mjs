@@ -60,6 +60,24 @@ function collectServer(dir) {
     }
   }
 }
+// Bildirim başlıkları (notifyAdmins/notifyInfluencer ilk argümanı, title: "..."):
+function collectNotifTitles(dir) {
+  for (const f of readdirSync(dir)) {
+    if (f === "node_modules" || f === "generated") continue;
+    const p = path.join(dir, f);
+    if (statSync(p).isDirectory()) { collectNotifTitles(p); continue; }
+    if (!/\.ts$/.test(f)) continue;
+    const src = readFileSync(p, "utf8");
+    for (const re of [/notify(?:Admins|Influencer|AdminUsers|InfluencerUser)\(\s*(?:tx,\s*)?(?:[\w.]+,\s*)?("(?:[^"\\]|\\.)*")/g, /\btitle:\s*("(?:[^"\\]|\\.)*")/g]) {
+      for (const m of src.matchAll(re)) {
+        let v; try { v = JSON.parse(m[1]); } catch { continue; }
+        if (/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(v) && v.length >= 3 && !/\$\{|^https?:/.test(v)) keys.add(v);
+      }
+    }
+  }
+}
+collectNotifTitles(CORE);
+collectNotifTitles(path.join(ROOT, "lib/actions"));
 collectServer(CORE);
 collectServer(path.join(ROOT, "lib/actions"));
 console.log(`${keys.size} anahtar`);

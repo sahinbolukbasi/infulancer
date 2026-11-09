@@ -1,0 +1,41 @@
+---
+title: 'RGPD transfert de données à l''étranger'
+slug: kvkk-yurtdisi-aktarim
+order: 2
+updatedAt: 2026-11-04
+verification: kismi
+summary: 'Deux transferts distincts (AWS et Meta) avec clauses contractuelles types ; la marque ne peut pas passer en direct sans avoir téléchargé l''accusé de réception de notification auprès de l''Autorité.'
+sources:
+  - label: KVKK — Clauses Contractuelles Types
+    url: https://www.kvkk.gov.tr
+    checkedAt: 2026-11-02
+---
+
+## Rôles
+
+Pour les données de campagne, destinataire et message, la **marque est responsable du traitement**, la plateforme est **sous-traitante**. Pour ses propres comptes utilisateurs, facturation et télémétrie, la plateforme est responsable du traitement.
+
+## Deux transferts distincts
+
+| Sous-traitant | Objectif |
+|---|---|
+| AWS eu-central-1 (Francfort) | Hébergement |
+| Meta WhatsApp Cloud API | Traitement des messages |
+
+La Turquie ne figure pas sur la liste de stockage local de Meta ; le contenu des messages peut être traité dans des centres de données internationaux. Meta est explicitement désignée comme sous-traitante dans le texte d'information et le contrat de marque.
+
+## Flux (page Conformité de la marque)
+
+1. Accord de clauses contractuelles types entre responsable du traitement et sous-traitant signé.
+2. Le système démarre un compteur de **5 jours ouvrables** et envoie un rappel.
+3. La marque notifie l'Autorité via le Module de Notification des Clauses Contractuelles Types.
+4. L'accusé de réception de notification pour **les deux transferts** est téléchargé.
+
+<Callout type="yasak">La marque ne peut pas passer en direct sans télécharger l'accusé de réception — c'est une barrière stricte dans ce système. La pénalité pour non-notification est de **90.308 – 1.806.377 TL**.</Callout>
+
+## Autres règles
+
+- Pour les transferts continus, le consentement explicite n'est pas requis ; les clauses contractuelles types sont utilisées.
+- L'approbation des messages marketing (İYS) et le consentement explicite pour le traitement des messages par intelligence artificielle sont collectés **séparément**.
+- Le contenu des messages de la marque n'est **jamais** utilisé pour l'entraînement des modèles de la plateforme ; il n'y a pas de partage entre marques.
+- Les données sensibles (santé, biométriques, religion, opinions politiques) sont interdites par contrat.

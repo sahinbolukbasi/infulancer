@@ -1,0 +1,31 @@
+---
+title: 'Kampagnenpunktzahl'
+slug: kampanya-skoru
+order: 2
+updatedAt: 2026-11-04
+verification: dogrulandi
+summary: 'Punktzahl = Σ (KPI-Erfüllungsquote × Gewichtung); wenn das Fenster offen ist, wird die Projektion immer neben der Punktzahl angezeigt.'
+sources: []
+---
+
+## Berechnung
+
+**Punktzahl = Σ (KPI-Erfüllungsquote × Gewichtung)**, wobei die Summe der Gewichtungen 1,0 beträgt.
+
+- KPIs: Reichweite, Impressionen, Engagement-Rate (ER), Klicks, Verkäufe, Aufrufe.
+- Erfüllungsquote = letzte Messung im Fenster / Ziel.
+- Status: Quote ≥ %100 "Erreicht", ≥ %85 "Teilweise", darunter "Nicht erreicht". Wenn das Fenster offen ist "Wird gemessen".
+
+## Fenster
+
+Das Fenster beginnt mit der ersten Veröffentlichung und dauert so lange wie die Messdauer des KPI in Tagen (z. B. 7 Tage). Wenn das Fenster schließt, wird der Wert **eingefroren**; später eingegebene Metriken ändern diesen KPI nicht. Wenn es noch Veröffentlichungen mit nicht stabilisierten Metriken gibt (YouTube 72 Stunden), wird keine Entscheidung getroffen.
+
+## Projektion
+
+Wenn das Fenster offen ist, wird der erwartete Wert am Ende des Fensters bei gleichbleibender Entwicklung berechnet: `erreicht × Fenstertage / verstrichene Tage`. Bei Quoten-KPIs wie ER wird der aktuelle Wert als Projektion akzeptiert. Die Projektion wird neben der Punktzahl **immer** angezeigt; der Agent erstellt täglich Warnungen für Projektionen unter %100 des Ziels.
+
+## Warum die momentane Punktzahl allein irreführend ist
+
+Beispiel: Eine Kampagne mit einem 7-Tage-Reichweitenziel hat **6 Stunden** nach der ersten Veröffentlichung %8 des Ziels erreicht. Die momentane Punktzahl beträgt **%8** und sieht "weit zurück" aus. Doch bei gleichbleibender Geschwindigkeit beträgt die Projektion für das Ende des Fensters `8 × 7 / 0,25 ≈ %224` — weit über dem Ziel. Umgekehrt zeigt ein Content, der früh explodiert und dann stagniert, in den frühen Stunden eine übertriebene Projektion.
+
+Deshalb werden Entscheidungen durch gleichzeitiges Lesen von **Punktzahl + Projektion + Fensterende** getroffen; vor dem Schließen des Fensters wird nicht "Nicht erreicht" gesagt.

@@ -4,12 +4,14 @@ import { AppShell } from "@/components/shell/app-shell";
 import { DocSearch } from "@/components/docs/doc-search";
 import { requireActor } from "@/lib/auth-guard";
 import { docsFor, docTree } from "@/lib/docs";
+import { getPreferences } from "@/lib/i18n/server";
 
 /** /docs: sol sütunda ağaç navigasyon, üstte arama. Rol uygulamanın kabuğuyla aynı. */
 export default async function DocsLayout({ children }: { children: ReactNode }) {
   const actor = await requireActor();
-  const tree = docTree(actor.role);
-  const items = docsFor(actor.role).map((d) => ({ path: d.path, title: d.title, section: d.section, headings: d.headings, plain: d.plain }));
+  const { locale } = await getPreferences();
+  const tree = docTree(actor.role, locale);
+  const items = docsFor(actor.role, locale).map((d) => ({ path: d.path, title: d.title, section: d.section, headings: d.headings, plain: d.plain }));
   return (
     <AppShell role={actor.role}>
       <div className="flex flex-col gap-6">
