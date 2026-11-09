@@ -8,8 +8,27 @@ data "aws_cloudfront_cache_policy" "optimized" {
   name = "Managed-CachingOptimized"
 }
 
-data "aws_cloudfront_origin_request_policy" "all_viewer" {
-  name = "Managed-AllViewer"
+# Tüm viewer başlıkları + CloudFront'un ürettiği CloudFront-Viewer-Country origin'e iletilir.
+# CloudFront bu coğrafi başlığı YALNIZCA origin request policy'nin başlık listesinde açıkça
+# istenirse üretir; Managed-AllViewer onu içermediği için ülke algılaması origin'e ulaşmıyordu
+# (proxy.ts cloudfront-viewer-country okur, gelmeyince TR'ye düşüyordu). Server Actions'ın origin
+# kontrolü için Host dahil tüm viewer başlıkları da gerekir, bu yüzden allViewer + ülke başlığı.
+resource "aws_cloudfront_origin_request_policy" "all_viewer_country" {
+  name    = "${local.name}-all-viewer-country"
+  comment = "Tüm viewer başlıkları + CloudFront-Viewer-Country (bölge/para birimi otomatik algılama)"
+
+  headers_config {
+    header_behavior = "allViewerAndWhitelistCloudFront"
+    headers {
+      items = ["CloudFront-Viewer-Country"]
+    }
+  }
+  cookies_config {
+    cookie_behavior = "all"
+  }
+  query_strings_config {
+    query_string_behavior = "all"
+  }
 }
 
 resource "aws_cloudfront_distribution" "app" {
@@ -40,7 +59,7 @@ resource "aws_cloudfront_distribution" "app" {
     cached_methods           = ["GET", "HEAD"]
     compress                 = true
     cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.all_viewer_country.id
   }
 
   # Next.js derleme çıktısı (içerik hash'li, değişmez).

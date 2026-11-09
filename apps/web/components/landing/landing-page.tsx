@@ -6,6 +6,7 @@ import { ReelCard } from "@/components/landing/reel-card";
 import { ScrollDemo } from "@/components/landing/scroll-demo";
 import { AudienceHero } from "@/components/landing/audience-hero";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { RegionSwitcher } from "@/components/i18n/region-switcher";
 import { BrandBadge, BrandLogo, type BrandLogoName } from "@/components/icons/brand-logos";
 import { LANDING_FEATURES, type LandingReference, type LandingVideo } from "@/lib/landing-content";
 import { cn } from "@/lib/cn";
@@ -242,6 +243,7 @@ export async function LandingPage({ stats, data }: { stats: LandingStats; data: 
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <RegionSwitcher compact />
             <ThemeToggle />
             <Link href="/giris" className="inline-flex h-9 items-center rounded-full bg-fg px-4 text-sm font-medium text-bg transition-transform hover:scale-105">{tt("Giriş yap")}</Link>
           </div>
