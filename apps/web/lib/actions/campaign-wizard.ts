@@ -148,10 +148,15 @@ export async function wizardSubmitAction(_p: ActionState, fd: FormData): Promise
   const a = await actor();
   const id = str(fd, "id");
   const res = await attempt(async () => {
-    await submitDraft(a, id);
-    return { ok: true };
+    const r = await submitDraft(a, id);
+    return { ok: true, data: { mode: r.mode } };
   });
   if (!res.ok) return res;
   revalidateAll();
-  redirect(a.role === "BRAND" ? `/marka/kampanyalar/${id}?gonderildi=1` : `/admin/kampanyalar/${id}/kurulum?adim=influencerlar`);
+  const mode = (res.data as { mode?: string } | undefined)?.mode;
+  if (a.role === "BRAND") {
+    // SELF: marka kendi kurulumuna geçer; AJANS: ajansa gönderildi onayı.
+    redirect(mode === "SELF" ? `/marka/kampanyalar/${id}/kurulum?adim=influencerlar` : `/marka/kampanyalar/${id}?gonderildi=1`);
+  }
+  redirect(`/admin/kampanyalar/${id}/kurulum?adim=influencerlar`);
 }

@@ -37,7 +37,7 @@ const FOLLOWER_STEPS = [0, 10_000, 50_000, 100_000, 500_000, 1_000_000];
  * → ortak bedeli herkese uygula → tek tıkla ekle (50'den fazlası parça parça gönderilir).
  * Marka çakışması olanlar eklenmez ve gerekçeli tekli atamaya yönlendirilir.
  */
-export function InfluencerPicker({ campaignId, influencers, preselected = [] }: { campaignId: string; influencers: PickerInfluencer[]; preselected?: string[] }) {
+export function InfluencerPicker({ campaignId, influencers, preselected = [], hideCommission = false }: { campaignId: string; influencers: PickerInfluencer[]; preselected?: string[]; hideCommission?: boolean }) {
   const tt = useTT();
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -126,7 +126,7 @@ export function InfluencerPicker({ campaignId, influencers, preselected = [] }: 
       const items = parsedFees.map((f) => ({ influencerId: f.id, feeKurus: Math.round(f.tl * 100) }));
       const merged: BulkAssignResult = { ok: false, created: [], failed: [] };
       for (let k = 0; k < items.length; k += 50) {
-        const res = await createAssignmentsBulk({ campaignId, commissionPct: Number.isFinite(pctNum) ? pctNum : 0, items: items.slice(k, k + 50) });
+        const res = await createAssignmentsBulk({ campaignId, commissionPct: hideCommission ? 0 : (Number.isFinite(pctNum) ? pctNum : 0), items: items.slice(k, k + 50) });
         merged.created.push(...res.created);
         merged.failed.push(...res.failed);
         if (!res.created.length && !res.failed.length && res.error) merged.error = res.error;
@@ -297,8 +297,10 @@ export function InfluencerPicker({ campaignId, influencers, preselected = [] }: 
               <Button type="button" size="sm" variant="secondary" onClick={() => applyFee(false)} disabled={!bulkFee.trim()}>{tt("Herkese uygula")}</Button>
               <Button type="button" size="sm" variant="ghost" onClick={() => applyFee(true)} disabled={!bulkFee.trim()}>{tt("Yalnız boşlara")}</Button>
             </div>
+            {hideCommission ? null : (
             <label className="flex items-center gap-2 text-[13px] text-fg-muted">{tt("Ajans komisyonu %")}<Input value={commissionPct} onChange={(e) => setCommissionPct(e.target.value)} inputMode="decimal" className="w-20" aria-label={tt("Ajans komisyonu yüzdesi")} />
             </label>
+            )}
           </div>
           <ul className="flex max-h-72 flex-col divide-y divide-border overflow-auto">
             {[...selected].map(([id, fee]) => {
@@ -330,7 +332,7 @@ export function InfluencerPicker({ campaignId, influencers, preselected = [] }: 
             })}
           </ul>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-            <span className="text-[13px] tabular-nums text-fg-muted">{tt("Toplam bedel")}{" "}{totalTl.toLocaleString("tr-TR")}{" "}{tt("TL · komisyon")}{" "}{Math.round((totalTl * (Number.isFinite(pctNum) ? pctNum : 0)) / 100).toLocaleString("tr-TR")}{" "}{tt("TL")}</span>
+            <span className="text-[13px] tabular-nums text-fg-muted">{tt("Toplam bedel")}{" "}{totalTl.toLocaleString("tr-TR")}{" "}{tt("TL")}{hideCommission ? "" : ` · ${tt("komisyon")} ${Math.round((totalTl * (Number.isFinite(pctNum) ? pctNum : 0)) / 100).toLocaleString("tr-TR")} ${tt("TL")}`}</span>
             <Button type="button" onClick={submit} disabled={pending || missingFee}>
               {pending ? tt("Ekleniyor…") : missingFee ? tt("Tüm bedelleri girin") : `${selected.size} influencer ekle ve teklif gönder`}
             </Button>
